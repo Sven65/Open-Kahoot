@@ -4,4 +4,5 @@ export enum SocketEvents {
 	RoomCreated = 'RoomCreated',
 	RoomJoined = 'RoomJoined',
 	JoinFailed = 'JoinFailed',
+	SendAnswer = 'SendAnswer',
 }

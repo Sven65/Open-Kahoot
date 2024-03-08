@@ -1,0 +1,44 @@
+.play-button-container {
+	--red: #EF476F;
+
+	width: 100vw;
+	height: 100vh;
+
+	.row {
+		width: 100%;
+		height: 50%;
+	}
+
+	button {
+		width: 50%;
+		height: 100%;
+
+
+		outline: none;
+		border: none;
+
+		&.play-btn-yellow {
+			background-color: #FFD166;
+		}
+
+		&.play-btn-red {
+			background-color: var(--red);
+		}
+
+		&.play-btn-green {
+			background-color: #06D6A0;
+		}
+
+		&.play-btn-blue {
+			background-color: #47A8BD;
+		}
+
+		&:hover {
+			filter: brightness(0.4);
+		}
+
+		&:active {
+			filter: brightness(0.6);
+		}
+	}
+}

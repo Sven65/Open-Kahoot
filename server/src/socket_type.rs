@@ -9,6 +9,8 @@ pub enum SocketEventType {
 	RoomCreated,
 	RoomJoined,
 	JoinFailed,
+    SendAnswer,
+    SendPoints,
 }
 
 impl From<SocketEventType> for Cow<'static, str> {
@@ -19,6 +21,8 @@ impl From<SocketEventType> for Cow<'static, str> {
             SocketEventType::RoomCreated => Cow::Borrowed("RoomCreated"),
             SocketEventType::RoomJoined => Cow::Borrowed("RoomJoined"),
             SocketEventType::JoinFailed => Cow::Borrowed("JoinFailed"),
+            SocketEventType::SendAnswer => Cow::Borrowed("SendAnswer"),
+            SocketEventType::SendPoints => Cow::Borrowed("SendPoints"),
         }
     }
 }
@@ -31,6 +35,8 @@ impl SocketEventType {
 			SocketEventType::RoomCreated => Cow::Borrowed("RoomCreated"),
             SocketEventType::RoomJoined => Cow::Borrowed("RoomJoined"),
             SocketEventType::JoinFailed => Cow::Borrowed("JoinFailed"),
+            SocketEventType::SendAnswer => Cow::Borrowed("SendAnswer"),
+            SocketEventType::SendPoints => Cow::Borrowed("SendPoints"),
         }
     }
 }

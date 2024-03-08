@@ -13,6 +13,7 @@ use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
+use util::generate_random_number_string;
 
 
 #[macro_use]
@@ -20,12 +21,16 @@ extern crate lazy_static;
 
 use crate::{game_room::GameRoom, socket_type::{SocketErrorMessage, SocketEventType}};
 
+#[derive(Debug, serde::Deserialize)]
+struct SentAnswer {
+    room_id: String,
+    answer: String
+}
+
 
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
 }
-
-
 
 async fn on_connect(socket: SocketRef) {
     info!("socket connected: {}", socket.id);
@@ -53,9 +58,6 @@ async fn on_connect(socket: SocketRef) {
             println!("Room clients {:#?}", socket.within(room.clone()));
             
             let _ = socket.emit(SocketEventType::RoomJoined, room);
-        
-            // let messages = store.get(&room).await;
-            // let _ = socket.emit("messages", Messages { messages });
         },
     );
 
@@ -84,8 +86,17 @@ async fn on_connect(socket: SocketRef) {
 
 
         socket.emit(SocketEventType::RoomCreated, room_code).unwrap();
+    });
 
-    })
+    socket.on(SocketEventType::SendAnswer, |socket: SocketRef, Data::<SentAnswer>(data)| async move {
+        // TODO: Check if player is in a room
+        let answer = data.answer;
+        let room = data.room_id;
+
+        info!("Got answer {} for room id {}", answer, room);
+
+        let _ = socket.emit(SocketEventType::SendPoints, 100);
+    });
 }
 
 async fn handler(axum::extract::State(io): axum::extract::State<SocketIo>) {
