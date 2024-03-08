@@ -1,8 +1,10 @@
 mod state;
 mod util;
 mod socket_type;
+mod game_room;
 
 use axum::routing::get;
+use game_room::{GameRoomStore, RoomStore};
 use socketioxide::{
     extract::{Data, SocketRef, State},
     SocketIo,
@@ -12,32 +14,17 @@ use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
 
-use crate::socket_type::{SocketErrorMessage, SocketEventType};
 
-#[derive(Debug, serde::Deserialize)]
-struct MessageIn {
-    room: String,
-    text: String,
+#[macro_use]
+extern crate lazy_static;
+
+use crate::{game_room::GameRoom, socket_type::{SocketErrorMessage, SocketEventType}};
+
+
+lazy_static! {
+    static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
 }
 
-#[derive(serde::Serialize)]
-struct Messages {
-    messages: Vec<state::Message>,
-}
-
-
-#[derive(serde::Serialize)]
-struct GameRoom {
-    pub id: String,
-    pub host: String,
-    pub players: Vec<String>
-}
-
-
-
-fn room_exist(socket: &SocketRef, room: &str) -> bool {
-    socket.rooms().unwrap().contains(&std::borrow::Cow::Borrowed(room))
-}
 
 
 async fn on_connect(socket: SocketRef) {
@@ -51,7 +38,7 @@ async fn on_connect(socket: SocketRef) {
             info!("Trying to to join room {:#?}. Available: {:#?}", room, socket.rooms());
             
 
-            if (!room_exist(&socket, &room)) {
+            if (!GAMEROOM_STORE.has_room(&room).await) {
                 info!("Failed to join room {:#?} as it does not exist. {:#?}", room, socket.rooms());
                 let _ = socket.emit("join_failed", SocketErrorMessage {
                     error_type: SocketEventType::JoinFailed,
@@ -88,6 +75,12 @@ async fn on_connect(socket: SocketRef) {
         let _ = socket.leave_all();
         let _ = socket.join(room_code.clone());
         info!("Rooms are now {:#?}", socket.rooms());
+
+        GAMEROOM_STORE.insert(GameRoom {
+            id: room_code.clone(),
+            host: socket.id.to_string(),
+            players: vec![]
+        }).await;
 
 
         socket.emit(SocketEventType::RoomCreated, room_code).unwrap();
