@@ -1,5 +1,6 @@
 mod state;
 mod util;
+mod socket_type;
 
 use axum::routing::get;
 use socketioxide::{
@@ -10,6 +11,8 @@ use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
+
+use crate::socket_type::{SocketErrorMessage, SocketEventType};
 
 #[derive(Debug, serde::Deserialize)]
 struct MessageIn {
@@ -22,9 +25,18 @@ struct Messages {
     messages: Vec<state::Message>,
 }
 
+
 #[derive(serde::Serialize)]
 struct GameRoom {
-    
+    pub id: String,
+    pub host: String,
+    pub players: Vec<String>
+}
+
+
+
+fn room_exist(socket: &SocketRef, room: &str) -> bool {
+    socket.rooms().unwrap().contains(&std::borrow::Cow::Borrowed(room))
 }
 
 
@@ -32,11 +44,29 @@ async fn on_connect(socket: SocketRef) {
     info!("socket connected: {}", socket.id);
 
     socket.on(
-        "join",
+        SocketEventType::Join,
         |socket: SocketRef, Data::<String>(room)| async move {
             info!("Received join {:?}", room);
+
+            info!("Trying to to join room {:#?}. Available: {:#?}", room, socket.rooms());
+            
+
+            if (!room_exist(&socket, &room)) {
+                info!("Failed to join room {:#?} as it does not exist. {:#?}", room, socket.rooms());
+                let _ = socket.emit("join_failed", SocketErrorMessage {
+                    error_type: SocketEventType::JoinFailed,
+                    error: "Failed to join as room doesn't exist.".to_string(),
+                });
+                return;
+            }
+
             let _ = socket.leave_all();
             let _ = socket.join(room.clone());
+
+            println!("Room clients {:#?}", socket.within(room.clone()));
+            
+            let _ = socket.emit(SocketEventType::RoomJoined, room);
+        
             // let messages = store.get(&room).await;
             // let _ = socket.emit("messages", Messages { messages });
         },
@@ -46,15 +76,22 @@ async fn on_connect(socket: SocketRef) {
         "hello",
         |socket: SocketRef| async move {
             info!("Got hello");
+           
             socket.emit("hello", "to you too").unwrap();
         },
     );
 
-    socket.on("createRoom", |socket: SocketRef| async move {
+    socket.on(SocketEventType::CreateRoom, |socket: SocketRef| async move {
         info!("Creating room");
         let room_code = util::generate_random_number_string(6);
 
-        socket.emit("room_created", room_code).unwrap();
+        let _ = socket.leave_all();
+        let _ = socket.join(room_code.clone());
+        info!("Rooms are now {:#?}", socket.rooms());
+
+
+        socket.emit(SocketEventType::RoomCreated, room_code).unwrap();
+
     })
 }
 
