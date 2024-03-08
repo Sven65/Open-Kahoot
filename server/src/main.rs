@@ -97,6 +97,17 @@ async fn on_connect(socket: SocketRef) {
 
         let _ = socket.emit(SocketEventType::SendPoints, 100);
     });
+
+    socket.on(SocketEventType::ShowQuestion, |socket: SocketRef, Data::<String>(room)| async move {
+        // TODO: Host check
+        let _ = socket.to(room).emit(SocketEventType::ShowQuestion, "");
+    });
+
+    socket.on(SocketEventType::HideQuestion, |socket: SocketRef, Data::<String>(room)| async move {
+        // TODO: Host check
+
+        let _ = socket.to(room).emit(SocketEventType::HideQuestion, "");
+    });
 }
 
 async fn handler(axum::extract::State(io): axum::extract::State<SocketIo>) {

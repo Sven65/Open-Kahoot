@@ -10,6 +10,9 @@ export type IGameContext = {
 	createRoom: () => void,
 	locationHook: LocationHook,
 	sendAnswer: (answer: string) => void,
+	sendShowQuestion: () => void,
+	sendHideQuestion: () => void,
+	showQuestion: boolean,
 }
 
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000'
@@ -28,6 +31,7 @@ export const GameContextProvider = ({
 
 
 	const [ roomId, setRoomId ] = useState('')
+	const [ showQuestion, setShowQuestion ] = useState(false)
 
 	socket.on(SocketEvents.RoomCreated, (roomCode: string) => {
 		console.log('room_code', roomCode)
@@ -48,6 +52,14 @@ export const GameContextProvider = ({
 		console.log('join fail', data)
 	})
 
+	socket.on(SocketEvents.ShowQuestion, () => {
+		setShowQuestion(true)
+	})
+
+	socket.on(SocketEvents.HideQuestion, () => {
+		setShowQuestion(false)
+	})
+
 	return (
 		<GameContext.Provider value={{
 			join: (room: string) => {
@@ -61,6 +73,13 @@ export const GameContextProvider = ({
 			sendAnswer: (answer: string) => {
 				socket.emit(SocketEvents.SendAnswer, roomId, answer)
 			},
+			sendShowQuestion: () => {
+				socket.emit(SocketEvents.ShowQuestion, roomId)
+			},
+			sendHideQuestion: () => {
+				socket.emit(SocketEvents.HideQuestion, roomId)
+			},
+			showQuestion,
 		}}>
 			{children}
 		</GameContext.Provider>

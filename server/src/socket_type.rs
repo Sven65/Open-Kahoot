@@ -11,6 +11,8 @@ pub enum SocketEventType {
 	JoinFailed,
     SendAnswer,
     SendPoints,
+    ShowQuestion,
+	HideQuestion,
 }
 
 impl From<SocketEventType> for Cow<'static, str> {
@@ -23,6 +25,8 @@ impl From<SocketEventType> for Cow<'static, str> {
             SocketEventType::JoinFailed => Cow::Borrowed("JoinFailed"),
             SocketEventType::SendAnswer => Cow::Borrowed("SendAnswer"),
             SocketEventType::SendPoints => Cow::Borrowed("SendPoints"),
+            SocketEventType::ShowQuestion => Cow::Borrowed("ShowQuestion"),
+            SocketEventType::HideQuestion => Cow::Borrowed("HideQuestion"),
         }
     }
 }
@@ -37,6 +41,8 @@ impl SocketEventType {
             SocketEventType::JoinFailed => Cow::Borrowed("JoinFailed"),
             SocketEventType::SendAnswer => Cow::Borrowed("SendAnswer"),
             SocketEventType::SendPoints => Cow::Borrowed("SendPoints"),
+            SocketEventType::ShowQuestion => Cow::Borrowed("ShowQuestion"),
+            SocketEventType::HideQuestion => Cow::Borrowed("HideQuestion"),
         }
     }
 }
