@@ -1,4 +1,5 @@
 mod state;
+mod util;
 
 use axum::routing::get;
 use socketioxide::{
@@ -19,6 +20,11 @@ struct MessageIn {
 #[derive(serde::Serialize)]
 struct Messages {
     messages: Vec<state::Message>,
+}
+
+#[derive(serde::Serialize)]
+struct GameRoom {
+    
 }
 
 
@@ -43,6 +49,13 @@ async fn on_connect(socket: SocketRef) {
             socket.emit("hello", "to you too").unwrap();
         },
     );
+
+    socket.on("createRoom", |socket: SocketRef| async move {
+        info!("Creating room");
+        let room_code = util::generate_random_number_string(6);
+
+        socket.emit("room_created", room_code).unwrap();
+    })
 }
 
 async fn handler(axum::extract::State(io): axum::extract::State<SocketIo>) {

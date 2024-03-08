@@ -11,6 +11,12 @@
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
 	-webkit-text-size-adjust: 100%;
+
+	--blue-background: #26547C;
+	--blue: #47A8BD;
+	--pink: #EF476F;
+	--green: #06D6A0;
+	--yellow: #FFD166;
 }
 
 body {
@@ -21,6 +27,8 @@ body {
 	display: flex;
 	flex-direction: column;
 	min-height: 100vh;
+	height: 100vh;
+	background-color: var(--blue-background);
 }
 
 header {

@@ -1,0 +1,23 @@
+.ok-input {
+	position: relative;
+	display: inline-block;
+	padding: 15px 30px;
+	font-size: 16px;
+	font-weight: 500;
+	line-height: 16px;
+	font-family: "Futura", sans-serif;
+	min-width: 170px;
+	text-align: center;
+	cursor: pointer;
+	color: #39393A;
+	
+	border-radius: unset;
+	border: none;
+
+	outline: none;
+
+	background-color: #fff;
+	border: 2px solid #39393A;
+
+	border-radius: 8px;
+}
