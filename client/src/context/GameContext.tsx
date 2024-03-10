@@ -4,14 +4,28 @@ import { io } from 'socket.io-client'
 import { SocketEvents } from '../types'
 import { LocationHook, useLocation } from 'preact-iso'
 
+export type Answer = {
+	id: string,
+	answer: string,
+}
+
+export type Question = {
+	id: string,
+    question: string,
+    answers: Answer[],
+    correct_answer_id: string,
+}
+
 export type IGameContext = {
 	join: (room: string) => void,
-	roomId: [string, StateUpdater<String>],
+	roomId: [string, StateUpdater<string>],
+	currentQuestion: [Question, StateUpdater<Question>],
 	createRoom: () => void,
 	locationHook: LocationHook,
 	sendAnswer: (answer: string) => void,
 	sendShowQuestion: () => void,
 	sendHideQuestion: () => void,
+	sendNextQuestion: () => void,
 	showQuestion: boolean,
 }
 
@@ -32,6 +46,7 @@ export const GameContextProvider = ({
 
 	const [ roomId, setRoomId ] = useState('')
 	const [ showQuestion, setShowQuestion ] = useState(false)
+	const [ currentQuestion, setCurrentQuestion ] = useState<Question | null>(null)
 
 	socket.on(SocketEvents.RoomCreated, (roomCode: string) => {
 		console.log('room_code', roomCode)
@@ -60,6 +75,13 @@ export const GameContextProvider = ({
 		setShowQuestion(false)
 	})
 
+	socket.on(SocketEvents.SendQuestion, (question: Question) => {
+		console.log('got q', question)
+		setCurrentQuestion(question)
+	})
+
+	console.log('qcurrent q in game ctx', currentQuestion)
+
 	return (
 		<GameContext.Provider value={{
 			join: (room: string) => {
@@ -67,6 +89,7 @@ export const GameContextProvider = ({
 				socket.emit(SocketEvents.Join, room)
 			},
 			roomId: [ roomId, setRoomId ],
+			currentQuestion: [ currentQuestion, setCurrentQuestion ],
 			createRoom: () => {
 				socket.emit(SocketEvents.CreateRoom)
 			},
@@ -78,6 +101,9 @@ export const GameContextProvider = ({
 			},
 			sendHideQuestion: () => {
 				socket.emit(SocketEvents.HideQuestion, roomId)
+			},
+			sendNextQuestion: () => {
+				socket.emit(SocketEvents.NextQuestion, roomId)
 			},
 			showQuestion,
 		}}>

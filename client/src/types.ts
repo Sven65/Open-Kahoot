@@ -7,4 +7,6 @@ export enum SocketEvents {
 	SendAnswer = 'SendAnswer',
 	ShowQuestion = 'ShowQuestion',
 	HideQuestion = 'HideQuestion',
+    SendQuestion = 'SendQuestion',
+    NextQuestion = 'NextQuestion',
 }

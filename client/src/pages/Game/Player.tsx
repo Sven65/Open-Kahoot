@@ -6,17 +6,18 @@ import './Player.scss'
 const GamePlayer = () => {
 	const gameContext = useContext(GameContext)
 	const sendAnswer = gameContext.sendAnswer
+	const question = gameContext.currentQuestion
 
 
 	return (
 		<div className={'play-button-container'}>
 			<div class="row">
-				<button class="play-btn-red" onClick={() => sendAnswer('1')}>1</button>
-				<button class="play-btn-green" onClick={() => sendAnswer('2')}>2</button>
+				<button class="play-btn-red" onClick={() => sendAnswer(question.answers[0].id)}>{question.answers[0].answer}</button>
+				<button class="play-btn-green" onClick={() => sendAnswer(question.answers[1].id)}>{question.answers[1].answer}</button>
 			</div>
 			<div class="row">
-				<button class="play-btn-blue" onClick={() => sendAnswer('3')}>3</button>
-				<button class="play-btn-yellow" onClick={() => sendAnswer('4')}>4</button>
+				<button class="play-btn-blue" onClick={() => sendAnswer(question.answers[2].id)}>{question.answers[2].answer}</button>
+				<button class="play-btn-yellow" onClick={() => sendAnswer(question.answers[3].id)}>{question.answers[3].answer}</button>
 			</div>
 		</div>
 	)
