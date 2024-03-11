@@ -3,6 +3,7 @@ import { GameContext } from '../../context/GameContext'
 
 import './Player.scss'
 import { useLocation } from 'preact-iso'
+import { CenterText } from '../../components/CenterText'
 
 interface GamePlayerProps {
 	onSelect: () => void,
@@ -37,7 +38,9 @@ const GamePlayer = ({
 
 const PlayerWaiter = () => (
 	<div class="player-waiter">
-		<h1>Please wait for your host to advance.</h1>
+		<CenterText>
+			<h1>Please wait for your host to advance.</h1>
+		</CenterText>
 	</div>
 )
 

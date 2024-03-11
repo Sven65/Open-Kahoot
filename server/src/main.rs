@@ -45,6 +45,12 @@ struct JoinMessage {
     pub name: String,
 }
 
+#[derive(Debug, serde::Deserialize)]
+struct ChangeStateMessage {
+    pub room_id: String,
+    pub state: String,
+}
+
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
     static ref QUESTION_TIME: f64 = 30.0;
@@ -101,11 +107,13 @@ async fn on_connect(socket: SocketRef) {
 
             let room = &mut room.unwrap();
 
-            room.insert_player(Player {
+            let player = Player {
                 id: socket.id.to_string(),
                 points: 0.0,
                 name: Some(data.name),
-            });
+            };
+            
+            room.insert_player(player.clone());
 
             GAMEROOM_STORE.insert(room.clone()).await;
 
@@ -114,7 +122,8 @@ async fn on_connect(socket: SocketRef) {
 
             println!("Room clients {:#?}", socket.within(data.room_id.clone()));
             
-            let _ = socket.emit(SocketEventType::RoomJoined, data.room_id);
+            let _ = socket.emit(SocketEventType::RoomJoined, data.room_id.clone());
+            let _ = socket.to(data.room_id.clone()).emit(SocketEventType::PlayerJoined, player);
         },
     );
 
@@ -145,6 +154,7 @@ async fn on_connect(socket: SocketRef) {
                 is_game_over: false,
                 question_started: None,
                 answer_count: 0,
+                client_state: "UNKNOWN".to_string(),
             },
             questions: vec![
                 Question {
@@ -239,7 +249,7 @@ async fn on_connect(socket: SocketRef) {
                         time_taken: duration.as_secs_f64(),
                     });
 
-                    if (room.has_all_players_answered()) {
+                    if room.has_all_players_answered() {
                         room.set_answer_count(0);
                         GAMEROOM_STORE.insert(room.clone()).await;
 
@@ -280,8 +290,8 @@ async fn on_connect(socket: SocketRef) {
             GAMEROOM_STORE.insert(room.clone()).await;
 
             if room.state.is_game_over {
-                let _ = socket.emit(SocketEventType::GameOver, "");
-                let _ = socket.to(room_id).emit(SocketEventType::GameOver, "");
+                let _ = socket.emit(SocketEventType::ChangeState, "ENDED");
+                let _ = socket.to(room_id).emit(SocketEventType::ChangeState, "ENDED");
             }
         } else {
             let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Room doesn't exist.".to_string(), error_type: SocketEventType::NextQuestion });
@@ -297,6 +307,23 @@ async fn on_connect(socket: SocketRef) {
         }
     });
 
+    socket.on(SocketEventType::ChangeState, |socket: SocketRef, Data::<ChangeStateMessage>(data)| async move {
+        // TODO: Host check
+
+        info!("Changing state for socket");
+
+        if let Some(mut room) = GAMEROOM_STORE.get_room_clone(&data.room_id).await {
+            room.set_client_state(data.state.clone());
+
+            GAMEROOM_STORE.insert(room).await;
+
+            let _ = socket.emit(SocketEventType::ChangeState, data.state.clone());
+            let _ = socket.to(data.room_id).emit(SocketEventType::ChangeState, data.state);
+        } else {
+            info!("No room exists");
+            let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Room doesn't exist.".to_string(), error_type: SocketEventType::ChangeState });
+        }
+    });
 
     // TODO: Logic for when socket disconnects (Remove as player, remove room if socket is host)
 }

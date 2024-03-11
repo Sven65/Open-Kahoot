@@ -26,7 +26,13 @@ export function Home() {
 			<Modal show={showModal} onClose={() => setShowModal(false)}>
 				<div class="join-modal-container">
 					<h1>Enter name</h1>
-					<Input name="player-name" placeholder={'Player Name'} value={playerName} onChange={(evt) => setPlayerName(evt.target.value)} />
+					<Input
+						name="player-name"
+						placeholder={'Player Name'}
+						value={playerName}
+						onChange={(evt) => setPlayerName(evt.target.value)}
+						onEnter={sendJoin}
+					/>
 					<Button
 						color="green"
 						onClick={sendJoin}
@@ -38,12 +44,20 @@ export function Home() {
 			</Modal>
 			<div class="form-container">
 				<h1>Open Kahoot</h1>
-				<form class={'code-form'} action="">
+				<form class={'code-form'} action="#">
 					<Input
 						name="code"
 						placeholder={'Game PIN'}
 						value={gamePin}
 						onChange={e => setGamePin(e.target.value)}
+						onEnter={() => {
+							if (gamePin.length === 0) {
+								toast.error('Please enter a game PIN.')
+								return
+							}
+
+							setShowModal(true)
+						}}
 					/>
 					<Button
 						color="green"

@@ -1,7 +1,7 @@
 import { createContext } from 'preact'
 import { StateUpdater, useState } from 'preact/hooks'
 import { io } from 'socket.io-client'
-import { Player, SocketEvents } from '../types'
+import { GameState, Player, SocketEvents } from '../types'
 import { LocationHook, useLocation } from 'preact-iso'
 import { toast } from 'react-toastify'
 
@@ -30,6 +30,8 @@ export type IGameContext = {
 	timeLeft: [number, StateUpdater<number>],
 	timerInterval: [any, StateUpdater<any>],
 	scores: [Player[], StateUpdater<Player[]>],
+	playerNames: [string[], StateUpdater<string[]>],
+	gameState: [GameState, StateUpdater<GameState>],
 	// eslint-disable-next-line no-unused-vars
 	join: (room_id: string, name: string) => void,
 	createRoom: () => void,
@@ -39,6 +41,7 @@ export type IGameContext = {
 	sendHideQuestion: () => void,
 	sendNextQuestion: () => void,
 	sendGetHighscores: () => void,
+	sendStartGame: () => void,
 	
 	clearContext: () => void,
 }
@@ -66,6 +69,9 @@ export const GameContextProvider = ({
 	let   [ timeLeft, setTimeLeft ] = useState(0)
 	const [ timerInterval, setTimerInterval ] = useState(null)
 	const [ scores, setScores ] = useState([])
+	const [ gameState, setGameState ] = useState<GameState>(GameState.STARTING)
+
+	const [ playerNames, setPlayerNames ] = useState<string[]>([])
 
 	const clearContext = () => {
 		setScores([])
@@ -74,6 +80,8 @@ export const GameContextProvider = ({
 		setCurrentQuestion(null)
 		setTimeLeft(0)
 		setTimerInterval(null)
+		setPlayerNames([])
+		setGameState(GameState.STARTING)
 	}
 
 	socket.on(SocketEvents.RoomCreated, (roomCode: string) => {
@@ -108,6 +116,8 @@ export const GameContextProvider = ({
 
 	socket.on(SocketEvents.SendQuestion, (question: Question) => {
 		setCurrentQuestion(question)
+
+		setScores([])
 	})
 
 	socket.on(SocketEvents.GetScores, (scores: Player[]) => {
@@ -119,6 +129,21 @@ export const GameContextProvider = ({
 		toast.error('Left game as room closed.')
 		clearContext()
 		location.route('/')
+	})
+
+	socket.on(SocketEvents.PlayerJoined, (player: Player) => {
+		setPlayerNames([
+			player.name,
+			...playerNames,
+		])
+	})
+
+	socket.on(SocketEvents.PlayerLeft, (player: Player) => {
+		setPlayerNames(playerNames.filter(item => item !== player.name))
+	})
+
+	socket.on(SocketEvents.ChangeState, (state: GameState) => {
+		setGameState(state)
 	})
 
 	console.log('qcurrent q in game ctx', currentQuestion)
@@ -137,6 +162,8 @@ export const GameContextProvider = ({
 			timeLeft: [ timeLeft, setTimeLeft ],
 			timerInterval: [ timerInterval, setTimerInterval ],
 			scores: [ scores, setScores ],
+			playerNames: [ playerNames, setPlayerNames ],
+			gameState: [ gameState, setGameState ],
 			createRoom: () => {
 				socket.emit(SocketEvents.CreateRoom)
 			},
@@ -154,6 +181,11 @@ export const GameContextProvider = ({
 			},
 			sendGetHighscores: () => {
 				socket.emit(SocketEvents.GetScores, roomId)
+			},
+			sendStartGame: () => {
+				console.log('starting game')
+				socket.emit(SocketEvents.ChangeState, { room_id: roomId, state: GameState.PLAYING })
+				socket.emit(SocketEvents.NextQuestion, roomId)
 			},
 			clearContext,
 			showQuestion,

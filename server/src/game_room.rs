@@ -29,6 +29,7 @@ pub struct GameState {
     #[serde(with = "serde_millis")]
     pub question_started: Option<Instant>,
     pub answer_count: usize,
+    pub client_state: String,
 }
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -125,6 +126,10 @@ impl GameRoom {
     pub fn has_all_players_answered(&self) -> bool {
         self.state.answer_count >= self.players.len()
     }
+
+    pub fn set_client_state(&mut self, state: String) {
+        self.state.client_state = state;
+    } 
 }
 
 #[derive(Default)]

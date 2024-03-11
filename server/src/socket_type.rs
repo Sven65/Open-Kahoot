@@ -19,6 +19,8 @@ pub enum SocketEventType {
     GetScores,
     RoomClosed,
     PlayerLeft,
+    PlayerJoined,
+    ChangeState,
 }
 
 impl From<SocketEventType> for Cow<'static, str> {
@@ -40,6 +42,8 @@ impl From<SocketEventType> for Cow<'static, str> {
             SocketEventType::GetScores => Cow::Borrowed("GetScores"),
             SocketEventType::RoomClosed => Cow::Borrowed("RoomClosed"),
             SocketEventType::PlayerLeft => Cow::Borrowed("PlayerLeft"),
+            SocketEventType::PlayerJoined => Cow::Borrowed("PlayerJoined"),
+            SocketEventType::ChangeState => Cow::Borrowed("ChangeState"),
         }
     }
 }
@@ -63,6 +67,8 @@ impl SocketEventType {
             SocketEventType::GetScores => Cow::Borrowed("GetScores"),
             SocketEventType::RoomClosed => Cow::Borrowed("RoomClosed"),
             SocketEventType::PlayerLeft => Cow::Borrowed("PlayerLeft"),
+            SocketEventType::PlayerJoined => Cow::Borrowed("PlayerJoined"),
+            SocketEventType::ChangeState => Cow::Borrowed("ChangeState"),
         }
     }
 }

@@ -13,10 +13,19 @@ export enum SocketEvents {
 	GetScores = 'GetScores',
 	RoomClosed = 'RoomClosed',
 	PlayerLeft = 'PlayerLeft',
+	PlayerJoined = 'PlayerJoined',
+	ChangeState = 'ChangeState',
 }
 
 export type Player = {
 	id: string,
 	points: number,
 	name: string
+}
+
+export enum GameState {
+	UNKNOWN = 'UNKNOWN',
+	STARTING = 'STARTING',
+	PLAYING = 'PLAYING',
+	ENDED = 'ENDED',
 }
