@@ -28,7 +28,7 @@ export const Highscores = ({
 								<span class="highscore separator"> - </span>
 								<span class="highscore-row name">{player.name}</span>
 								<span class="highscore separator"> - </span>
-								<span class="highscore-row points">{player.points}</span>
+								<span class="highscore-row points">{player.points.toFixed(0)}</span>
 							</div>
 						</li>
 					))}
