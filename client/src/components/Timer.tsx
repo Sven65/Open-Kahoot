@@ -27,6 +27,7 @@ export const InnerTimer = ({
 
 	timerRef.current = timer
 
+
 	return (
 		<div>
 			Seconds left: {timer.totalSeconds}

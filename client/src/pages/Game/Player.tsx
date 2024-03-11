@@ -45,6 +45,7 @@ export const Player = () => {
 	const location = useLocation()
 
 	const gameContext = useContext(GameContext)
+	const [currentQuestion] = gameContext.currentQuestion
 	const [roomId] = gameContext.roomId
 	const showQuestion = gameContext.showQuestion
 	const [ hasSelected, setHasSelected ] = useState(false)
@@ -53,7 +54,7 @@ export const Player = () => {
 		if (showQuestion && hasSelected) {
 			setHasSelected(false)
 		}
-	}, [showQuestion])
+	}, [currentQuestion])
 
 
 	if (!roomId) {

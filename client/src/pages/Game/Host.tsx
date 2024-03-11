@@ -12,7 +12,7 @@ export const Host = () => {
 	const [roomId] = gameContext.roomId
 	const [currentQuestion] = gameContext.currentQuestion
 	const [scores] = gameContext.scores
-	const { sendHideQuestion, sendShowQuestion, sendNextQuestion, sendGetHighscores } = gameContext
+	const { sendNextQuestion, sendGetHighscores } = gameContext
 
 	const location = useLocation()
 
@@ -20,11 +20,21 @@ export const Host = () => {
 
 	useEffect(() => {
 		if (!currentQuestion) return
+		
 		const newTime = new Date()
 		newTime.setSeconds(newTime.getSeconds() + currentQuestion.max_time)
 
 		timerRef.current.restart(newTime)
 	}, [currentQuestion])
+
+	useEffect(() => {
+		console.log('timer effect')
+		if (scores && scores.length > 0) {
+			console.log('stop timer')
+			timerRef.current.pause()
+			return
+		}
+	}, [scores])
 
 	if (!roomId) {
 		location.route('/')
@@ -51,8 +61,6 @@ export const Host = () => {
 
 			<Timer timerRef={timerRef} time={currentQuestion?.max_time} onExpire={onTimerExpire} />
 
-			<Button color="red" onClick={sendHideQuestion}>Hide question</Button>
-			<Button color="green"  onClick={sendShowQuestion}>Show question</Button>
 			<Button color="green"  onClick={sendNextQuestion}>Next question</Button>
 		</>
 	)

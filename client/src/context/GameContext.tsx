@@ -40,6 +40,7 @@ export type IGameContext = {
 	sendNextQuestion: () => void,
 	sendGetHighscores: () => void,
 	
+	clearContext: () => void,
 }
 
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000'
@@ -65,6 +66,15 @@ export const GameContextProvider = ({
 	let   [ timeLeft, setTimeLeft ] = useState(0)
 	const [ timerInterval, setTimerInterval ] = useState(null)
 	const [ scores, setScores ] = useState([])
+
+	const clearContext = () => {
+		setScores([])
+		setRoomId('')
+		setShowQuestion(false)
+		setCurrentQuestion(null)
+		setTimeLeft(0)
+		setTimerInterval(null)
+	}
 
 	socket.on(SocketEvents.RoomCreated, (roomCode: string) => {
 		console.log('room_code', roomCode)
@@ -107,6 +117,7 @@ export const GameContextProvider = ({
 
 	socket.on(SocketEvents.RoomClosed, () => {
 		toast.error('Left game as room closed.')
+		clearContext()
 		location.route('/')
 	})
 
@@ -144,6 +155,7 @@ export const GameContextProvider = ({
 			sendGetHighscores: () => {
 				socket.emit(SocketEvents.GetScores, roomId)
 			},
+			clearContext,
 			showQuestion,
 		}}>
 			{children}
