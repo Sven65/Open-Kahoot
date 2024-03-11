@@ -44,7 +44,7 @@ export function Home() {
 			</Modal>
 			<div class="form-container">
 				<h1>Open Kahoot</h1>
-				<form class={'code-form'} action="#">
+				<form class={'code-form'} action="#" onSubmit={(e) => e.preventDefault()}>
 					<Input
 						name="code"
 						placeholder={'Game PIN'}

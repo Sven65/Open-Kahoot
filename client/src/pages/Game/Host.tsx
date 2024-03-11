@@ -6,7 +6,7 @@ import { createRef } from 'preact'
 import { toast } from 'react-toastify'
 import { Highscores } from '../../components/Highscores'
 import { useLocation } from 'preact-iso'
-import { GameState, Player } from '../../types'
+import { GameState } from '../../types'
 import { StartingScreen } from '../../components/Host/StartingScreen'
 
 
@@ -76,7 +76,7 @@ export const Host = () => {
 			<>
 				{(scores && scores.length > 0) && (
 					<>
-						<Button color="green"  onClick={sendNextQuestion}>Next question</Button>
+						<Button color="green"  onClick={sendNextQuestion}>Next</Button>
 						<Highscores scores={scores} />
 					</>
 				)}
@@ -91,24 +91,6 @@ export const Host = () => {
 			{gameState === GameState.STARTING && (
 				<>
 					<StartingScreen
-						// roomId={'123456'}
-						// names={[
-						// 	'Alice',
-						// 	'Bob',
-						// 	'Charlie',
-						// 	'David',
-						// 	'Eve',
-						// 	'Frank',
-						// 	'Grace',
-						// 	'Helen',
-						// 	'Isaac',
-						// 	'Jack',
-						// 	'Kate',
-						// 	'Liam',
-						// 	'Mia',
-						// 	'Noah',
-						// 	'Olivia',
-						// ]}
 						roomId={roomId}
 						names={playerNames}
 						onStartGame={sendStartGame}

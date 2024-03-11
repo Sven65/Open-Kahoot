@@ -211,7 +211,14 @@ async fn on_connect(socket: SocketRef) {
                     id: "q-2".to_string(),
                     question: "What is the second answer?".to_string(),
                     max_time: 30.0,
-                }
+                },
+                Question {
+                    answers: vec![],
+                    correct_answer_id: "".to_string(),
+                    question: "This should never be shown.".to_string(),
+                    id: "last-question".to_string(),
+                    max_time: 30.0,
+                },
             ]
         }).await;
 
@@ -266,12 +273,6 @@ async fn on_connect(socket: SocketRef) {
 
     });
 
-    socket.on(SocketEventType::HideQuestion, |socket: SocketRef, Data::<String>(room)| async move {
-        // TODO: Host check
-
-        let _ = socket.to(room).emit(SocketEventType::HideQuestion, "");
-    });
-
     socket.on(SocketEventType::NextQuestion, |socket: SocketRef, Data::<String>(room_id)| async move {
         // TODO: Host check
 
@@ -292,6 +293,9 @@ async fn on_connect(socket: SocketRef) {
             if room.state.is_game_over {
                 let _ = socket.emit(SocketEventType::ChangeState, "ENDED");
                 let _ = socket.to(room_id).emit(SocketEventType::ChangeState, "ENDED");
+
+                let scores = room.get_players_sorted_by_score();
+                let _ = socket.emit(SocketEventType::GetScores, (scores,));
             }
         } else {
             let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Room doesn't exist.".to_string(), error_type: SocketEventType::NextQuestion });

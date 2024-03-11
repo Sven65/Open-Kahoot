@@ -80,11 +80,20 @@ impl GameRoom {
         info!("Prepping next question");
 
         if let Some(next_question_id) = self.get_next_question_id() {
-            self.set_current_question_id(next_question_id);
+            self.set_current_question_id(next_question_id.clone());
+
+            if (next_question_id == "last-question") {
+                info!("Setting game over because next is last");
+                self.state.is_game_over = true;
+            }
         } else {
             info!("Setting game over");
             self.state.is_game_over = true;
         }
+    }
+
+    pub fn get_last_question(&self) -> &Question {
+        self.questions.last().unwrap()
     }
 
     pub fn get_player(&self, id: String) -> Option<&Player> {
