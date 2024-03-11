@@ -144,9 +144,15 @@ impl RoomStore {
         let rooms_guard = self.rooms.read().await;
         let cloned_rooms = rooms_guard.clone();
 
-        let found_room = cloned_rooms.values().find(|room| room.players.contains_key(&player_id));
 
-        found_room.cloned()
+        if let Some(found_room) = cloned_rooms.values().find(|room| room.players.contains_key(&player_id)) {
+            return Some(found_room.clone());
+        } else {
+            let room = cloned_rooms.values().find(|room| room.host == player_id);
+
+            return room.cloned();
+        }
+
     }
 
     // pub async fn add_player_to_room (&self, room_id: &String, player: &String) {

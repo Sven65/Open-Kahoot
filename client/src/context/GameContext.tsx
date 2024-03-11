@@ -105,6 +105,11 @@ export const GameContextProvider = ({
 		console.log('Got scores', scores)
 	})
 
+	socket.on(SocketEvents.RoomClosed, () => {
+		toast.error('Left game as room closed.')
+		location.route('/')
+	})
+
 	console.log('qcurrent q in game ctx', currentQuestion)
 
 	return (

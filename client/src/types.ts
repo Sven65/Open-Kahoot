@@ -11,6 +11,8 @@ export enum SocketEvents {
     SendQuestion = 'SendQuestion',
     NextQuestion = 'NextQuestion',
 	GetScores = 'GetScores',
+	RoomClosed = 'RoomClosed',
+	PlayerLeft = 'PlayerLeft',
 }
 
 export type Player = {
