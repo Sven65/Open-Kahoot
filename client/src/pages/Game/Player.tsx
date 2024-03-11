@@ -6,7 +6,7 @@ import './Player.scss'
 const GamePlayer = () => {
 	const gameContext = useContext(GameContext)
 	const sendAnswer = gameContext.sendAnswer
-	const question = gameContext.currentQuestion
+	const [question] = gameContext.currentQuestion
 
 
 	return (

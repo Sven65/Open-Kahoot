@@ -1,6 +1,10 @@
 use std::{collections::{HashMap, VecDeque}, sync::Arc};
+use chrono::Local;
 use tokio::sync::{RwLock};
 use tracing::info;
+use std::time::{Duration, Instant};
+
+use crate::player::Player;
 
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -22,6 +26,8 @@ pub struct GameState {
     pub show_question: bool,
     pub current_question_id: String,
     pub is_game_over: bool,
+    #[serde(with = "serde_millis")]
+    pub question_started: Option<Instant>,
 }
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -29,7 +35,7 @@ pub struct GameRoom {
     pub id: String,
     pub host: String,
     pub state: GameState,
-    pub players: Vec<String>,
+    pub players: HashMap<String, Player>,
     pub questions: Vec<Question>,
 }
 
@@ -77,6 +83,14 @@ impl GameRoom {
             info!("Setting game over");
             self.state.is_game_over = true;
         }
+    }
+
+    pub fn get_player(&self, id: String) -> Option<&Player> {
+        self.players.get(&id)
+    }
+
+    pub fn insert_player(&self, player: Player) {
+        self.players.insert(player.id, player);
     }
 }
 

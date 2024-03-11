@@ -2,26 +2,26 @@ mod state;
 mod util;
 mod socket_type;
 mod game_room;
+mod player;
+
+use std::{collections::HashMap, time::Instant};
 
 use axum::routing::get;
-use game_room::{Answer, GameRoomStore, Question, RoomStore};
+use game_room::{Answer, Question, RoomStore};
 use socketioxide::{
-    extract::{Data, SocketRef, State},
+    extract::{Data, SocketRef},
     SocketIo,
 };
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
-use util::generate_random_number_string;
-
-use cat_loggr::log;
 
 
 #[macro_use]
 extern crate lazy_static;
 
-use crate::{game_room::{GameRoom, GameState}, socket_type::{SocketErrorMessage, SocketEventType}};
+use crate::{game_room::{GameRoom, GameState}, player::calculate_points, socket_type::{SocketErrorMessage, SocketEventType}};
 
 #[derive(Debug, serde::Deserialize)]
 struct SentInAnswer {
@@ -83,11 +83,12 @@ async fn on_connect(socket: SocketRef) {
         GAMEROOM_STORE.insert(GameRoom {
             id: room_code.clone(),
             host: socket.id.to_string(),
-            players: vec![],
+            players: HashMap::new(),
             state: GameState {
                 show_question: false,
                 current_question_id: "q-1".to_string(),
                 is_game_over: false,
+                question_started: None,
             },
             questions: vec![
                 Question {
@@ -146,16 +147,32 @@ async fn on_connect(socket: SocketRef) {
     socket.on(SocketEventType::SendAnswer, |socket: SocketRef, Data::<SentInAnswer>(data)| async move {
         // TODO: Check if player is in a room
         let answer = data.answer;
-        let room = data.room_id;
+        let room_id = data.room_id;
 
-        info!("Got answer {} for room id {}", answer, room);
+        info!("Got answer {} for room id {}", answer, room_id);
 
-        let _ = socket.emit(SocketEventType::SendPoints, 100);
-    });
+        let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
+        
+        if let Some(room) = room {
 
-    socket.on(SocketEventType::ShowQuestion, |socket: SocketRef, Data::<String>(room)| async move {
-        // TODO: Host check
-        let _ = socket.to(room).emit(SocketEventType::ShowQuestion, "");
+            if answer == room.get_current_question().unwrap().correct_answer_id {
+                let duration = room.state.question_started.unwrap().elapsed();
+                let points = calculate_points(duration.as_secs_f64(), 30.0, 1000.0);
+                
+                if let Some(player) = room.get_player(socket.id.to_string()) {
+                    player.add_points(points);
+
+                    room.insert_player(player.clone());
+
+                    GAMEROOM_STORE.insert(room);
+                }     
+                
+                let _ = socket.emit(SocketEventType::SendPoints, points);
+            } else {
+                let _ = socket.emit(SocketEventType::SendPoints, 0);
+            }
+        }
+
     });
 
     socket.on(SocketEventType::HideQuestion, |socket: SocketRef, Data::<String>(room)| async move {
@@ -177,6 +194,9 @@ async fn on_connect(socket: SocketRef) {
                 let _ = socket.to(room_id.clone()).emit(SocketEventType::SendQuestion, question);
             
                 room.prepare_next_question();
+
+                let _ = socket.to(room_id.clone()).emit(SocketEventType::ShowQuestion, "");
+                room.state.question_started = Some(Instant::now());
 
                 GAMEROOM_STORE.insert(room.clone()).await;
 
