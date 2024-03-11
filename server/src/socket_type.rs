@@ -17,6 +17,8 @@ pub enum SocketEventType {
     NextQuestion,
     GameOver,
     GetScores,
+    RoomClosed,
+    PlayerLeft,
 }
 
 impl From<SocketEventType> for Cow<'static, str> {
@@ -36,6 +38,8 @@ impl From<SocketEventType> for Cow<'static, str> {
             SocketEventType::NextQuestion => Cow::Borrowed("NextQuestion"),
             SocketEventType::GameOver => Cow::Borrowed("GameOver"),
             SocketEventType::GetScores => Cow::Borrowed("GetScores"),
+            SocketEventType::RoomClosed => Cow::Borrowed("RoomClosed"),
+            SocketEventType::PlayerLeft => Cow::Borrowed("PlayerLeft"),
         }
     }
 }
@@ -57,6 +61,8 @@ impl SocketEventType {
             SocketEventType::NextQuestion => Cow::Borrowed("NextQuestion"),
             SocketEventType::GameOver => Cow::Borrowed("GameOver"),
             SocketEventType::GetScores => Cow::Borrowed("GetScores"),
+            SocketEventType::RoomClosed => Cow::Borrowed("RoomClosed"),
+            SocketEventType::PlayerLeft => Cow::Borrowed("PlayerLeft"),
         }
     }
 }

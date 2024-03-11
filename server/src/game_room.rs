@@ -98,6 +98,10 @@ impl GameRoom {
         self.players.insert(player.clone().id, player);
     }
 
+    pub fn remove_player(&mut self, player_id: String) {
+        self.players.remove(&player_id);
+    }
+
     pub fn get_players_sorted_by_score(&self) -> Vec<Player> {
         let cloned_players = &mut self.players.clone();
         let mut players_vec: Vec<Player> = cloned_players.drain().map(|(_, player)| player).collect();
@@ -136,6 +140,15 @@ impl RoomStore {
         rooms_guard.get(room).cloned()
     }
 
+    pub async fn get_player_rooms_cloned(&self, player_id: String) -> Option<GameRoom> {
+        let rooms_guard = self.rooms.read().await;
+        let cloned_rooms = rooms_guard.clone();
+
+        let found_room = cloned_rooms.values().find(|room| room.players.contains_key(&player_id));
+
+        found_room.cloned()
+    }
+
     // pub async fn add_player_to_room (&self, room_id: &String, player: &String) {
     //     let mut binding = self.rooms.write().await;
     //     let rooms = binding.entry(room_id.clone()).or_default();
@@ -146,5 +159,10 @@ impl RoomStore {
     pub async fn insert(&self, room: GameRoom) {
         let mut rooms = self.rooms.write().await;
         rooms.insert(room.id.clone(), room);
+    }
+
+    pub async fn remove(&self, room: GameRoom) {
+        let mut rooms = self.rooms.write().await;
+        rooms.remove(&room.id);
     }
 }

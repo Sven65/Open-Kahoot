@@ -16,6 +16,11 @@ export function Home() {
 	console.log(gameContext)
 
 
+	const sendJoin = () => {
+		console.log('Joining game', gamePin, 'with name', playerName)
+		gameContext.join(gamePin, playerName)
+	}
+
 	return (
 		<div class="home">
 			<Modal show={showModal} onClose={() => setShowModal(false)}>
@@ -24,9 +29,7 @@ export function Home() {
 					<Input name="player-name" placeholder={'Player Name'} value={playerName} onChange={(evt) => setPlayerName(evt.target.value)} />
 					<Button
 						color="green"
-						onClick={() => {
-							gameContext.join(gamePin, playerName)
-						}}
+						onClick={sendJoin}
 						type={'button'}
 					>
 						Enter

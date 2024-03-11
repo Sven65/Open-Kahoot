@@ -31,7 +31,7 @@ export type IGameContext = {
 	timerInterval: [any, StateUpdater<any>],
 	scores: [Player[], StateUpdater<Player[]>],
 	// eslint-disable-next-line no-unused-vars
-	join: (room: string, name: string) => void,
+	join: (room_id: string, name: string) => void,
 	createRoom: () => void,
 	// eslint-disable-next-line no-unused-vars
 	sendAnswer: (_answer: string) => void,
@@ -110,8 +110,9 @@ export const GameContextProvider = ({
 	return (
 		<GameContext.Provider value={{
 			join: (room_id: string, name: string) => {
+				console.log('Senfing the join', room_id, name)
 				socket.emit(SocketEvents.Join, {
-					room: room_id,
+					room_id,
 					name,
 				})
 			},
