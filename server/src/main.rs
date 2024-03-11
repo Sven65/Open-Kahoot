@@ -144,6 +144,7 @@ async fn on_connect(socket: SocketRef) {
                 current_question_id: "starter-question".to_string(),
                 is_game_over: false,
                 question_started: None,
+                answer_count: 0,
             },
             questions: vec![
                 Question {
@@ -227,6 +228,8 @@ async fn on_connect(socket: SocketRef) {
                     let duration = question_started.elapsed(); // Use the cloned field
                     let points = calculate_points(duration.as_secs_f64(), question_clone.max_time, 1000.0);
                     player.add_points(points);
+
+                    room.add_answer_count(1);
     
                     // Insert the modified room back into the store
                     GAMEROOM_STORE.insert(room.clone()).await;
@@ -235,6 +238,14 @@ async fn on_connect(socket: SocketRef) {
                         points: points,
                         time_taken: duration.as_secs_f64(),
                     });
+
+                    if (room.has_all_players_answered()) {
+                        room.set_answer_count(0);
+                        GAMEROOM_STORE.insert(room.clone()).await;
+
+                        let scores = room.get_players_sorted_by_score();
+                        let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores,));
+                    }
                 } else {
                     let _ = socket.emit(SocketEventType::SendPoints, 0);
                 }
