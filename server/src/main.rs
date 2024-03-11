@@ -34,8 +34,15 @@ struct PointsOutMessage {
     pub time_taken: f64,
 }
 
+#[derive(Debug, serde::Serialize)]
+struct QuestionOut {
+    pub question: Question,
+    pub max_time: f64,
+}
+
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
+    static ref QUESTION_TIME: f64 = 30.0;
 }
 
 async fn on_connect(socket: SocketRef) {
@@ -110,6 +117,7 @@ async fn on_connect(socket: SocketRef) {
                     correct_answer_id: "".to_string(),
                     question: "This should never be shown".to_string(),
                     id: "starter-question".to_string(),
+                    max_time: 30.0,
                 },
                 Question {
                     answers: vec![
@@ -132,7 +140,8 @@ async fn on_connect(socket: SocketRef) {
                     ],
                     correct_answer_id: "1".to_string(),
                     id: "q-1".to_string(),
-                    question: "What is the answer?".to_string()
+                    question: "What is the answer?".to_string(),
+                    max_time: 30.0,
                 },
                 Question {
                     answers: vec![
@@ -155,7 +164,8 @@ async fn on_connect(socket: SocketRef) {
                     ],
                     correct_answer_id: "5".to_string(),
                     id: "q-2".to_string(),
-                    question: "What is the second answer?".to_string()
+                    question: "What is the second answer?".to_string(),
+                    max_time: 30.0,
                 }
             ]
         }).await;
@@ -177,10 +187,11 @@ async fn on_connect(socket: SocketRef) {
             let question = room.get_current_question().unwrap();
             info!("Question is {:#?}", question);
             if answer == question.correct_answer_id {
+                let question_clone = question.clone();
                 if let Some(player) = room.get_player_mut(socket.id.to_string()) {
                     info!("Player {:#?}", player);
                     let duration = question_started.elapsed(); // Use the cloned field
-                    let points = calculate_points(duration.as_secs_f64(), 30.0, 1000.0);
+                    let points = calculate_points(duration.as_secs_f64(), question_clone.max_time, 1000.0);
                     player.add_points(points);
     
                     // Insert the modified room back into the store
@@ -212,32 +223,23 @@ async fn on_connect(socket: SocketRef) {
         let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
 
         if let Some(mut room) = room {
-            let room_clone = room.clone();
-            let question = room_clone.get_current_question();
+            room.prepare_next_question();
 
-            if let Some(question) = question {
-                let _ = socket.emit(SocketEventType::SendQuestion, question.clone());
-                
-                room.prepare_next_question();
+            let question = room.get_current_question();
 
-                let question = room.get_current_question();
+            info!("new question is {:#?}", question);
 
-                
-                let _ = socket.to(room_id.clone()).emit(SocketEventType::SendQuestion, question);
-            
+            let _ = socket.emit(SocketEventType::SendQuestion, question.clone());
+            let _ = socket.to(room_id.clone()).emit(SocketEventType::SendQuestion, question);
+            let _ = socket.to(room_id.clone()).emit(SocketEventType::ShowQuestion, "");
+            room.state.question_started = Some(Instant::now());
 
-                let _ = socket.to(room_id.clone()).emit(SocketEventType::ShowQuestion, "");
-                room.state.question_started = Some(Instant::now());
+            GAMEROOM_STORE.insert(room.clone()).await;
 
-                GAMEROOM_STORE.insert(room.clone()).await;
-
-                if room.state.is_game_over {
-                    let _ = socket.emit(SocketEventType::GameOver, "");
-                    let _ = socket.to(room_id).emit(SocketEventType::GameOver, "");
-                }
-            } else {
-                let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Room doesn't have a current question.".to_string(), error_type: SocketEventType::NextQuestion });
-            }           
+            if room.state.is_game_over {
+                let _ = socket.emit(SocketEventType::GameOver, "");
+                let _ = socket.to(room_id).emit(SocketEventType::GameOver, "");
+            }
         } else {
             let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Room doesn't exist.".to_string(), error_type: SocketEventType::NextQuestion });
         }

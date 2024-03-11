@@ -18,6 +18,7 @@ pub struct Question {
     pub question: String,
     pub answers: Vec<Answer>,
     pub correct_answer_id: String,
+    pub max_time: f64,
 }
 
 #[derive(serde::Serialize, Clone, Debug)]

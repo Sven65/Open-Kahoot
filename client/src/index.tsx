@@ -7,11 +7,15 @@ import './style.css'
 import { Host } from './pages/Game/Host.js'
 import { GameContextProvider } from './context/GameContext.js'
 import { Player } from './pages/Game/Player.js'
+import { ToastContainer } from 'react-toastify'
+
+import 'react-toastify/dist/ReactToastify.css'
 
 export function App() {
 	return (
 		<LocationProvider>
 			<GameContextProvider>
+				<ToastContainer />
 				<Router>
 					<Route path="/" component={Home} />
 					<Route path="/host" component={Host} />
