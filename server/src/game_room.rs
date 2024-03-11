@@ -1,8 +1,7 @@
-use std::{collections::{HashMap, VecDeque}, sync::Arc};
-use chrono::Local;
-use tokio::sync::{RwLock};
+use std::collections::HashMap;
+use tokio::sync::RwLock;
 use tracing::info;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use crate::player::Player;
 
@@ -86,11 +85,16 @@ impl GameRoom {
     }
 
     pub fn get_player(&self, id: String) -> Option<&Player> {
-        self.players.get(&id)
+       self.players.get(&id)
     }
 
-    pub fn insert_player(&self, player: Player) {
-        self.players.insert(player.id, player);
+    pub fn get_player_mut(&mut self, id: String) -> Option<&mut Player> {
+        self.players.get_mut(&id)
+
+    }
+
+    pub fn insert_player(&mut self, player: Player) {
+        self.players.insert(player.clone().id, player);
     }
 }
 

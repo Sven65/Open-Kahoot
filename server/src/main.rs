@@ -1,4 +1,3 @@
-mod state;
 mod util;
 mod socket_type;
 mod game_room;
@@ -21,7 +20,7 @@ use tracing_subscriber::FmtSubscriber;
 #[macro_use]
 extern crate lazy_static;
 
-use crate::{game_room::{GameRoom, GameState}, player::calculate_points, socket_type::{SocketErrorMessage, SocketEventType}};
+use crate::{game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
 
 #[derive(Debug, serde::Deserialize)]
 struct SentInAnswer {
@@ -39,14 +38,15 @@ async fn on_connect(socket: SocketRef) {
 
     socket.on(
         SocketEventType::Join,
-        |socket: SocketRef, Data::<String>(room)| async move {
-            info!("Received join {:?}", room);
+        |socket: SocketRef, Data::<String>(room_id)| async move {
+            info!("Received join {:?}", room_id);
 
-            info!("Trying to to join room {:#?}. Available: {:#?}", room, socket.rooms());
+            info!("Trying to to join room {:#?}. Available: {:#?}", room_id, socket.rooms());
             
+            let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
 
-            if (!GAMEROOM_STORE.has_room(&room).await) {
-                info!("Failed to join room {:#?} as it does not exist. {:#?}", room, socket.rooms());
+            if room.is_none() {
+                info!("Failed to join room {:#?} as it does not exist. {:#?}", room_id, socket.rooms());
                 let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {
                     error_type: SocketEventType::JoinFailed,
                     error: "Failed to join as room doesn't exist.".to_string(),
@@ -54,12 +54,21 @@ async fn on_connect(socket: SocketRef) {
                 return;
             }
 
-            let _ = socket.leave_all();
-            let _ = socket.join(room.clone());
+            let room = &mut room.unwrap();
 
-            println!("Room clients {:#?}", socket.within(room.clone()));
+            room.insert_player(Player {
+                id: socket.id.to_string(),
+                points: 0.0,
+            });
+
+            GAMEROOM_STORE.insert(room.clone()).await;
+
+            let _ = socket.leave_all();
+            let _ = socket.join(room_id.clone());
+
+            println!("Room clients {:#?}", socket.within(room_id.clone()));
             
-            let _ = socket.emit(SocketEventType::RoomJoined, room);
+            let _ = socket.emit(SocketEventType::RoomJoined, room_id);
         },
     );
 
@@ -118,22 +127,22 @@ async fn on_connect(socket: SocketRef) {
                     answers: vec![
                         Answer {
                             answer: "One".to_string(),
-                            id: "1".to_string()
+                            id: "5".to_string()
                         },
                         Answer {
                             answer: "Two".to_string(),
-                            id: "2".to_string()
+                            id: "6".to_string()
                         },
                         Answer {
                             answer: "Three".to_string(),
-                            id: "3".to_string()
+                            id: "7".to_string()
                         },
                         Answer {
                             answer: "Four".to_string(),
-                            id: "4".to_string()
+                            id: "8".to_string()
                         },
                     ],
-                    correct_answer_id: "1".to_string(),
+                    correct_answer_id: "5".to_string(),
                     id: "q-2".to_string(),
                     question: "What is the second answer?".to_string()
                 }
@@ -151,25 +160,51 @@ async fn on_connect(socket: SocketRef) {
 
         info!("Got answer {} for room id {}", answer, room_id);
 
-        let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
+        // let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
         
-        if let Some(room) = room {
+        // if let Some(mut room) = room {
 
-            if answer == room.get_current_question().unwrap().correct_answer_id {
-                let duration = room.state.question_started.unwrap().elapsed();
-                let points = calculate_points(duration.as_secs_f64(), 30.0, 1000.0);
+        //     if answer == room.clone().get_current_question().unwrap().correct_answer_id {
+        //         let duration = room.state.question_started.unwrap().elapsed();
+        //         let points = calculate_points(duration.as_secs_f64(), 30.0, 1000.0);
+
+        //         if let Some(player) = room.get_player_mut(socket.id.to_string()) {
+        //             player.add_points(points);
+
+        //             let mut room_clone = &mut room.clone();
+
+        //             room_clone.insert_player(player.clone());
+
+        //             GAMEROOM_STORE.insert(room_clone.clone());
+        //         }     
                 
-                if let Some(player) = room.get_player(socket.id.to_string()) {
+        //         let _ = socket.emit(SocketEventType::SendPoints, points);
+        //     } else {
+        //         let _ = socket.emit(SocketEventType::SendPoints, 0);
+        //     }
+        // }
+
+        if let Some(mut room) = GAMEROOM_STORE.get_room_clone(&room_id).await {
+            let question_started = room.state.question_started.unwrap(); // Clone the field
+            info!("question started at {:#?}", question_started);
+            let question = room.get_current_question().unwrap();
+            info!("Question is {:#?}", question);
+            if answer == question.correct_answer_id {
+                if let Some(player) = room.get_player_mut(socket.id.to_string()) {
+                    info!("Player {:#?}", player);
+                    let duration = question_started.elapsed(); // Use the cloned field
+                    let points = calculate_points(duration.as_secs_f64(), 30.0, 1000.0);
                     player.add_points(points);
-
-                    room.insert_player(player.clone());
-
-                    GAMEROOM_STORE.insert(room);
-                }     
-                
-                let _ = socket.emit(SocketEventType::SendPoints, points);
+    
+                    // Insert the modified room back into the store
+                    GAMEROOM_STORE.insert(room.clone()).await;
+    
+                    let _ = socket.emit(SocketEventType::SendPoints, points);
+                } else {
+                    let _ = socket.emit(SocketEventType::SendPoints, 0);
+                }
             } else {
-                let _ = socket.emit(SocketEventType::SendPoints, 0);
+                info!("Sent in answer doesn't match");
             }
         }
 

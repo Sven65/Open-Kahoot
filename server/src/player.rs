@@ -17,7 +17,7 @@ pub struct Player {
 }
 
 impl Player {
-	pub fn add_points(&self, points: f64) {
+	pub fn add_points(&mut self, points: f64) {
 		self.points += points;
 	}
 }
