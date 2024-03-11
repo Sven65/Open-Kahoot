@@ -28,6 +28,11 @@ struct SentInAnswer {
     answer: String
 }
 
+#[derive(Debug, serde::Serialize)]
+struct PointsOutMessage {
+    pub points: f64,
+    pub time_taken: f64,
+}
 
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
@@ -95,11 +100,17 @@ async fn on_connect(socket: SocketRef) {
             players: HashMap::new(),
             state: GameState {
                 show_question: false,
-                current_question_id: "q-1".to_string(),
+                current_question_id: "starter-question".to_string(),
                 is_game_over: false,
                 question_started: None,
             },
             questions: vec![
+                Question {
+                    answers: vec![],
+                    correct_answer_id: "".to_string(),
+                    question: "This should never be shown".to_string(),
+                    id: "starter-question".to_string(),
+                },
                 Question {
                     answers: vec![
                         Answer {
@@ -126,19 +137,19 @@ async fn on_connect(socket: SocketRef) {
                 Question {
                     answers: vec![
                         Answer {
-                            answer: "One".to_string(),
+                            answer: "Five".to_string(),
                             id: "5".to_string()
                         },
                         Answer {
-                            answer: "Two".to_string(),
+                            answer: "Six".to_string(),
                             id: "6".to_string()
                         },
                         Answer {
-                            answer: "Three".to_string(),
+                            answer: "Seven".to_string(),
                             id: "7".to_string()
                         },
                         Answer {
-                            answer: "Four".to_string(),
+                            answer: "Eight".to_string(),
                             id: "8".to_string()
                         },
                     ],
@@ -160,30 +171,6 @@ async fn on_connect(socket: SocketRef) {
 
         info!("Got answer {} for room id {}", answer, room_id);
 
-        // let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
-        
-        // if let Some(mut room) = room {
-
-        //     if answer == room.clone().get_current_question().unwrap().correct_answer_id {
-        //         let duration = room.state.question_started.unwrap().elapsed();
-        //         let points = calculate_points(duration.as_secs_f64(), 30.0, 1000.0);
-
-        //         if let Some(player) = room.get_player_mut(socket.id.to_string()) {
-        //             player.add_points(points);
-
-        //             let mut room_clone = &mut room.clone();
-
-        //             room_clone.insert_player(player.clone());
-
-        //             GAMEROOM_STORE.insert(room_clone.clone());
-        //         }     
-                
-        //         let _ = socket.emit(SocketEventType::SendPoints, points);
-        //     } else {
-        //         let _ = socket.emit(SocketEventType::SendPoints, 0);
-        //     }
-        // }
-
         if let Some(mut room) = GAMEROOM_STORE.get_room_clone(&room_id).await {
             let question_started = room.state.question_started.unwrap(); // Clone the field
             info!("question started at {:#?}", question_started);
@@ -199,7 +186,10 @@ async fn on_connect(socket: SocketRef) {
                     // Insert the modified room back into the store
                     GAMEROOM_STORE.insert(room.clone()).await;
     
-                    let _ = socket.emit(SocketEventType::SendPoints, points);
+                    let _ = socket.emit(SocketEventType::SendPoints, PointsOutMessage {
+                        points: points,
+                        time_taken: duration.as_secs_f64(),
+                    });
                 } else {
                     let _ = socket.emit(SocketEventType::SendPoints, 0);
                 }
@@ -222,13 +212,19 @@ async fn on_connect(socket: SocketRef) {
         let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
 
         if let Some(mut room) = room {
-            let question = room.get_current_question();
+            let room_clone = room.clone();
+            let question = room_clone.get_current_question();
 
             if let Some(question) = question {
                 let _ = socket.emit(SocketEventType::SendQuestion, question.clone());
+                
+                room.prepare_next_question();
+
+                let question = room.get_current_question();
+
+                
                 let _ = socket.to(room_id.clone()).emit(SocketEventType::SendQuestion, question);
             
-                room.prepare_next_question();
 
                 let _ = socket.to(room_id.clone()).emit(SocketEventType::ShowQuestion, "");
                 room.state.question_started = Some(Instant::now());
