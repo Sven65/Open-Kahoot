@@ -10,4 +10,11 @@ export enum SocketEvents {
 	HideQuestion = 'HideQuestion',
     SendQuestion = 'SendQuestion',
     NextQuestion = 'NextQuestion',
+	GetScores = 'GetScores',
+}
+
+export type Player = {
+	id: string,
+	points: number,
+	name: string
 }

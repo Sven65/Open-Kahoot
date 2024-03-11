@@ -1,0 +1,49 @@
+.modal {
+	position: absolute;
+
+	&.hide {
+		display: none;
+	}
+
+	z-index: 1;
+	background-color: rgba(#39393A, 0.4);
+
+	width: 100vw;
+	height: 100vh;
+
+	h1 {
+		color: #39393A;
+	}
+
+	.modal-header {
+		float: right;
+		color: #39393A;
+
+		&:hover {
+			cursor: pointer;
+		}
+
+		user-select: none;
+	}
+
+	.modal-content {
+		padding: 16px;
+		
+		top: 50%;
+		left: 50%;
+		right: auto;
+		bottom: auto;
+
+		transform: translate(-50%, -50%);
+				
+		z-index: 2;
+		position: absolute;
+
+		
+
+		background-color: #fff;
+
+		border: 2px solid #39393A;
+		border-radius: 8px;
+	}
+}

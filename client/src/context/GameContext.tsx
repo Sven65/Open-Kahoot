@@ -1,7 +1,7 @@
 import { createContext } from 'preact'
 import { StateUpdater, useState } from 'preact/hooks'
 import { io } from 'socket.io-client'
-import { SocketEvents } from '../types'
+import { Player, SocketEvents } from '../types'
 import { LocationHook, useLocation } from 'preact-iso'
 import { toast } from 'react-toastify'
 
@@ -24,24 +24,31 @@ type SocketErrorMessage = {
 }
 
 export type IGameContext = {
-	join: (room: string) => void,
 	roomId: [string, StateUpdater<string>],
 	currentQuestion: [Question, StateUpdater<Question>],
-	createRoom: () => void,
-	locationHook: LocationHook,
-	sendAnswer: (answer: string) => void,
-	sendShowQuestion: () => void,
-	sendHideQuestion: () => void,
-	sendNextQuestion: () => void,
 	showQuestion: boolean,
 	timeLeft: [number, StateUpdater<number>],
 	timerInterval: [any, StateUpdater<any>],
+	scores: [Player[], StateUpdater<Player[]>],
+	// eslint-disable-next-line no-unused-vars
+	join: (room: string, name: string) => void,
+	createRoom: () => void,
+	// eslint-disable-next-line no-unused-vars
+	sendAnswer: (_answer: string) => void,
+	sendShowQuestion: () => void,
+	sendHideQuestion: () => void,
+	sendNextQuestion: () => void,
+	sendGetHighscores: () => void,
+	
 }
 
 const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000'
 
 
 export const socket = io(URL)
+
+// @ts-ignore  
+window.socket = socket
 
 
 export const GameContext = createContext<IGameContext>(null)
@@ -52,12 +59,12 @@ export const GameContextProvider = ({
 }) => {
 	const location = useLocation()
 
-
 	const [ roomId, setRoomId ] = useState('')
 	const [ showQuestion, setShowQuestion ] = useState(false)
 	const [ currentQuestion, setCurrentQuestion ] = useState<Question | null>(null)
 	let   [ timeLeft, setTimeLeft ] = useState(0)
 	const [ timerInterval, setTimerInterval ] = useState(null)
+	const [ scores, setScores ] = useState([])
 
 	socket.on(SocketEvents.RoomCreated, (roomCode: string) => {
 		console.log('room_code', roomCode)
@@ -93,18 +100,26 @@ export const GameContextProvider = ({
 		setCurrentQuestion(question)
 	})
 
+	socket.on(SocketEvents.GetScores, (scores: Player[]) => {
+		setScores(scores)
+		console.log('Got scores', scores)
+	})
+
 	console.log('qcurrent q in game ctx', currentQuestion)
 
 	return (
 		<GameContext.Provider value={{
-			join: (room: string) => {
-				console.log('joining room', room)
-				socket.emit(SocketEvents.Join, room)
+			join: (room_id: string, name: string) => {
+				socket.emit(SocketEvents.Join, {
+					room: room_id,
+					name,
+				})
 			},
 			roomId: [ roomId, setRoomId ],
 			currentQuestion: [ currentQuestion, setCurrentQuestion ],
 			timeLeft: [ timeLeft, setTimeLeft ],
 			timerInterval: [ timerInterval, setTimerInterval ],
+			scores: [ scores, setScores ],
 			createRoom: () => {
 				socket.emit(SocketEvents.CreateRoom)
 			},
@@ -119,6 +134,9 @@ export const GameContextProvider = ({
 			},
 			sendNextQuestion: () => {
 				socket.emit(SocketEvents.NextQuestion, roomId)
+			},
+			sendGetHighscores: () => {
+				socket.emit(SocketEvents.GetScores, roomId)
 			},
 			showQuestion,
 		}}>

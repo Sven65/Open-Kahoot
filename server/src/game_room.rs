@@ -97,6 +97,17 @@ impl GameRoom {
     pub fn insert_player(&mut self, player: Player) {
         self.players.insert(player.clone().id, player);
     }
+
+    pub fn get_players_sorted_by_score(&self) -> Vec<Player> {
+        let cloned_players = &mut self.players.clone();
+        let mut players_vec: Vec<Player> = cloned_players.drain().map(|(_, player)| player).collect();
+        
+        players_vec.sort_by(|a, b| {
+           b.points.total_cmp(&a.points)
+        });
+
+        players_vec
+    }
 }
 
 #[derive(Default)]

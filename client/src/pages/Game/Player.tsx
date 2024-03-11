@@ -2,6 +2,7 @@ import { useContext } from 'preact/hooks'
 import { GameContext } from '../../context/GameContext'
 
 import './Player.scss'
+import { useLocation } from 'preact-iso'
 
 const GamePlayer = () => {
 	const gameContext = useContext(GameContext)
@@ -30,9 +31,16 @@ const PlayerWaiter = () => (
 )
 
 export const Player = () => {
+	const location = useLocation()
+
 	const gameContext = useContext(GameContext)
 	const [roomId] = gameContext.roomId
 	const showQuestion = gameContext.showQuestion
+
+	if (!roomId) {
+		location.route('/')
+		return <h1>Please wait...</h1>
+	}
 
 	return (
 		<>

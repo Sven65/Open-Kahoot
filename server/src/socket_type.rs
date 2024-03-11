@@ -16,6 +16,7 @@ pub enum SocketEventType {
     SendQuestion,
     NextQuestion,
     GameOver,
+    GetScores,
 }
 
 impl From<SocketEventType> for Cow<'static, str> {
@@ -34,6 +35,7 @@ impl From<SocketEventType> for Cow<'static, str> {
             SocketEventType::SendQuestion => Cow::Borrowed("SendQuestion"),
             SocketEventType::NextQuestion => Cow::Borrowed("NextQuestion"),
             SocketEventType::GameOver => Cow::Borrowed("GameOver"),
+            SocketEventType::GetScores => Cow::Borrowed("GetScores"),
         }
     }
 }
@@ -54,6 +56,7 @@ impl SocketEventType {
             SocketEventType::SendQuestion => Cow::Borrowed("SendQuestion"),
             SocketEventType::NextQuestion => Cow::Borrowed("NextQuestion"),
             SocketEventType::GameOver => Cow::Borrowed("GameOver"),
+            SocketEventType::GetScores => Cow::Borrowed("GetScores"),
         }
     }
 }

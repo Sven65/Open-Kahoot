@@ -14,6 +14,7 @@ pub fn calculate_points(time_taken: f64, max_time: f64, max_points: f64) -> f64 
 pub struct Player {
 	pub id: String,
 	pub points: f64,
+	pub name: Option<String>,
 }
 
 impl Player {

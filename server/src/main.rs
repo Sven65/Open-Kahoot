@@ -40,6 +40,12 @@ struct QuestionOut {
     pub max_time: f64,
 }
 
+#[derive(Debug, serde::Deserialize)]
+struct JoinMessage {
+    pub room_id: String,
+    pub name: String,
+}
+
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
     static ref QUESTION_TIME: f64 = 30.0;
@@ -50,15 +56,15 @@ async fn on_connect(socket: SocketRef) {
 
     socket.on(
         SocketEventType::Join,
-        |socket: SocketRef, Data::<String>(room_id)| async move {
-            info!("Received join {:?}", room_id);
+        |socket: SocketRef, Data::<JoinMessage>(data)| async move {
+            info!("Received join {:?}", data.room_id);
 
-            info!("Trying to to join room {:#?}. Available: {:#?}", room_id, socket.rooms());
+            info!("Trying to to join room {:#?}. Available: {:#?}", data.room_id, socket.rooms());
             
-            let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
+            let room = GAMEROOM_STORE.get_room_clone(&data.room_id).await;
 
             if room.is_none() {
-                info!("Failed to join room {:#?} as it does not exist. {:#?}", room_id, socket.rooms());
+                info!("Failed to join room {:#?} as it does not exist. {:#?}", data.room_id, socket.rooms());
                 let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {
                     error_type: SocketEventType::JoinFailed,
                     error: "Failed to join as room doesn't exist.".to_string(),
@@ -71,16 +77,17 @@ async fn on_connect(socket: SocketRef) {
             room.insert_player(Player {
                 id: socket.id.to_string(),
                 points: 0.0,
+                name: Some(data.name),
             });
 
             GAMEROOM_STORE.insert(room.clone()).await;
 
             let _ = socket.leave_all();
-            let _ = socket.join(room_id.clone());
+            let _ = socket.join(data.room_id.clone());
 
-            println!("Room clients {:#?}", socket.within(room_id.clone()));
+            println!("Room clients {:#?}", socket.within(data.room_id.clone()));
             
-            let _ = socket.emit(SocketEventType::RoomJoined, room_id);
+            let _ = socket.emit(SocketEventType::RoomJoined, data.room_id);
         },
     );
 
@@ -227,8 +234,6 @@ async fn on_connect(socket: SocketRef) {
 
             let question = room.get_current_question();
 
-            info!("new question is {:#?}", question);
-
             let _ = socket.emit(SocketEventType::SendQuestion, question.clone());
             let _ = socket.to(room_id.clone()).emit(SocketEventType::SendQuestion, question);
             let _ = socket.to(room_id.clone()).emit(SocketEventType::ShowQuestion, "");
@@ -244,6 +249,18 @@ async fn on_connect(socket: SocketRef) {
             let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Room doesn't exist.".to_string(), error_type: SocketEventType::NextQuestion });
         }
     });
+
+    socket.on(SocketEventType::GetScores, |socket: SocketRef, Data::<String>(room_id)| async move {
+        if let Some(room) = GAMEROOM_STORE.get_room_clone(&room_id).await {
+            let scores = room.get_players_sorted_by_score();
+            let _ = socket.emit(SocketEventType::GetScores, (scores,));
+        } else {
+            let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Room doesn't exist.".to_string(), error_type: SocketEventType::GetScores });
+        }
+    });
+
+
+    // TODO: Logic for when socket disconnects (Remove as player, remove room if socket is host)
 }
 
 async fn handler(axum::extract::State(io): axum::extract::State<SocketIo>) {
