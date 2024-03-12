@@ -82,7 +82,7 @@ impl GameRoom {
         if let Some(next_question_id) = self.get_next_question_id() {
             self.set_current_question_id(next_question_id.clone());
 
-            if (next_question_id == "last-question") {
+            if next_question_id == "last-question" {
                 info!("Setting game over because next is last");
                 self.state.is_game_over = true;
             }
@@ -90,10 +90,6 @@ impl GameRoom {
             info!("Setting game over");
             self.state.is_game_over = true;
         }
-    }
-
-    pub fn get_last_question(&self) -> &Question {
-        self.questions.last().unwrap()
     }
 
     pub fn get_player(&self, id: String) -> Option<&Player> {
@@ -151,12 +147,6 @@ impl RoomStore {
         Self {
             rooms: RwLock::new(GameRoomStore::new())
         }
-    }
-
-    pub async fn has_room (&self, room: &String) -> bool {
-        let rooms = self.rooms.read().await;
-
-        rooms.contains_key(room)
     }
 
     pub async fn get_room_clone(&self, room: &String) -> Option<GameRoom> {

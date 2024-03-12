@@ -333,11 +333,6 @@ async fn on_connect(socket: SocketRef) {
     // TODO: Logic for when socket disconnects (Remove as player, remove room if socket is host)
 }
 
-async fn handler(axum::extract::State(io): axum::extract::State<SocketIo>) {
-    info!("handler called");
-    let _ = io.emit("hello", "world");
-}
-
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::subscriber::set_global_default(FmtSubscriber::default())?;

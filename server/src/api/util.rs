@@ -6,6 +6,7 @@ struct GenericError {
 	pub error: String
 }
 
+#[allow(dead_code)]
 pub fn generic_response(status: StatusCode, message: &str) -> Response<axum::body::Body> {
     Response::builder()
         .status(status)
