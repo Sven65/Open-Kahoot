@@ -248,6 +248,15 @@ async fn on_connect(socket: SocketRef) {
                 }
             } else {
                 room.add_answer_count(1);
+
+                if room.has_all_players_answered() {
+                    room.set_answer_count(0);
+                    GAMEROOM_STORE.insert(room.clone()).await;
+
+                    let scores = room.get_players_sorted_by_score();
+                    let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores,));
+                }
+
                 info!("Sent in answer doesn't match");
             }
         }
