@@ -1,7 +1,6 @@
 use axum::{extract::Path, http::{Response, StatusCode}, routing::get, Router};
 use chrono::NaiveDateTime;
 use diesel::{prelude::*, QueryDsl};
-use tracing::info;
 
 use crate::{api::util::{generic_error, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{quiz, users}}};
 
@@ -65,9 +64,6 @@ async fn get_quiz_by_id (quiz_id: i32, conn: &mut PgConnection) -> Result<Return
 		.filter(users::id.eq(quiz.owner_id))
 		.select((users::id, users::username))
 		.get_result::<(i32, String)>(conn)?;
-
-
-	info!("your dfuign mom {:#?} and {:#?} then {:#?} for user {:#?}", quiz, questions, answers, owner);
 
 	Ok(ReturnedQuiz::new_from(quiz, questions, answers, owner))
 }
