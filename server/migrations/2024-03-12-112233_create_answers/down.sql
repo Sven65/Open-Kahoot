@@ -1,3 +1,4 @@
 -- This file should undo anything in `up.sql`
 
-DROP TABLE answers
+DROP TYPE answer_color CASCADE;
+DROP TABLE answers;

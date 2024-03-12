@@ -12,6 +12,7 @@ struct ReturnedQuestion {
 	created_at: NaiveDateTime,
 	updated_at: NaiveDateTime,
 	answers: Vec<Answer>,
+	question_rank: i32,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -31,6 +32,24 @@ struct ReturnedQuiz {
 
 impl ReturnedQuiz {
 	pub fn new_from(quiz: Quiz, questions: Vec<Question>, answers: Vec<Answer>, owner: (i32, String)) -> Self {
+		let mut collected_questions = questions
+			.into_iter().map(|map_question| {
+				ReturnedQuestion {
+					answers: answers.clone().into_iter().filter(|answer| {
+						answer.question_id.eq(&map_question.id)
+					}).collect(),
+					id: map_question.id,
+					quiz_id: map_question.quiz_id,
+					question: map_question.question,
+					created_at: map_question.created_at,
+					updated_at: map_question.updated_at,
+					question_rank: map_question.question_rank,
+				}
+			})
+			.collect::<Vec<ReturnedQuestion>>();
+
+		collected_questions.sort_by(|a, b| { a.question_rank.cmp(&b.question_rank) });
+
 		Self {
 			id: quiz.id,
 			owner: ReturnedUser {
@@ -40,18 +59,7 @@ impl ReturnedQuiz {
 			name: quiz.name,
 			created_at: quiz.created_at,
 			updated_at: quiz.updated_at,
-			questions: questions.into_iter().map(|map_question| {
-				ReturnedQuestion {
-					answers: answers.clone().into_iter().filter(|answer| {
-						answer.question_id.eq(&map_question.id)
-					}).collect(),
-					id: map_question.id,
-					quiz_id: map_question.quiz_id,
-					question: map_question.question,
-					created_at: map_question.created_at,
-					updated_at: map_question.updated_at
-				}
-			}).collect(),
+			questions: collected_questions,
 		}
 	}
 }

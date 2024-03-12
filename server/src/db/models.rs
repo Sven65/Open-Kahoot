@@ -1,5 +1,45 @@
-use diesel::{deserialize::FromSqlRow, prelude::*};
+use std::io::Write;
+
+use diesel::{deserialize::{self, FromSql, FromSqlRow}, expression::AsExpression, pg::{Pg, PgValue}, prelude::*, serialize::{self, IsNull, Output, ToSql}, sql_types::SqlType};
 use serde::Serialize;
+
+use super::schema::sql_types::AnswerColor;
+
+
+#[derive(Debug, SqlType, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Clone)]
+#[diesel(sql_type = AnswerColor)]
+pub enum RealAnswerColor {
+    Red,
+    Yellow,
+    Blue,
+    Green,
+}
+
+
+impl ToSql<AnswerColor, Pg> for RealAnswerColor {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
+        match *self {
+            RealAnswerColor::Blue => out.write_all(b"Blue")?,
+            RealAnswerColor::Green => out.write_all(b"Green")?,
+            RealAnswerColor::Red => out.write_all(b"Red")?,
+            RealAnswerColor::Yellow => out.write_all(b"Yellow")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+
+impl FromSql<AnswerColor, Pg> for RealAnswerColor {
+    fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"Blue" => Ok(RealAnswerColor::Blue),
+            b"Green" => Ok(RealAnswerColor::Green),
+            b"Red" => Ok(RealAnswerColor::Red),
+            b"Yellow" => Ok(RealAnswerColor::Yellow),
+            _ => Err("Unrecognized enum variant".into()),
+        }
+    }
+}
+
 
 #[derive(Debug, Queryable, Selectable)]
 #[diesel(table_name = crate::db::schema::users)]
@@ -29,6 +69,7 @@ pub struct Answer {
     pub question_id: i32,
     pub answer: String,
     pub is_correct: bool,
+    pub answer_color: RealAnswerColor,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }
@@ -41,6 +82,7 @@ pub struct Question {
     pub id: i32,
     pub quiz_id: i32,
     pub question: String,
+    pub question_rank: i32,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }

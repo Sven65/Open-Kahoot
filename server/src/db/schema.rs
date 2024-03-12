@@ -1,11 +1,21 @@
 // @generated automatically by Diesel CLI.
 
+pub mod sql_types {
+    #[derive(diesel::query_builder::QueryId, diesel::sql_types::SqlType)]
+    #[diesel(postgres_type(name = "answer_color"))]
+    pub struct AnswerColor;
+}
+
 diesel::table! {
+    use diesel::sql_types::*;
+    use super::sql_types::AnswerColor;
+
     answers (id) {
         id -> Int4,
         question_id -> Int4,
         answer -> Varchar,
         is_correct -> Bool,
+        answer_color -> AnswerColor,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -16,6 +26,7 @@ diesel::table! {
         id -> Int4,
         quiz_id -> Int4,
         question -> Varchar,
+        question_rank -> Int4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
