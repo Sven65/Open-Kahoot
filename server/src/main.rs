@@ -193,7 +193,7 @@ async fn on_connect(socket: SocketRef) {
             players: HashMap::new(),
             state: GameState {
                 show_question: false,
-                current_question_id: 0,
+                current_question_id: -1,
                 is_game_over: false,
                 question_started: None,
                 answer_count: 0,
@@ -247,6 +247,7 @@ async fn on_connect(socket: SocketRef) {
                     let _ = socket.emit(SocketEventType::SendPoints, 0);
                 }
             } else {
+                room.add_answer_count(1);
                 info!("Sent in answer doesn't match");
             }
         }
