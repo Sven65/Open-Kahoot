@@ -1,4 +1,4 @@
-use diesel::prelude::*;
+use diesel::{deserialize::FromSqlRow, prelude::*};
 use serde::Serialize;
 
 #[derive(Debug, Queryable, Selectable)]
@@ -20,9 +20,10 @@ pub struct NewUser {
     pub password: String,
 }
 
-#[derive(Debug, Queryable, Selectable, Insertable)]
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations)]
 #[diesel(table_name = crate::db::schema::answers)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(belongs_to(Question))]
 pub struct Answer {
     pub id: i32,
     pub question_id: i32,
@@ -32,9 +33,10 @@ pub struct Answer {
     pub updated_at: chrono::NaiveDateTime,
 }
 
-#[derive(Debug, Queryable, Selectable, Insertable)]
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations)]
 #[diesel(table_name = crate::db::schema::questions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
+#[diesel(belongs_to(Quiz))]
 pub struct Question {
     pub id: i32,
     pub quiz_id: i32,
@@ -43,7 +45,7 @@ pub struct Question {
     pub updated_at: chrono::NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Queryable, Selectable, Insertable)]
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::db::schema::quiz)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Quiz {
