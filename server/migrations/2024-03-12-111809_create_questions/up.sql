@@ -7,6 +7,8 @@ CREATE TABLE questions (
   quiz_id INTEGER NOT NULL REFERENCES quiz(id),
   question VARCHAR NOT NULL,
   question_rank INTEGER NOT NULL,
+  max_time REAL NOT NULL,
+  max_points REAL NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

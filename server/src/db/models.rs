@@ -83,6 +83,8 @@ pub struct Question {
     pub quiz_id: i32,
     pub question: String,
     pub question_rank: i32,
+    pub max_time: f32,
+    pub max_points: f32,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
 }

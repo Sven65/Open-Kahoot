@@ -3,7 +3,7 @@ use tokio::sync::RwLock;
 use tracing::info;
 use std::time::Instant;
 
-use crate::player::Player;
+use crate::{api::quiz::ReturnedQuestion, player::Player};
 
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -24,7 +24,7 @@ pub struct Question {
 #[derive(serde::Serialize, Clone, Debug)]
 pub struct GameState {
     pub show_question: bool,
-    pub current_question_id: String,
+    pub current_question_id: i32,
     pub is_game_over: bool,
     #[serde(with = "serde_millis")]
     pub question_started: Option<Instant>,
@@ -38,20 +38,20 @@ pub struct GameRoom {
     pub host: String,
     pub state: GameState,
     pub players: HashMap<String, Player>,
-    pub questions: Vec<Question>,
+    pub questions: Vec<ReturnedQuestion>,
 }
 
 
 pub type GameRoomStore = HashMap<String, GameRoom>;
 
 impl GameRoom {
-    pub fn get_current_question (&self) -> Option<&Question> {
+    pub fn get_current_question (&self) -> Option<&ReturnedQuestion> {
         self.questions.iter().find(|item| {
             item.id == self.state.current_question_id
         })
     }
 
-    pub fn get_next_question_id (&self) -> Option<String> {
+    pub fn get_next_question_id (&self) -> Option<i32> {
         let current_idx = self.questions.iter().position(|item| {
             item.id == self.state.current_question_id
         });
@@ -70,7 +70,7 @@ impl GameRoom {
         }
     }
 
-    pub fn set_current_question_id (&mut self, id: String) {
+    pub fn set_current_question_id (&mut self, id: i32) {
         info!("Setting current q id to {}", id);
 
         self.state.current_question_id = id;
@@ -82,7 +82,7 @@ impl GameRoom {
         if let Some(next_question_id) = self.get_next_question_id() {
             self.set_current_question_id(next_question_id.clone());
 
-            if next_question_id == "last-question" {
+            if next_question_id == i32::MAX {
                 info!("Setting game over because next is last");
                 self.state.is_game_over = true;
             }

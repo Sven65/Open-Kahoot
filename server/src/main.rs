@@ -7,6 +7,7 @@ mod api;
 
 use std::{collections::HashMap, time::Instant};
 
+use chrono::Utc;
 use game_room::{Answer, Question, RoomStore};
 use socketioxide::{
     extract::{Data, SocketRef}, socket::DisconnectReason, SocketIo
@@ -20,24 +21,24 @@ use tracing_subscriber::FmtSubscriber;
 #[macro_use]
 extern crate lazy_static;
 
-use crate::{game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
+use crate::{api::quiz::{get_quiz_by_id, ReturnedQuestion}, db::establish_connection, game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
 
 #[derive(Debug, serde::Deserialize)]
 struct SentInAnswer {
     room_id: String,
-    answer: String
+    answer: i32
 }
 
 #[derive(Debug, serde::Serialize)]
 struct PointsOutMessage {
-    pub points: f64,
-    pub time_taken: f64,
+    pub points: f32,
+    pub time_taken: f32,
 }
 
 #[derive(Debug, serde::Serialize)]
 struct QuestionOut {
     pub question: Question,
-    pub max_time: f64,
+    pub max_time: f32,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -54,7 +55,7 @@ struct ChangeStateMessage {
 
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
-    static ref QUESTION_TIME: f64 = 30.0;
+    static ref CURRENT_QUIZ_ID: i32 = 1;
 }
 
 async fn on_connect(socket: SocketRef) {
@@ -145,82 +146,60 @@ async fn on_connect(socket: SocketRef) {
         let _ = socket.join(room_code.clone());
         info!("Rooms are now {:#?}", socket.rooms());
 
+        let mut conn = establish_connection();
+
+        let quiz = get_quiz_by_id(*CURRENT_QUIZ_ID, &mut conn).await;
+
+        if quiz.is_err() {
+            let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Tried to load a quiz that doesn't exist.".to_string(), error_type: SocketEventType::CreateRoom });
+            return
+        }
+
+        let quiz = quiz.unwrap();
+
+        let mut questions: Vec<ReturnedQuestion> = vec![
+            ReturnedQuestion {
+                answers: vec![],
+                correct_answer_id: 0,
+                question: "This should never be shown".to_string(),
+                id: -1,
+                max_time: 30.0,
+                max_points: 1000.0,
+                created_at: Utc::now().naive_utc(),
+                updated_at: Utc::now().naive_utc(),
+                question_rank: 0,
+                quiz_id: *CURRENT_QUIZ_ID,
+            }
+        ];
+
+        questions.append(&mut quiz.questions.clone());
+
+        questions.push(ReturnedQuestion {
+            answers: vec![],
+            correct_answer_id: 0,
+            question: "This should never be shown.".to_string(),
+            id: std::i32::MAX,
+            max_time: 30.0,
+            max_points: 1000.0,
+            created_at: Utc::now().naive_utc(),
+            updated_at: Utc::now().naive_utc(),
+            question_rank: std::i32::MAX,
+            quiz_id: *CURRENT_QUIZ_ID,
+        });
+
         GAMEROOM_STORE.insert(GameRoom {
             id: room_code.clone(),
             host: socket.id.to_string(),
             players: HashMap::new(),
             state: GameState {
                 show_question: false,
-                current_question_id: "starter-question".to_string(),
+                current_question_id: 0,
                 is_game_over: false,
                 question_started: None,
                 answer_count: 0,
                 client_state: "UNKNOWN".to_string(),
             },
-            questions: vec![
-                Question {
-                    answers: vec![],
-                    correct_answer_id: "".to_string(),
-                    question: "This should never be shown".to_string(),
-                    id: "starter-question".to_string(),
-                    max_time: 30.0,
-                },
-                Question {
-                    answers: vec![
-                        Answer {
-                            answer: "One".to_string(),
-                            id: "1".to_string()
-                        },
-                        Answer {
-                            answer: "Two".to_string(),
-                            id: "2".to_string()
-                        },
-                        Answer {
-                            answer: "Three".to_string(),
-                            id: "3".to_string()
-                        },
-                        Answer {
-                            answer: "Four".to_string(),
-                            id: "4".to_string()
-                        },
-                    ],
-                    correct_answer_id: "1".to_string(),
-                    id: "q-1".to_string(),
-                    question: "What is the answer?".to_string(),
-                    max_time: 30.0,
-                },
-                Question {
-                    answers: vec![
-                        Answer {
-                            answer: "Five".to_string(),
-                            id: "5".to_string()
-                        },
-                        Answer {
-                            answer: "Six".to_string(),
-                            id: "6".to_string()
-                        },
-                        Answer {
-                            answer: "Seven".to_string(),
-                            id: "7".to_string()
-                        },
-                        Answer {
-                            answer: "Eight".to_string(),
-                            id: "8".to_string()
-                        },
-                    ],
-                    correct_answer_id: "5".to_string(),
-                    id: "q-2".to_string(),
-                    question: "What is the second answer?".to_string(),
-                    max_time: 30.0,
-                },
-                Question {
-                    answers: vec![],
-                    correct_answer_id: "".to_string(),
-                    question: "This should never be shown.".to_string(),
-                    id: "last-question".to_string(),
-                    max_time: 30.0,
-                },
-            ]
+            questions: questions,
         }).await;
 
 
@@ -244,7 +223,7 @@ async fn on_connect(socket: SocketRef) {
                 if let Some(player) = room.get_player_mut(socket.id.to_string()) {
                     info!("Player {:#?}", player);
                     let duration = question_started.elapsed(); // Use the cloned field
-                    let points = calculate_points(duration.as_secs_f64(), question_clone.max_time, 1000.0);
+                    let points = calculate_points(duration.as_secs_f32(), question_clone.max_time, 1000.0);
                     player.add_points(points);
 
                     room.add_answer_count(1);
@@ -254,7 +233,7 @@ async fn on_connect(socket: SocketRef) {
     
                     let _ = socket.emit(SocketEventType::SendPoints, PointsOutMessage {
                         points: points,
-                        time_taken: duration.as_secs_f64(),
+                        time_taken: duration.as_secs_f32(),
                     });
 
                     if room.has_all_players_answered() {

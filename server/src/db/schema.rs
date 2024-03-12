@@ -27,6 +27,8 @@ diesel::table! {
         quiz_id -> Int4,
         question -> Varchar,
         question_rank -> Int4,
+        max_time -> Float,
+        max_points -> Float,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

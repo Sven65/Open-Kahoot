@@ -5,46 +5,58 @@ use diesel::{prelude::*, QueryDsl};
 use crate::{api::util::{generic_error, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{quiz, users}}};
 
 #[derive(Debug, Clone, serde::Serialize)]
-struct ReturnedQuestion {
-	id: i32,
-	quiz_id: i32,
-	question: String,
-	created_at: NaiveDateTime,
-	updated_at: NaiveDateTime,
-	answers: Vec<Answer>,
-	question_rank: i32,
+pub struct ReturnedQuestion {
+	pub id: i32,
+	pub quiz_id: i32,
+	pub question: String,
+	pub correct_answer_id: i32,
+	pub answers: Vec<Answer>,
+	pub question_rank: i32,
+	pub max_time: f32,
+    pub max_points: f32,
+	pub created_at: NaiveDateTime,
+	pub updated_at: NaiveDateTime,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
-struct ReturnedUser {
-	id: i32,
-	username: String,
+pub struct ReturnedUser {
+	pub id: i32,
+	pub username: String,
 }
 #[derive(Debug, Clone, serde::Serialize)]
-struct ReturnedQuiz {
-	id: i32,
-	owner: ReturnedUser,
-	name: String,
-	created_at: NaiveDateTime,
-	updated_at: NaiveDateTime,
-	questions: Vec<ReturnedQuestion>,
+pub struct ReturnedQuiz {
+	pub id: i32,
+	pub owner: ReturnedUser,
+	pub name: String,
+	pub created_at: NaiveDateTime,
+	pub updated_at: NaiveDateTime,
+	pub questions: Vec<ReturnedQuestion>,
 }
 
 impl ReturnedQuiz {
 	pub fn new_from(quiz: Quiz, questions: Vec<Question>, answers: Vec<Answer>, owner: (i32, String)) -> Self {
 		let mut collected_questions = questions
 			.into_iter().map(|map_question| {
-				ReturnedQuestion {
-					answers: answers.clone().into_iter().filter(|answer| {
-						answer.question_id.eq(&map_question.id)
-					}).collect(),
+				let answers_for_question = answers.clone().into_iter().filter(|answer| {
+					answer.question_id.eq(&map_question.id)
+				}).collect::<Vec<Answer>>();
+
+				let correct_answer = answers_for_question.iter().find(|answer| {
+					answer.is_correct
+				}).unwrap();
+
+				return ReturnedQuestion {
+					answers: answers_for_question.clone(),
 					id: map_question.id,
 					quiz_id: map_question.quiz_id,
 					question: map_question.question,
 					created_at: map_question.created_at,
 					updated_at: map_question.updated_at,
 					question_rank: map_question.question_rank,
-				}
+					correct_answer_id: correct_answer.id,
+					max_points: map_question.max_points,
+					max_time: map_question.max_time,
+				};
 			})
 			.collect::<Vec<ReturnedQuestion>>();
 
@@ -64,7 +76,7 @@ impl ReturnedQuiz {
 	}
 }
 
-async fn get_quiz_by_id (quiz_id: i32, conn: &mut PgConnection) -> Result<ReturnedQuiz, diesel::result::Error> {
+pub async fn get_quiz_by_id (quiz_id: i32, conn: &mut PgConnection) -> Result<ReturnedQuiz, diesel::result::Error> {
 	let quiz = quiz::table.find(quiz_id).first::<Quiz>(conn)?;
     let questions = Question::belonging_to(&quiz).load::<Question>(conn)?;
 	let answers = Answer::belonging_to(&questions).load::<Answer>(conn)?;
