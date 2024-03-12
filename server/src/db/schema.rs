@@ -39,6 +39,7 @@ diesel::table! {
         id -> Int4,
         owner_id -> Int4,
         name -> Varchar,
+        public -> Bool,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
