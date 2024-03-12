@@ -85,7 +85,20 @@ async fn get_quiz(Path(id): Path<i32>) -> Response<axum::body::Body> {
 	}
 }
 
+async fn patch_quiz(Path(_id): Path<i32>) -> &'static str {
+	"Hello patch"
+}
+
+async fn delete_quiz(Path(_id): Path<i32>) -> &'static str {
+	"hello delete"
+}
+
 pub fn quiz_router() -> Router {
 	Router::new()
-		.route("/:id", get(get_quiz))
+		.route(
+			"/:id",
+			get(get_quiz)
+			.patch(patch_quiz)
+			.delete(delete_quiz)
+		)
 }
