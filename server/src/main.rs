@@ -2,10 +2,11 @@ mod util;
 mod socket_type;
 mod game_room;
 mod player;
+mod db;
+mod api;
 
 use std::{collections::HashMap, time::Instant};
 
-use axum::routing::get;
 use game_room::{Answer, Question, RoomStore};
 use socketioxide::{
     extract::{Data, SocketRef}, socket::DisconnectReason, SocketIo
@@ -346,9 +347,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     io.ns("/", on_connect);
 
     let app = axum::Router::new()
-        .route("/", get(|| async { "Hello World" }))
-        .route("/hello", get(handler))
         .with_state(io)
+        .nest("/api", api::api_router())
         .layer(
             ServiceBuilder::new()
             .layer(CorsLayer::permissive())
