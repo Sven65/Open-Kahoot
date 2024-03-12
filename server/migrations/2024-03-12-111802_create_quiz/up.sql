@@ -1,0 +1,14 @@
+-- Your SQL goes here
+
+CREATE TABLE quiz (
+  id SERIAL PRIMARY KEY,
+  owner_id INTEGER NOT NULL REFERENCES users(id),
+  name VARCHAR NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TRIGGER set_timestamp
+	BEFORE UPDATE ON quiz
+	FOR EACH ROW
+	EXECUTE PROCEDURE trigger_set_timestamp();

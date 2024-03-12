@@ -10,9 +10,10 @@ use argon2::{
 use axum::{http::StatusCode, response::Response, routing::{get, post}, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper};
 use serde::{Deserialize, Serialize};
-use tracing::info;
 
 use crate::db::{establish_connection, models::NewUser, models::User, schema::users};
+
+use super::util::{generic_error, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -52,12 +53,7 @@ async fn create_user(
 	let hash_tuple = hash_password(payload.password.as_bytes());
 
 	if hash_tuple.is_none() {
-		return Response::builder()
-			.status(StatusCode::INTERNAL_SERVER_ERROR)
-			.body(axum::body::Body::from(
-                "Invalid data".to_string(),
-            ))
-			.unwrap();
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Invalid hashing data");
 	}
 
 	let (salt, password) = hash_tuple.unwrap();	
@@ -78,12 +74,7 @@ async fn create_user(
 	if result.is_err() {
 		let error = result.err().unwrap();
 
-		return Response::builder()
-			.status(StatusCode::INTERNAL_SERVER_ERROR)
-			.body(axum::body::Body::from(
-				error.to_string()
-			))
-			.unwrap();
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, error.to_string().as_str());
 	}
 
 	let result = result.unwrap();
@@ -93,12 +84,7 @@ async fn create_user(
 		username: result.username
 	};
 
-	return Response::builder()
-		.status(StatusCode::CREATED)
-		.body(axum::body::Body::from(
-			serde_json::to_string(&user).expect("Failed to serialize json")
-		))
-		.unwrap();
+	json_response(StatusCode::CREATED, user)
 
 }
 
