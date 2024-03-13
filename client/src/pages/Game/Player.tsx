@@ -4,6 +4,7 @@ import { GameContext } from '../../context/GameContext'
 import './Player.scss'
 import { useLocation } from 'preact-iso'
 import { CenterText } from '../../components/CenterText'
+import { Answer, AnswerColor } from '../../types'
 
 interface GamePlayerProps {
 	onSelect: () => void,
@@ -16,21 +17,29 @@ const GamePlayer = ({
 	const sendAnswer = gameContext.sendAnswer
 	const [question] = gameContext.currentQuestion
 
+	const getAnswerForColor = (color: AnswerColor): Answer => {
+		return question.answers.find(answer => answer.answer_color === color)
+	}
+
 	const selectAnswer = (answer: string) => {
 		onSelect()
 		sendAnswer(answer)
 	}
 
+	let redAnswer = getAnswerForColor(AnswerColor.Red)
+	let blueAnswer = getAnswerForColor(AnswerColor.Blue)
+	let greenAnswer = getAnswerForColor(AnswerColor.Green)
+	let yellowAnswer = getAnswerForColor(AnswerColor.Yellow)
 
 	return (
 		<div className={'play-button-container'}>
 			<div class="row">
-				<button class="play-btn-red" onClick={() => selectAnswer(question.answers[0].id)}>{question.answers[0].answer}</button>
-				<button class="play-btn-green" onClick={() => selectAnswer(question.answers[1].id)}>{question.answers[1].answer}</button>
+				<button class="play-btn-red" onClick={() => selectAnswer(redAnswer.id)}>{redAnswer.answer}</button>
+				<button class="play-btn-green" onClick={() => selectAnswer(greenAnswer.id)}>{greenAnswer.answer}</button>
 			</div>
 			<div class="row">
-				<button class="play-btn-blue" onClick={() => selectAnswer(question.answers[2].id)}>{question.answers[2].answer}</button>
-				<button class="play-btn-yellow" onClick={() => selectAnswer(question.answers[3].id)}>{question.answers[3].answer}</button>
+				<button class="play-btn-blue" onClick={() => selectAnswer(blueAnswer.id)}>{blueAnswer.answer}</button>
+				<button class="play-btn-yellow" onClick={() => selectAnswer(yellowAnswer.id)}>{yellowAnswer.answer}</button>
 			</div>
 		</div>
 	)

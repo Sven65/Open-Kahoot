@@ -1,0 +1,34 @@
+.answer-shower {
+	width: 100%;
+
+	.row {
+		width: 100%;
+	}
+
+	span {
+		display: block;
+
+		color: #39393A;
+		font-size: 2em;
+
+		padding: 8px;
+		margin: 0;
+
+
+		&.answer-red {
+			background-color: #EF476F;
+		}
+
+		&.answer-yellow {
+			background-color: #FFD166;
+		}
+
+		&.answer-green {
+			background-color: #06D6A0;
+		}
+
+		&.answer-blue {
+			background-color: #47A8BD;
+		}
+	}
+}

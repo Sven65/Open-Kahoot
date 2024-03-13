@@ -1,13 +1,18 @@
 import { createContext } from 'preact'
 import { StateUpdater, useState } from 'preact/hooks'
 import { io } from 'socket.io-client'
-import { GameState, Player, SocketEvents } from '../types'
-import { LocationHook, useLocation } from 'preact-iso'
+import { AnswerColor, GameState, Player, SocketEvents } from '../types'
+import { useLocation } from 'preact-iso'
 import { toast } from 'react-toastify'
 
 export type Answer = {
 	id: string,
-	answer: string,
+	question_id: string,
+    answer: string,
+    is_correct: boolean,
+    answer_color: AnswerColor,
+    created_at: Date,
+    updated_at: Date,
 }
 
 export type Question = {
@@ -47,6 +52,7 @@ export type IGameContext = {
 }
 
 // const URL = process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3000'
+// @ts-ignore
 const URL = window.__env__.REACT_APP_BACKEND_URL
 
 export const socket = io(URL)
@@ -115,6 +121,8 @@ export const GameContextProvider = ({
 	})
 
 	socket.on(SocketEvents.SendQuestion, (question: Question) => {
+		console.log('question has length', question.answers.length)
+		
 		setCurrentQuestion(question)
 
 		setScores([])

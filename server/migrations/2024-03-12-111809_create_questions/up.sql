@@ -4,7 +4,7 @@
 
 CREATE TABLE questions (
   id VARCHAR PRIMARY KEY,
-  quiz_id VARCHAR NOT NULL REFERENCES quiz(id),
+  quiz_id VARCHAR NOT NULL REFERENCES quiz(id) ON DELETE CASCADE,
   question VARCHAR NOT NULL,
   question_rank INTEGER NOT NULL,
   max_time REAL NOT NULL,

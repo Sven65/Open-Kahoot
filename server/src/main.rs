@@ -5,6 +5,7 @@ mod player;
 mod db;
 mod api;
 
+use core::fmt;
 use std::{collections::HashMap, time::Instant};
 
 use chrono::Utc;
@@ -55,10 +56,11 @@ struct ChangeStateMessage {
 
 const LAST_QUESTION_ID: &str = "LAST-QUESTION";
 const FIRST_QUESTION_ID: &str = "FIRST-QUESTION";
+const PLAYER_NAME_LENGTH_LIMIT: usize = 24;
 
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
-    static ref CURRENT_QUIZ_ID: String = "MhqNBeCAS3igKqJP43v8KQ".to_string();
+    static ref CURRENT_QUIZ_ID: String = "quiz_1".to_string();
 }
 
 async fn on_connect(socket: SocketRef) {
@@ -95,6 +97,7 @@ async fn on_connect(socket: SocketRef) {
     socket.on(
         SocketEventType::Join,
         |socket: SocketRef, Data::<JoinMessage>(data)| async move {
+            // Todo: Add length limit for player names because players are stupid
             let room = GAMEROOM_STORE.get_room_clone(&data.room_id).await;
 
             if room.is_none() {
@@ -104,6 +107,14 @@ async fn on_connect(socket: SocketRef) {
                     error: "Failed to join as room doesn't exist.".to_string(),
                 });
                 return;
+            }
+
+            if data.name.len() > PLAYER_NAME_LENGTH_LIMIT {
+                let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {
+                    error_type: SocketEventType::JoinFailed,
+                    error: format!("Failed to join as player name is above limit. ({:#?})", PLAYER_NAME_LENGTH_LIMIT).to_string(),
+                });
+                return
             }
 
             let room = &mut room.unwrap();
@@ -171,7 +182,25 @@ async fn on_connect(socket: SocketRef) {
             }
         ];
 
-        questions.append(&mut quiz.questions.clone());
+        let mut questions_with_answers: Vec<ReturnedQuestion> = quiz.questions
+            .iter()
+            .filter(|question| {
+                info!("ansers 4 question {:#?}", question.answers);
+                if let Some(answers) = &question.answers {
+                    if answers.len() == 0 {
+                        return false;
+                    }
+                    true
+                } else {
+                    false
+                }
+            })
+            .map(|question| {
+                question.to_owned()
+            })
+            .collect::<Vec<ReturnedQuestion>>();
+
+        questions.append(&mut questions_with_answers);
 
         questions.push(ReturnedQuestion {
             answers: Some(vec![]),

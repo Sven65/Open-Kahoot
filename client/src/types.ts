@@ -38,9 +38,9 @@ export enum AnswerColor {
 }
 
 export type Answer = {
-    id: number,
-    question_id: number,
-    answer: String,
+    id: string,
+    question_id: string,
+    answer: string,
     is_correct: boolean,
     answer_color: AnswerColor,
     created_at: Date,
@@ -48,10 +48,10 @@ export type Answer = {
 }
 
 export type Question = {
-	id: number,
-	quiz_id: number,
-	question: String,
-	correct_answer_id: number,
+	id: string,
+	quiz_id: string,
+	question: string,
+	correct_answer_id: string,
 	answers: Answer[],
 	question_rank: number,
 	max_time: number,
@@ -61,12 +61,12 @@ export type Question = {
 }
 
 export type User = {
-	id: number,
-	username: String,
+	id: string,
+	username: string,
 }
 
 export type Quiz = {
-	id: number,
+	id: string,
 	owner: User,
 	name: String,
 	public: boolean,

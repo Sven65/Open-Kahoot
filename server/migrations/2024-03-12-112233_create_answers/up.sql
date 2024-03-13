@@ -16,7 +16,7 @@ END $$;
 
 CREATE TABLE answers (
   id VARCHAR PRIMARY KEY,
-  question_id VARCHAR NOT NULL REFERENCES questions(id),
+  question_id VARCHAR NOT NULL REFERENCES questions(id) ON DELETE CASCADE,
   answer VARCHAR NOT NULL,
   is_correct BOOLEAN NOT NULL,
   answer_color answer_color NOT NULL,
