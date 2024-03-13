@@ -123,6 +123,7 @@ async fn on_connect(socket: SocketRef) {
                 id: socket.id.to_string(),
                 points: 0.0,
                 name: Some(data.name),
+                has_answered: false,
             };
             
             room.insert_player(player.clone());
@@ -254,12 +255,16 @@ async fn on_connect(socket: SocketRef) {
             if answer == question.correct_answer_id.clone().unwrap() {
                 let question_clone = question.clone();
                 if let Some(player) = room.get_player_mut(socket.id.to_string()) {
+                    if player.has_answered {
+                        info!("Player has already answered");
+                        return
+                    }
+
                     info!("Player {:#?}", player);
                     let duration = question_started.elapsed(); // Use the cloned field
                     let points = calculate_points(duration.as_secs_f32(), question_clone.max_time, 1000.0);
                     player.add_points(points);
-
-                    room.add_answer_count(1);
+                    player.has_answered = true;
     
                     // Insert the modified room back into the store
                     GAMEROOM_STORE.insert(room.clone()).await;
@@ -270,7 +275,7 @@ async fn on_connect(socket: SocketRef) {
                     });
 
                     if room.has_all_players_answered() {
-                        room.set_answer_count(0);
+                        room.reset_answers();
                         GAMEROOM_STORE.insert(room.clone()).await;
 
                         let scores = room.get_players_sorted_by_score();
@@ -280,15 +285,27 @@ async fn on_connect(socket: SocketRef) {
                     let _ = socket.emit(SocketEventType::SendPoints, 0);
                 }
             } else {
-                room.add_answer_count(1);
+                if let Some(player) = room.get_player_mut(socket.id.to_string()) {
+                    if player.has_answered {
+                        info!("Player has already answered");
+                        return
+                    }
 
-                if room.has_all_players_answered() {
-                    room.set_answer_count(0);
+                    player.has_answered = true;
+
                     GAMEROOM_STORE.insert(room.clone()).await;
 
-                    let scores = room.get_players_sorted_by_score();
-                    let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores,));
+
+                    if room.has_all_players_answered() {
+                        room.reset_answers();
+                        GAMEROOM_STORE.insert(room.clone()).await;
+    
+                        let scores = room.get_players_sorted_by_score();
+                        let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores,));
+                    }
                 }
+
+                
 
                 info!("Sent in answer doesn't match");
             }

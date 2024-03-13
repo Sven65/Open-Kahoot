@@ -34,12 +34,12 @@ const GamePlayer = ({
 	return (
 		<div className={'play-button-container'}>
 			<div class="row">
-				<button class="play-btn-red" onClick={() => selectAnswer(redAnswer.id)}>{redAnswer.answer}</button>
-				<button class="play-btn-green" onClick={() => selectAnswer(greenAnswer.id)}>{greenAnswer.answer}</button>
+				<button class="play-btn-red" onClick={() => selectAnswer(redAnswer.id)}>{redAnswer && redAnswer.answer}</button>
+				<button class="play-btn-green" onClick={() => selectAnswer(greenAnswer.id)}>{greenAnswer && greenAnswer.answer}</button>
 			</div>
 			<div class="row">
-				<button class="play-btn-blue" onClick={() => selectAnswer(blueAnswer.id)}>{blueAnswer.answer}</button>
-				<button class="play-btn-yellow" onClick={() => selectAnswer(yellowAnswer.id)}>{yellowAnswer.answer}</button>
+				<button class="play-btn-blue" onClick={() => selectAnswer(blueAnswer.id)}>{blueAnswer && blueAnswer.answer}</button>
+				<button class="play-btn-yellow" onClick={() => selectAnswer(yellowAnswer.id)}>{yellowAnswer && yellowAnswer.answer}</button>
 			</div>
 		</div>
 	)

@@ -20,6 +20,8 @@ export const Host = () => {
 	const [playerNames] = gameContext.playerNames
 	
 
+	console.log('gameContext', gameContext)
+
 	const location = useLocation()
 
 	const { sendNextQuestion, sendGetHighscores, sendStartGame } = gameContext
@@ -29,6 +31,7 @@ export const Host = () => {
 
 	useEffect(() => {
 		if (!currentQuestion) return
+		if (!timerRef.current) return
 		
 		const newTime = new Date()
 		newTime.setSeconds(newTime.getSeconds() + currentQuestion.max_time)
@@ -37,7 +40,7 @@ export const Host = () => {
 	}, [currentQuestion])
 
 	useEffect(() => {
-		console.log('timer effect')
+		if (!timerRef.current) return
 		if (scores && scores.length > 0) {
 			console.log('stop timer')
 			timerRef.current.pause()
@@ -56,13 +59,9 @@ export const Host = () => {
 		sendGetHighscores()
 	}
 
-	console.log('the scores are now', scores)
-	console.log('gamestate', gameState)
-
-	console.log('gamestate is expexte', gameState === GameState.STARTING)
-
 	const QuestionPart = () => {
-		if (scores && scores.length > 0) return null
+		if (currentQuestion === null) return <h1>no question??</h1>
+		if (scores && scores.length > 0) return <h1>we have scores?</h1>
 
 
 		const getAnswerForColor = (color: AnswerColor): Answer => {
@@ -76,22 +75,22 @@ export const Host = () => {
 		let yellowAnswer = getAnswerForColor(AnswerColor.Yellow)
 	
 		return (
-			<>
+			<div>
 				{currentQuestion && (<h1>Question is: {currentQuestion?.question}</h1>)}
 
-				<Timer timerRef={timerRef} time={currentQuestion?.max_time} onExpire={onTimerExpire} />
+				{timerRef && (<Timer timerRef={timerRef} time={currentQuestion?.max_time} onExpire={onTimerExpire} />)}
 
 				<div className={'answer-shower'}>
 					<div class="row">
-						<span class="answer-red">{redAnswer.answer}</span>
-						<span class="answer-green" >{greenAnswer.answer}</span>
+						<span class="answer-red">{redAnswer && redAnswer.answer}</span>
+						<span class="answer-green" >{greenAnswer && greenAnswer.answer}</span>
 					</div>
 					<div class="row">
-						<span class="answer-blue">{blueAnswer.answer}</span>
-						<span class="answer-yellow">{yellowAnswer.answer}</span>
+						<span class="answer-blue">{blueAnswer && blueAnswer.answer}</span>
+						<span class="answer-yellow">{yellowAnswer && yellowAnswer.answer}</span>
 					</div>
 				</div>
-			</>
+			</div>
 		)
 
 	}

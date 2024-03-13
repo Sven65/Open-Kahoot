@@ -1,6 +1,7 @@
 -- Your SQL goes here
 
 -- todo: Make uniq constraint for (question_id, answer_color)
+-- todo: Make uniq constraint for (question_id, is_correct)
 
 DO $$ BEGIN
     IF NOT EXISTS (

@@ -114,21 +114,26 @@ impl GameRoom {
         players_vec
     }
 
-    pub fn add_answer_count(&mut self, count: usize) {
-        self.state.answer_count += count;
-    }
-
     pub fn set_answer_count(&mut self, count: usize) {
         self.state.answer_count = count;
     } 
 
     pub fn has_all_players_answered(&self) -> bool {
-        self.state.answer_count >= self.players.len()
+        self.players.iter().all(|player| player.1.has_answered)
     }
 
     pub fn set_client_state(&mut self, state: String) {
         self.state.client_state = state;
-    } 
+    }
+
+    pub fn reset_answers(&mut self) {
+        let players = self.players.clone();
+
+        for (_, mut player) in players {
+            player.has_answered = false;
+            self.insert_player(player);
+        }
+    }
 }
 
 #[derive(Default)]
