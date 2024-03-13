@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use tokio::sync::RwLock;
-use tracing::info;
 use std::time::Instant;
 
 use crate::{api::quiz_types::ReturnedQuestion, player::Player};
@@ -71,23 +70,18 @@ impl GameRoom {
     }
 
     pub fn set_current_question_id (&mut self, id: String) {
-        info!("Setting current q id to {}", id);
-
         self.state.current_question_id = id;
     }
 
     pub fn prepare_next_question(&mut self) {
-        info!("Prepping next question");
 
         if let Some(next_question_id) = self.get_next_question_id() {
             self.set_current_question_id(next_question_id.clone());
 
             if next_question_id == crate::LAST_QUESTION_ID {
-                info!("Setting game over because next is last");
                 self.state.is_game_over = true;
             }
         } else {
-            info!("Setting game over");
             self.state.is_game_over = true;
         }
     }

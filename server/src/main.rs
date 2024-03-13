@@ -95,10 +95,6 @@ async fn on_connect(socket: SocketRef) {
     socket.on(
         SocketEventType::Join,
         |socket: SocketRef, Data::<JoinMessage>(data)| async move {
-            info!("Received join {:?}", data.room_id);
-
-            info!("Trying to to join room {:#?}. Available: {:#?}", data.room_id, socket.rooms());
-            
             let room = GAMEROOM_STORE.get_room_clone(&data.room_id).await;
 
             if room.is_none() {
@@ -162,7 +158,7 @@ async fn on_connect(socket: SocketRef) {
 
         let mut questions: Vec<ReturnedQuestion> = vec![
             ReturnedQuestion {
-                answers: vec![],
+                answers: Some(vec![]),
                 correct_answer_id: Some("0".to_string()),
                 question: "This should never be shown".to_string(),
                 id: Some(FIRST_QUESTION_ID.to_string()),
@@ -178,7 +174,7 @@ async fn on_connect(socket: SocketRef) {
         questions.append(&mut quiz.questions.clone());
 
         questions.push(ReturnedQuestion {
-            answers: vec![],
+            answers: Some(vec![]),
             correct_answer_id: Some("0".to_string()),
             question: "This should never be shown.".to_string(),
             id: Some(LAST_QUESTION_ID.to_string()),

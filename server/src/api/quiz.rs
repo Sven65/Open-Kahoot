@@ -56,24 +56,26 @@ async fn update_quiz(
 			.set(&update_question)
 			.execute(&mut conn);
 
-		for mut ret_answer in ret_question.answers {	
-			if ret_answer.question_id.is_none() {
-				ret_answer.question_id = Some(new_question_id.clone())
-			}
-
-			if ret_answer.id.is_none() {
-				ret_answer.id = Some(generate_short_uuid())
-			}
-
-			let new_answer = Answer::from(ret_answer);
-
-			let _ = diesel::insert_into(crate::api::quiz::answers::dsl::answers)
-				.values(&new_answer)
-				.on_conflict(answers::id)
-				.do_update()
-				.set(&new_answer)
-				.execute(&mut conn);
-		};
+		if let Some(answers) = ret_question.answers {
+			for mut ret_answer in answers {
+				if ret_answer.question_id.is_none() {
+					ret_answer.question_id = Some(new_question_id.clone())
+				}
+	
+				if ret_answer.id.is_none() {
+					ret_answer.id = Some(generate_short_uuid())
+				}
+	
+				let new_answer = Answer::from(ret_answer);
+	
+				let _ = diesel::insert_into(crate::api::quiz::answers::dsl::answers)
+					.values(&new_answer)
+					.on_conflict(answers::id)
+					.do_update()
+					.set(&new_answer)
+					.execute(&mut conn);
+			};
+		}
 	};
 
 	let _= diesel::update(crate::api::quiz::quiz::dsl::quiz)

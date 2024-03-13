@@ -37,13 +37,15 @@ pub struct ReturnedQuestion {
 	pub quiz_id: String,
 	pub question: String,
 	pub correct_answer_id: Option<String>,
-	pub answers: Vec<ReturnedAnswer>,
+	#[serde(default)]
+	pub answers: Option<Vec<ReturnedAnswer>>,
 	pub question_rank: i32,
 	pub max_time: f32,
     pub max_points: f32,
 	pub created_at: Option<NaiveDateTime>,
 	pub updated_at: Option<NaiveDateTime>,
 }
+
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReturnedUser {
@@ -83,7 +85,7 @@ impl ReturnedQuiz {
 
 
 				return ReturnedQuestion {
-					answers: answers_for_question.clone(),
+					answers: Some(answers_for_question.clone()),
 					id: Some(map_question.id),
 					quiz_id: map_question.quiz_id,
 					question: map_question.question,
