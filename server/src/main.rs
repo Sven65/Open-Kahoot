@@ -8,7 +8,7 @@ mod api;
 use std::{collections::HashMap, time::Instant};
 
 use chrono::Utc;
-use game_room::{Answer, Question, RoomStore};
+use game_room::{Question, RoomStore};
 use socketioxide::{
     extract::{Data, SocketRef}, socket::DisconnectReason, SocketIo
 };
@@ -160,7 +160,7 @@ async fn on_connect(socket: SocketRef) {
         let mut questions: Vec<ReturnedQuestion> = vec![
             ReturnedQuestion {
                 answers: vec![],
-                correct_answer_id: 0,
+                correct_answer_id: Some(0),
                 question: "This should never be shown".to_string(),
                 id: -1,
                 max_time: 30.0,
@@ -176,7 +176,7 @@ async fn on_connect(socket: SocketRef) {
 
         questions.push(ReturnedQuestion {
             answers: vec![],
-            correct_answer_id: 0,
+            correct_answer_id: Some(0),
             question: "This should never be shown.".to_string(),
             id: std::i32::MAX,
             max_time: 30.0,
@@ -218,7 +218,12 @@ async fn on_connect(socket: SocketRef) {
             info!("question started at {:#?}", question_started);
             let question = room.get_current_question().unwrap();
             info!("Question is {:#?}", question);
-            if answer == question.correct_answer_id {
+            if question.correct_answer_id.is_none() {
+                let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Question does not have a correct answer.".to_string(), error_type: SocketEventType::SendAnswer });
+                return
+            }
+
+            if answer == question.correct_answer_id.unwrap() {
                 let question_clone = question.clone();
                 if let Some(player) = room.get_player_mut(socket.id.to_string()) {
                     info!("Player {:#?}", player);

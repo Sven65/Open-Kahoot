@@ -9,7 +9,7 @@ pub struct ReturnedQuestion {
 	pub id: i32,
 	pub quiz_id: i32,
 	pub question: String,
-	pub correct_answer_id: i32,
+	pub correct_answer_id: Option<i32>,
 	pub answers: Vec<Answer>,
 	pub question_rank: i32,
 	pub max_time: f32,
@@ -42,9 +42,14 @@ impl ReturnedQuiz {
 					answer.question_id.eq(&map_question.id)
 				}).collect::<Vec<Answer>>();
 
-				let correct_answer = answers_for_question.iter().find(|answer| {
+				let mut correct_answer_id: Option<i32> = None;
+
+				if let Some(correct_answer) = answers_for_question.iter().find(|answer| {
 					answer.is_correct
-				}).unwrap();
+				}) {
+					correct_answer_id = Some(correct_answer.id)
+				}
+
 
 				return ReturnedQuestion {
 					answers: answers_for_question.clone(),
@@ -54,7 +59,7 @@ impl ReturnedQuiz {
 					created_at: map_question.created_at,
 					updated_at: map_question.updated_at,
 					question_rank: map_question.question_rank,
-					correct_answer_id: correct_answer.id,
+					correct_answer_id,
 					max_points: map_question.max_points,
 					max_time: map_question.max_time,
 				};
