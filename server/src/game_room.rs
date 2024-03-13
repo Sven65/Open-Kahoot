@@ -3,7 +3,7 @@ use tokio::sync::RwLock;
 use tracing::info;
 use std::time::Instant;
 
-use crate::{api::quiz::ReturnedQuestion, player::Player,};
+use crate::{api::quiz_types::ReturnedQuestion, player::Player};
 
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -47,13 +47,13 @@ pub type GameRoomStore = HashMap<String, GameRoom>;
 impl GameRoom {
     pub fn get_current_question (&self) -> Option<&ReturnedQuestion> {
         self.questions.iter().find(|item| {
-            item.id == self.state.current_question_id
+            item.id == Some(self.state.current_question_id.clone())
         })
     }
 
     pub fn get_next_question_id (&self) -> Option<String> {
         let current_idx = self.questions.iter().position(|item| {
-            item.id == self.state.current_question_id
+            item.id == Some(self.state.current_question_id.clone())
         });
 
         if current_idx.is_none() {
@@ -64,7 +64,7 @@ impl GameRoom {
         let next_question = self.questions.get(current_idx + 1);
 
         if let Some(next_question) = next_question {
-            return Some(next_question.id.clone())
+            return next_question.id.clone()
         } else {
             return None
         }

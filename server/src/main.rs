@@ -21,7 +21,7 @@ use tracing_subscriber::FmtSubscriber;
 #[macro_use]
 extern crate lazy_static;
 
-use crate::{api::quiz::{get_quiz_by_id, ReturnedQuestion}, db::establish_connection, game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
+use crate::{api::{quiz::get_quiz_by_id, quiz_types::ReturnedQuestion}, db::establish_connection, game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
 
 #[derive(Debug, serde::Deserialize)]
 struct SentInAnswer {
@@ -165,7 +165,7 @@ async fn on_connect(socket: SocketRef) {
                 answers: vec![],
                 correct_answer_id: Some("0".to_string()),
                 question: "This should never be shown".to_string(),
-                id: FIRST_QUESTION_ID.to_string(),
+                id: Some(FIRST_QUESTION_ID.to_string()),
                 max_time: 30.0,
                 max_points: 1000.0,
                 created_at: Some(Utc::now().naive_utc()),
@@ -181,7 +181,7 @@ async fn on_connect(socket: SocketRef) {
             answers: vec![],
             correct_answer_id: Some("0".to_string()),
             question: "This should never be shown.".to_string(),
-            id: LAST_QUESTION_ID.to_string(),
+            id: Some(LAST_QUESTION_ID.to_string()),
             max_time: 30.0,
             max_points: 1000.0,
             created_at: Some(Utc::now().naive_utc()),

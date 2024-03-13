@@ -1,9 +1,10 @@
 use std::io::Write;
 
+use chrono::Local;
 use diesel::{deserialize::{self, FromSql, FromSqlRow}, expression::AsExpression, pg::{Pg, PgValue}, prelude::*, serialize::{self, IsNull, Output, ToSql}, sql_types::SqlType};
 use serde::{Deserialize, Serialize};
 
-use crate::api::quiz::{ReturnedQuestion, ReturnedQuiz};
+use crate::api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz};
 
 use super::schema::sql_types::AnswerColor;
 
@@ -67,7 +68,21 @@ pub struct Answer {
     pub updated_at: chrono::NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations, AsChangeset)]
+impl From<ReturnedAnswer> for Answer {
+    fn from(value: ReturnedAnswer) -> Self {
+        Self {
+            id: value.id.unwrap(),
+            question_id: value.question_id.unwrap(),
+            answer: value.answer,
+            is_correct: value.is_correct,
+            answer_color: value.answer_color,
+            created_at: value.created_at.unwrap_or(Local::now().naive_local()),
+            updated_at: value.updated_at.unwrap_or(Local::now().naive_local()),
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations, AsChangeset)]
 #[diesel(table_name = crate::db::schema::questions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(Quiz))]
@@ -85,14 +100,14 @@ pub struct Question {
 impl From<ReturnedQuestion> for Question {
     fn from(value: ReturnedQuestion) -> Self {
         Self {
-            created_at: value.created_at.unwrap_or_default(),
-            id: value.id,
+            id: value.id.unwrap(),
             max_points: value.max_points,
             max_time: value.max_time,
             question: value.question,
             question_rank: value.question_rank,
             quiz_id: value.quiz_id,
-            updated_at: value.updated_at.unwrap_or_default()
+            created_at: value.created_at.unwrap_or(Local::now().naive_local()),
+            updated_at: value.updated_at.unwrap_or(Local::now().naive_local())
         }
     }
 }
@@ -112,12 +127,12 @@ pub struct Quiz {
 impl From<ReturnedQuiz> for Quiz {
     fn from(value: ReturnedQuiz) -> Self {
         Self {
-            id: value.id,
+            id: value.id.unwrap(),
             owner_id: value.owner.id,
             name: value.name,
             public: value.public,
-            created_at: value.created_at.unwrap(),
-            updated_at: value.updated_at.unwrap(),
+            created_at: value.created_at.unwrap_or(Local::now().naive_local()),
+            updated_at: value.updated_at.unwrap_or(Local::now().naive_local()),
         }
     }
 }

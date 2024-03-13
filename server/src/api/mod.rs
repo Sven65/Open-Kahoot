@@ -1,7 +1,7 @@
 pub mod util;
 pub mod user;
 pub mod quiz;
-
+pub mod quiz_types;
 
 use axum::{routing::get, Router};
 
