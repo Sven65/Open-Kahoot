@@ -1,10 +1,12 @@
-use axum::{extract::Path, http::{Response, StatusCode}, routing::get, Router};
+use axum::{extract::Path, http::{Response, StatusCode}, routing::get, Json, Router};
 use chrono::NaiveDateTime;
 use diesel::{prelude::*, QueryDsl};
+use tracing::info;
 
-use crate::{api::util::{generic_error, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{quiz, users}}};
+use crate::{api::util::{generic_error, generic_json_response, generic_response, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}};
 
-#[derive(Debug, Clone, serde::Serialize)]
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReturnedQuestion {
 	pub id: i32,
 	pub quiz_id: i32,
@@ -18,12 +20,12 @@ pub struct ReturnedQuestion {
 	pub updated_at: NaiveDateTime,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReturnedUser {
 	pub id: i32,
 	pub username: String,
 }
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReturnedQuiz {
 	pub id: i32,
 	pub owner: ReturnedUser,
@@ -104,9 +106,39 @@ async fn get_quiz(Path(id): Path<i32>) -> Response<axum::body::Body> {
 	}
 }
 
-async fn patch_quiz(Path(_id): Path<i32>) -> &'static str {
-	"Hello patch"
+async fn update_quiz(
+	Path(_id): Path<i32>,
+	Json(new_quiz): Json<ReturnedQuiz>,
+) -> Response<axum::body::Body> {
+	info!("Payload is {:#?}", new_quiz);
+
+	let mut conn = establish_connection();
+	let cloned_quiz = new_quiz.clone();
+
+	for ret_question in new_quiz.questions {
+		let update_question = Question::from(ret_question.clone());
+		
+		let _= diesel::update(crate::api::quiz::questions::dsl::questions)
+			.filter(questions::id.eq(update_question.id))
+			.set(&update_question)
+			.execute(&mut conn);
+
+		for ret_answer in ret_question.answers {			
+			let _= diesel::update(crate::api::quiz::answers::dsl::answers)
+				.filter(answers::id.eq(ret_answer.id))
+				.set(&ret_answer)
+				.execute(&mut conn);
+		};
+	};
+
+	let _= diesel::update(crate::api::quiz::quiz::dsl::quiz)
+		.filter(quiz::id.eq(cloned_quiz.id))
+		.set(Quiz::from(cloned_quiz))
+		.execute(&mut conn);
+
+		generic_json_response(StatusCode::OK, "Update OK")
 }
+
 
 async fn delete_quiz(Path(_id): Path<i32>) -> &'static str {
 	"hello delete"
@@ -117,7 +149,7 @@ pub fn quiz_router() -> Router {
 		.route(
 			"/:id",
 			get(get_quiz)
-			.patch(patch_quiz)
+			.put(update_quiz)
 			.delete(delete_quiz)
 		)
 }

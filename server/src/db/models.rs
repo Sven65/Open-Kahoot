@@ -1,12 +1,14 @@
 use std::io::Write;
 
 use diesel::{deserialize::{self, FromSql, FromSqlRow}, expression::AsExpression, pg::{Pg, PgValue}, prelude::*, serialize::{self, IsNull, Output, ToSql}, sql_types::SqlType};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+
+use crate::api::quiz::{ReturnedQuestion, ReturnedQuiz};
 
 use super::schema::sql_types::AnswerColor;
 
 
-#[derive(Debug, SqlType, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Clone)]
+#[derive(Debug, Deserialize, SqlType, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Clone)]
 #[diesel(sql_type = AnswerColor)]
 pub enum RealAnswerColor {
     Red,
@@ -60,7 +62,7 @@ pub struct NewUser {
     pub password: String,
 }
 
-#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations)]
+#[derive(Debug, Serialize, Deserialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations, AsChangeset)]
 #[diesel(table_name = crate::db::schema::answers)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(Question))]
@@ -74,7 +76,7 @@ pub struct Answer {
     pub updated_at: chrono::NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations)]
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations, AsChangeset)]
 #[diesel(table_name = crate::db::schema::questions)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(Quiz))]
@@ -89,7 +91,22 @@ pub struct Question {
     pub updated_at: chrono::NaiveDateTime,
 }
 
-#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable)]
+impl From<ReturnedQuestion> for Question {
+    fn from(value: ReturnedQuestion) -> Self {
+        Self {
+            created_at: value.created_at,
+            id: value.id,
+            max_points: value.max_points,
+            max_time: value.max_time,
+            question: value.question,
+            question_rank: value.question_rank,
+            quiz_id: value.quiz_id,
+            updated_at: value.updated_at
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, AsChangeset)]
 #[diesel(table_name = crate::db::schema::quiz)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Quiz {
@@ -99,4 +116,17 @@ pub struct Quiz {
     pub public: bool,
     pub created_at: chrono::NaiveDateTime,
     pub updated_at: chrono::NaiveDateTime,
+}
+
+impl From<ReturnedQuiz> for Quiz {
+    fn from(value: ReturnedQuiz) -> Self {
+        Self {
+            id: value.id,
+            owner_id: value.owner.id,
+            name: value.name,
+            public: value.public,
+            created_at: value.created_at,
+            updated_at: value.updated_at,
+        }
+    }
 }

@@ -6,6 +6,11 @@ struct GenericError {
 	pub error: String
 }
 
+#[derive(Serialize)]
+struct GenericMessahe {
+	pub message: String
+}
+
 #[allow(dead_code)]
 pub fn generic_response(status: StatusCode, message: &str) -> Response<axum::body::Body> {
     Response::builder()
@@ -31,4 +36,12 @@ pub fn generic_error(status: StatusCode, message: &str) -> Response<axum::body::
 	};
 
 	json_response(status, error)
+}
+
+pub fn generic_json_response(status: StatusCode, message: &str) -> Response<axum::body::Body> {
+	let g_message = GenericMessahe {
+		message: message.to_string()
+	};
+
+	json_response(status, g_message)
 }
