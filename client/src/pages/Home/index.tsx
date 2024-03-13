@@ -48,6 +48,7 @@ export function Home() {
 					<Input
 						name="code"
 						placeholder={'Game PIN'}
+						type={'number'}
 						value={gamePin}
 						onChange={e => setGamePin(e.target.value)}
 						onEnter={() => {

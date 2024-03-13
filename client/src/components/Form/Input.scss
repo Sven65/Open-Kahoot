@@ -20,4 +20,8 @@
 	border: 2px solid #39393A;
 
 	border-radius: 8px;
+
+	-moz-appearance: textfield;
+	-webkit-appearance: textfield;
+	appearance: textfield;
 }

@@ -58,7 +58,7 @@ const FIRST_QUESTION_ID: &str = "FIRST-QUESTION";
 
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
-    static ref CURRENT_QUIZ_ID: String = "gfnfsogns".to_string();
+    static ref CURRENT_QUIZ_ID: String = "MhqNBeCAS3igKqJP43v8KQ".to_string();
 }
 
 async fn on_connect(socket: SocketRef) {

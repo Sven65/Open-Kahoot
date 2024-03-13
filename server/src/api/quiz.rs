@@ -31,7 +31,7 @@ async fn get_quiz(Path(id): Path<String>) -> Response<axum::body::Body> {
 }
 
 async fn update_quiz(
-	Path(_id): Path<i32>,
+	Path(_id): Path<String>,
 	Json(new_quiz): Json<ReturnedQuiz>,
 ) -> Response<axum::body::Body> {
 	info!("Payload is {:#?}", new_quiz);
