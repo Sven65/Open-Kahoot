@@ -6,8 +6,8 @@ import { GameContext } from '../../context/GameContext'
 import { Modal } from '../../components/Modal/Modal'
 import { toast } from 'react-toastify'
 
-
 export function Home() {
+	console.log("We're home!")
 	const gameContext = useContext(GameContext)
 	const [ gamePin, setGamePin ] = useState('')
 	const [ playerName, setPlayerName ] = useState('')
