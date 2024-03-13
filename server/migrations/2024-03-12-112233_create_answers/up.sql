@@ -2,12 +2,21 @@
 
 -- todo: Make uniq constraint for (question_id, answer_color)
 
-CREATE TYPE answer_color AS ENUM ('Red', 'Green', 'Blue', 'Yellow');
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_type
+        WHERE typname = 'answer_color'
+        AND typtype = 'e'
+    ) THEN
+        CREATE TYPE answer_color AS ENUM ('Red', 'Green', 'Blue', 'Yellow');
+    END IF;
+END $$;
 
 
 CREATE TABLE answers (
-  id SERIAL PRIMARY KEY,
-  question_id INTEGER NOT NULL REFERENCES questions(id),
+  id VARCHAR PRIMARY KEY,
+  question_id VARCHAR NOT NULL REFERENCES questions(id),
   answer VARCHAR NOT NULL,
   is_correct BOOLEAN NOT NULL,
   answer_color answer_color NOT NULL,

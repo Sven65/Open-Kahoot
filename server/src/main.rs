@@ -26,7 +26,7 @@ use crate::{api::quiz::{get_quiz_by_id, ReturnedQuestion}, db::establish_connect
 #[derive(Debug, serde::Deserialize)]
 struct SentInAnswer {
     room_id: String,
-    answer: i32
+    answer: String
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -53,9 +53,12 @@ struct ChangeStateMessage {
     pub state: String,
 }
 
+const LAST_QUESTION_ID: &str = "LAST-QUESTION";
+const FIRST_QUESTION_ID: &str = "FIRST-QUESTION";
+
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
-    static ref CURRENT_QUIZ_ID: i32 = 1;
+    static ref CURRENT_QUIZ_ID: String = "gfnfsogns".to_string();
 }
 
 async fn on_connect(socket: SocketRef) {
@@ -148,7 +151,7 @@ async fn on_connect(socket: SocketRef) {
 
         let mut conn = establish_connection();
 
-        let quiz = get_quiz_by_id(*CURRENT_QUIZ_ID, &mut conn).await;
+        let quiz = get_quiz_by_id(CURRENT_QUIZ_ID.to_string(), &mut conn).await;
 
         if quiz.is_err() {
             let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Tried to load a quiz that doesn't exist.".to_string(), error_type: SocketEventType::CreateRoom });
@@ -160,15 +163,15 @@ async fn on_connect(socket: SocketRef) {
         let mut questions: Vec<ReturnedQuestion> = vec![
             ReturnedQuestion {
                 answers: vec![],
-                correct_answer_id: Some(0),
+                correct_answer_id: Some("0".to_string()),
                 question: "This should never be shown".to_string(),
-                id: -1,
+                id: FIRST_QUESTION_ID.to_string(),
                 max_time: 30.0,
                 max_points: 1000.0,
-                created_at: Utc::now().naive_utc(),
-                updated_at: Utc::now().naive_utc(),
+                created_at: Some(Utc::now().naive_utc()),
+                updated_at: Some(Utc::now().naive_utc()),
                 question_rank: 0,
-                quiz_id: *CURRENT_QUIZ_ID,
+                quiz_id: CURRENT_QUIZ_ID.to_string(),
             }
         ];
 
@@ -176,15 +179,15 @@ async fn on_connect(socket: SocketRef) {
 
         questions.push(ReturnedQuestion {
             answers: vec![],
-            correct_answer_id: Some(0),
+            correct_answer_id: Some("0".to_string()),
             question: "This should never be shown.".to_string(),
-            id: std::i32::MAX,
+            id: LAST_QUESTION_ID.to_string(),
             max_time: 30.0,
             max_points: 1000.0,
-            created_at: Utc::now().naive_utc(),
-            updated_at: Utc::now().naive_utc(),
+            created_at: Some(Utc::now().naive_utc()),
+            updated_at: Some(Utc::now().naive_utc()),
             question_rank: std::i32::MAX,
-            quiz_id: *CURRENT_QUIZ_ID,
+            quiz_id: CURRENT_QUIZ_ID.to_string(),
         });
 
         GAMEROOM_STORE.insert(GameRoom {
@@ -193,7 +196,7 @@ async fn on_connect(socket: SocketRef) {
             players: HashMap::new(),
             state: GameState {
                 show_question: false,
-                current_question_id: -1,
+                current_question_id: FIRST_QUESTION_ID.to_string(),
                 is_game_over: false,
                 question_started: None,
                 answer_count: 0,
@@ -223,7 +226,7 @@ async fn on_connect(socket: SocketRef) {
                 return
             }
 
-            if answer == question.correct_answer_id.unwrap() {
+            if answer == question.correct_answer_id.clone().unwrap() {
                 let question_clone = question.clone();
                 if let Some(player) = room.get_player_mut(socket.id.to_string()) {
                     info!("Player {:#?}", player);

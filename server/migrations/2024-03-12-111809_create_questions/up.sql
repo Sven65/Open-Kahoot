@@ -3,8 +3,8 @@
 -- todo: Make uniq constraint for (quiz_id, question_rank)
 
 CREATE TABLE questions (
-  id SERIAL PRIMARY KEY,
-  quiz_id INTEGER NOT NULL REFERENCES quiz(id),
+  id VARCHAR PRIMARY KEY,
+  quiz_id VARCHAR NOT NULL REFERENCES quiz(id),
   question VARCHAR NOT NULL,
   question_rank INTEGER NOT NULL,
   max_time REAL NOT NULL,

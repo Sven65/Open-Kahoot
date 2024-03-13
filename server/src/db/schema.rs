@@ -11,8 +11,8 @@ diesel::table! {
     use super::sql_types::AnswerColor;
 
     answers (id) {
-        id -> Int4,
-        question_id -> Int4,
+        id -> Varchar,
+        question_id -> Varchar,
         answer -> Varchar,
         is_correct -> Bool,
         answer_color -> AnswerColor,
@@ -23,12 +23,12 @@ diesel::table! {
 
 diesel::table! {
     questions (id) {
-        id -> Int4,
-        quiz_id -> Int4,
+        id -> Varchar,
+        quiz_id -> Varchar,
         question -> Varchar,
         question_rank -> Int4,
-        max_time -> Float,
-        max_points -> Float,
+        max_time -> Float4,
+        max_points -> Float4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }
@@ -36,8 +36,8 @@ diesel::table! {
 
 diesel::table! {
     quiz (id) {
-        id -> Int4,
-        owner_id -> Int4,
+        id -> Varchar,
+        owner_id -> Varchar,
         name -> Varchar,
         public -> Bool,
         created_at -> Timestamptz,
@@ -47,7 +47,7 @@ diesel::table! {
 
 diesel::table! {
     users (id) {
-        id -> Int4,
+        id -> Varchar,
         username -> Varchar,
         salt -> Varchar,
         password -> Varchar,

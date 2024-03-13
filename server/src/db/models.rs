@@ -43,21 +43,12 @@ impl FromSql<AnswerColor, Pg> for RealAnswerColor {
 }
 
 
-#[derive(Debug, Queryable, Selectable)]
+#[derive(Debug, Queryable, Selectable, Insertable)]
 #[diesel(table_name = crate::db::schema::users)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct User {
-    pub id: i32,
+    pub id: String,
     pub username: String,
-    pub salt: String,
-    pub password: String,
-}
-
-
-#[derive(Debug, Insertable)]
-#[diesel(table_name = crate::db::schema::users)]
-pub struct NewUser {
-	pub username: String,
     pub salt: String,
     pub password: String,
 }
@@ -67,8 +58,8 @@ pub struct NewUser {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(Question))]
 pub struct Answer {
-    pub id: i32,
-    pub question_id: i32,
+    pub id: String,
+    pub question_id: String,
     pub answer: String,
     pub is_correct: bool,
     pub answer_color: RealAnswerColor,
@@ -81,8 +72,8 @@ pub struct Answer {
 #[diesel(check_for_backend(diesel::pg::Pg))]
 #[diesel(belongs_to(Quiz))]
 pub struct Question {
-    pub id: i32,
-    pub quiz_id: i32,
+    pub id: String,
+    pub quiz_id: String,
     pub question: String,
     pub question_rank: i32,
     pub max_time: f32,
@@ -94,14 +85,14 @@ pub struct Question {
 impl From<ReturnedQuestion> for Question {
     fn from(value: ReturnedQuestion) -> Self {
         Self {
-            created_at: value.created_at,
+            created_at: value.created_at.unwrap_or_default(),
             id: value.id,
             max_points: value.max_points,
             max_time: value.max_time,
             question: value.question,
             question_rank: value.question_rank,
             quiz_id: value.quiz_id,
-            updated_at: value.updated_at
+            updated_at: value.updated_at.unwrap_or_default()
         }
     }
 }
@@ -110,8 +101,8 @@ impl From<ReturnedQuestion> for Question {
 #[diesel(table_name = crate::db::schema::quiz)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Quiz {
-    pub id: i32,
-    pub owner_id: i32,
+    pub id: String,
+    pub owner_id: String,
     pub name: String,
     pub public: bool,
     pub created_at: chrono::NaiveDateTime,
@@ -125,8 +116,8 @@ impl From<ReturnedQuiz> for Quiz {
             owner_id: value.owner.id,
             name: value.name,
             public: value.public,
-            created_at: value.created_at,
-            updated_at: value.updated_at,
+            created_at: value.created_at.unwrap(),
+            updated_at: value.updated_at.unwrap(),
         }
     }
 }

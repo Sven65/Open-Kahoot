@@ -11,7 +11,7 @@ use axum::{http::StatusCode, response::Response, routing::{get, post}, Json, Rou
 use diesel::{RunQueryDsl, SelectableHelper};
 use serde::{Deserialize, Serialize};
 
-use crate::db::{establish_connection, models::NewUser, models::User, schema::users};
+use crate::{db::{establish_connection, models::User, schema::users}, util::generate_short_uuid};
 
 use super::util::{generic_error, json_response};
 
@@ -28,7 +28,7 @@ struct CreateUser {
 // the output to our `create_user` handler
 #[derive(Serialize)]
 struct CreatedUser {
-    id: i32,
+    id: String,
     username: String,
 }
 
@@ -57,10 +57,12 @@ async fn create_user(
 	}
 
 	let (salt, password) = hash_tuple.unwrap();	
+	let user_id = generate_short_uuid();
 
 	let conn = &mut establish_connection();
 
-	let new_user = NewUser {
+	let new_user = User {
+		id: user_id,
 		salt,
 		password,
 		username: payload.username.clone(),

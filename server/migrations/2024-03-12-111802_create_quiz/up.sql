@@ -1,8 +1,8 @@
 -- Your SQL goes here
 
 CREATE TABLE quiz (
-  id SERIAL PRIMARY KEY,
-  owner_id INTEGER NOT NULL REFERENCES users(id),
+  id VARCHAR PRIMARY KEY,
+  owner_id VARCHAR NOT NULL REFERENCES users(id),
   name VARCHAR NOT NULL,
   public BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
