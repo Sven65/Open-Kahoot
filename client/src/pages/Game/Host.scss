@@ -14,21 +14,20 @@
 		padding: 8px;
 		margin: 0;
 
-
 		&.answer-red {
-			background-color: #EF476F;
+			background-color: var(--question-red);
 		}
 
 		&.answer-yellow {
-			background-color: #FFD166;
+			background-color: var(--question-yellow);
 		}
 
 		&.answer-green {
-			background-color: #06D6A0;
+			background-color: var(--question-green);
 		}
 
 		&.answer-blue {
-			background-color: #47A8BD;
+			background-color: var(--question-blue);
 		}
 	}
 }

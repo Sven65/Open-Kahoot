@@ -1,6 +1,4 @@
 .play-button-container {
-	--red: #EF476F;
-
 	width: 100vw;
 	height: 100vh;
 
@@ -18,19 +16,19 @@
 		border: none;
 
 		&.play-btn-yellow {
-			background-color: #FFD166;
+			background-color: var(--question-yellow);
 		}
 
 		&.play-btn-red {
-			background-color: var(--red);
+			background-color: var(--question-red);
 		}
 
 		&.play-btn-green {
-			background-color: #06D6A0;
+			background-color: var(--question-green);
 		}
 
 		&.play-btn-blue {
-			background-color: #47A8BD;
+			background-color: var(--question-blue);
 		}
 
 		&:hover {

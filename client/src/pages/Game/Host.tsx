@@ -61,19 +61,20 @@ export const Host = () => {
 	}
 
 	const QuestionPart = () => {
-		if (currentQuestion === null) return <h1>no question??</h1>
-		if (scores && scores.length > 0) return <h1>we have scores?</h1>
+		if (currentQuestion === null) return null
+		if (scores && scores.length > 0) return null
 
 
 		const getAnswerForColor = (color: AnswerColor): Answer => {
 			return currentQuestion.answers.find(answer => answer.answer_color === color)
 		}
-	
 
 		let redAnswer = getAnswerForColor(AnswerColor.Red)
 		let blueAnswer = getAnswerForColor(AnswerColor.Blue)
 		let greenAnswer = getAnswerForColor(AnswerColor.Green)
 		let yellowAnswer = getAnswerForColor(AnswerColor.Yellow)
+
+		
 	
 		return (
 			<div>
@@ -97,12 +98,17 @@ export const Host = () => {
 	}
 		
 	const GameScreen = () => {
+		const getCorrectAnswerColor = (): AnswerColor => {
+			return currentQuestion.answers.find(answer => answer.is_correct).answer_color
+		}
+	
+
 		return (
 			<>
 				{(scores && scores.length > 0) && (
 					<>
 						<Button color="green"  onClick={sendNextQuestion}>Next</Button>
-						<Highscores scores={scores} scoreMap={scoreMap} />
+						<Highscores scores={scores} scoreMap={scoreMap} correctAnswerColor={getCorrectAnswerColor()} />
 					</>
 				)}
 

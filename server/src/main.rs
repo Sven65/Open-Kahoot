@@ -5,7 +5,6 @@ mod player;
 mod db;
 mod api;
 
-use core::fmt;
 use std::{collections::HashMap, time::Instant};
 
 use chrono::Utc;
@@ -133,8 +132,6 @@ async fn on_connect(socket: SocketRef) {
 
             let _ = socket.leave_all();
             let _ = socket.join(data.room_id.clone());
-
-            println!("Room clients {:#?}", socket.within(data.room_id.clone()));
             
             let _ = socket.emit(SocketEventType::RoomJoined, data.room_id.clone());
             let _ = socket.to(data.room_id.clone()).emit(SocketEventType::PlayerJoined, player);
@@ -187,7 +184,6 @@ async fn on_connect(socket: SocketRef) {
         let mut questions_with_answers: Vec<ReturnedQuestion> = quiz.questions
             .iter()
             .filter(|question| {
-                info!("ansers 4 question {:#?}", question.answers);
                 if let Some(answers) = &question.answers {
                     if answers.len() == 0 {
                         return false;
@@ -247,13 +243,13 @@ async fn on_connect(socket: SocketRef) {
         if let Some(mut room) = GAMEROOM_STORE.get_room_clone(&room_id).await {
             let cloned_room = room.clone();
             let question_started = room.state.question_started.unwrap(); // Clone the field
-            info!("question started at {:#?}", question_started);
             let question = cloned_room.get_current_question().unwrap();
-            info!("Question is {:#?}", question);
             if question.correct_answer_id.is_none() {
                 let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Question does not have a correct answer.".to_string(), error_type: SocketEventType::SendAnswer });
                 return
             }
+
+            info!("Player answer is {:#?}", player_answer);
 
             if player_answer == question.correct_answer_id.clone().unwrap() {
                 let question_clone = question.clone();

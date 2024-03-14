@@ -1,18 +1,20 @@
+import classNames from 'classnames'
 import { ScoreMap } from '../context/GameContext'
-import { Player } from '../types'
+import { AnswerColor, Player } from '../types'
 import { CenterText } from './CenterText'
 import './Highscores.scss'
 
 interface Props {
 	scores: Player[],
 	scoreMap: ScoreMap,
+	correctAnswerColor: AnswerColor,
 }
 
 export const Highscores = ({
 	scores,
 	scoreMap,
+	correctAnswerColor,
 }: Props) => {
-	console.log('score', scoreMap)
 	return (
 		<div class="highscore-page">
 			<div class="header-container">
@@ -21,6 +23,21 @@ export const Highscores = ({
 						<h1>Scoreboard</h1>
 					</div>
 				</CenterText>
+			</div>
+			<div class="answer-breakdown">
+				{
+					Object.entries(scoreMap).map(([ color, count ]) => (
+						<div
+							class={classNames('answer-count', {
+								[color]: true,
+								muted: color !== correctAnswerColor,
+							})} key={`answer-${color}`}>
+							<div class="answer-count-inner">
+								<span>{count}</span>
+							</div>
+						</div>
+					))
+				}
 			</div>
 
 			<div class="highscore-container">

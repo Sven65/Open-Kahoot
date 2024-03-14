@@ -3,7 +3,7 @@
 	line-height: 1.5;
 	font-weight: 400;
 
-	color: #39393A;;
+	color: #39393A;
 	background-color: #ffffff;
 
 	font-synthesis: none;
@@ -13,10 +13,13 @@
 	-webkit-text-size-adjust: 100%;
 
 	--blue-background: #26547C;
-	--blue: #47A8BD;
-	--pink: #EF476F;
-	--green: #06D6A0;
-	--yellow: #FFD166;
+
+	--text-color-light: #fff;
+	--text-color-primary: #39393A;
+	--question-blue: #47A8BD;
+	--question-red: #EF476F;
+	--question-green: #06D6A0;
+	--question-yellow: #FFD166;
 }
 
 body {

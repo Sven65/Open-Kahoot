@@ -135,8 +135,14 @@ impl GameRoom {
     pub fn count_answer_colors(&self) -> HashMap<RealAnswerColor, i32> {
         let mut color_counts: HashMap<RealAnswerColor, i32> = HashMap::new();
 
+        color_counts.insert(RealAnswerColor::Red, 0);
+        color_counts.insert(RealAnswerColor::Green, 0);
+        color_counts.insert(RealAnswerColor::Blue, 0);
+        color_counts.insert(RealAnswerColor::Yellow, 0);
+
         for player in self.players.values() {
-            let color = self.answer_id_to_color(&player.answer_id.clone().unwrap());
+            let answer_id = &player.answer_id.clone().unwrap();
+            let color = self.answer_id_to_color(answer_id);
             *color_counts.entry(color).or_insert(0) += 1;
         }
 
@@ -144,13 +150,21 @@ impl GameRoom {
     }
 
     pub fn answer_id_to_color(&self, answer_id: &String) -> RealAnswerColor {
-        let index = answer_id.chars().fold(0, |acc, c| acc + c as usize) % 4; // Assuming 4 colors
-        match index {
-            0 => RealAnswerColor::Red,
-            1 => RealAnswerColor::Green,
-            2 => RealAnswerColor::Blue,
-            3 => RealAnswerColor::Yellow,
-            _ => unreachable!(), // This should never happen
+        if let Some(question) = self.get_current_question() {
+            if let Some(answers) = question.answers.clone() {
+                if let Some(found_answer ) = answers.into_iter().find(|answer| {
+                    answer.id.eq(&Some(answer_id.clone()))
+                }) {
+                    return found_answer.answer_color
+                } else {
+                    panic!("No answer id matches passed id.");
+                }
+            } else {
+                panic!("Room question does not have answers.");
+            }
+
+        } else {
+            panic!("Room does not have question.");
         }
     }
 }

@@ -1,3 +1,5 @@
+$muted-brightness: 60%;
+
 .header-container {
 	display: flex;
 
@@ -53,4 +55,69 @@
 			}
 		}
 	}
+}
+
+.answer-breakdown-container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	z-index: 2;
+	background-color: rgba(#39393A, 0.4);
+	width: 100vw;
+	height: 100vh;
+
+
+	
+}
+
+.answer-breakdown {
+	width: 100%;
+	display: flex;
+	justify-content: center;
+
+	.answer-count {
+		height: 20%;
+		padding: 16px;
+
+		.answer-count-inner {
+			position: relative;
+			top: calc(100% - 16px - 0.5em);
+			color: var(--text-color-light);
+
+			font-size: 1.5em;
+		}
+
+		&.Red {
+			background-color: var(--question-red);
+
+			&.muted {
+				filter: brightness($muted-brightness);
+			}
+		}
+
+		&.Blue {
+			background-color: var(--question-blue);
+
+			&.muted {
+				filter: brightness($muted-brightness);
+			}
+		}
+
+		&.Green {
+			background-color: var(--question-green);
+
+			&.muted {
+				filter: brightness($muted-brightness);
+			}
+		}
+
+		&.Yellow {
+			background-color: var(--question-yellow);
+
+			&.muted {
+				filter: brightness($muted-brightness);
+			}
+		}
+	}
+
 }
