@@ -25,6 +25,7 @@ export function App() {
 						<Route path="/host" component={Host} />
 						<Route path="/play" component={Player} />
 						<Route path="/quiz/:id/edit" component={QuizEditor} />
+						<Route path="/quiz/:id/edit/:questionId" component={QuizEditor} />
 						<Route default component={NotFound} />
 					</Router>
 				</ApiContextProvider>

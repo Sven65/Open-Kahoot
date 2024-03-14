@@ -1,3 +1,29 @@
 .editor-card {
 	background-color: white;
 }
+
+.editor-container {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: repeat(2, 1fr);
+	grid-column-gap: 0px;
+	grid-row-gap: 0px; 
+
+	.editor-header { grid-area: 1 / 1 / 2 / 6; }
+	.editor-left-column { grid-area: 2 / 1 / 6 / 2; }
+	.editor-middle-column { grid-area: 2 / 2 / 3 / 3; }
+	.editor-right-column { grid-area: 2 / 3 / 3 / 4; } 
+}
+
+.editor-header {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: 1fr;
+	grid-column-gap: 0px;
+	grid-row-gap: 0px; 
+
+	.editor-header-left { grid-area: 1 / 1 / 2 / 3; }
+	.editor-header-right { grid-area: 1 / 3 / 2 / 4; } 
+}
+
+

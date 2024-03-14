@@ -3,16 +3,17 @@ import { Question } from '../../../types'
 import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
 import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { SortableItem } from './SortableItem'
-import { Input } from '../../../components/Form/Input'
 
 interface Props {
 	questions: Question[],
 	onEdit: (newQuestions: Question[]) => void
+	onClickQuestion: (id: String) => void,
 }
 
-export const QuestionEditor = ({
+export const QuestionsList = ({
 	questions,
 	onEdit,
+	onClickQuestion,
 }: Props) => {
 	const [ items, setItems ] = useState(questions)
 
@@ -24,6 +25,11 @@ export const QuestionEditor = ({
 		useSensor(PointerSensor),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
+		}),
+		useSensor(PointerSensor, {
+			activationConstraint: {
+			  distance: 8,
+			},
 		}),
 	)
 
@@ -47,8 +53,6 @@ export const QuestionEditor = ({
 		}
 	}
 
-	console.log('items', items)
-
 	return (
 		<DndContext
 			sensors={sensors}
@@ -59,40 +63,15 @@ export const QuestionEditor = ({
 				items={items}
 				strategy={verticalListSortingStrategy}
 			>
-				{items.map(question => (
-					<SortableItem id={question.id} key={`sortable-${question.id}`}>
-						<div>
-							<form action="#" onSubmit={e => e.preventDefault()}>
-								<h1>{question.question}</h1>
-								<div class="question-editor">
-									<label for="question">Question</label>
-									<Input placeholder={'question'} name="question" />
-								</div>
-								<div class="answers">
-									<div class="red-answer-editor">
-										<label for="question">Red Answer</label>
-										<Input placeholder={'question'} />
-									</div>
-									<div class="green-answer-editor">
-										<label for="question">Green Answer</label>
-
-										<Input placeholder={'question'} />
-									</div>
-									<div class="blue-answer-editor">
-										<label for="question">Blue Answer</label>
-
-										<Input placeholder={'question'} />
-									</div>
-									<div class="yellow-answer-editor">
-										<label for="question">Yellow Answer</label>
-
-										<Input placeholder={'question'} />
-									</div>
-								</div>
-							</form>
-						</div>
-					</SortableItem>
-				))}
+				{items.map(question => 
+					(
+						<SortableItem id={question.id} key={`sortable-${question.id}`}>
+							<a class="listed-question" onClick={() => onClickQuestion(question.id)}>
+								<h3>{question.question}</h3>
+							</a>
+						</SortableItem>
+					),
+				)}
 			</SortableContext>
 		</DndContext>
 	)

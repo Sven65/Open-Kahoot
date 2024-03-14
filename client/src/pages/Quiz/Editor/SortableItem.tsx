@@ -1,16 +1,17 @@
 import { h } from 'preact'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Question } from '../../../types'
+import { PropsWithChildren } from 'preact/compat'
 
-interface Props {
-	id: any,
-	question: Question
+type Props = PropsWithChildren & {
+	id: string,
+	onClick?: () => void,
 }
 
 export const SortableItem = ({
 	id,
-	question,
+	onClick,
+	children,
 }: Props) => {
 	const {
 	  attributes,
@@ -26,8 +27,8 @@ export const SortableItem = ({
 	}
 	
 	return (
-		<div ref={setNodeRef} style={style} {...attributes} {...listeners} key={question.id}>
-			<h1>{question.question}</h1>
+		<div ref={setNodeRef} style={style} {...attributes} {...listeners} onClick={onClick}>
+			{children}
 		</div>
 	)
 }

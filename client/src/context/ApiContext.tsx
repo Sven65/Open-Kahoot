@@ -1,6 +1,7 @@
 import { createContext } from 'preact'
 import { Quiz } from '../types'
 import { useState } from 'preact/hooks'
+import { toast } from 'react-toastify'
 
 export type IApiContext = {
 	quiz: Quiz,
@@ -33,9 +34,12 @@ export const ApiContextProvider = ({
 					},
 					body: JSON.stringify(quiz),
 				})
-				//const data = await request.json()
 
-				console.log('the save data is')
+				if (request.status === 200) {
+					toast.success('Save OK!')
+				} else {
+					toast.error('Save failed.')
+				}
 			},
 		}}>
 			{children}
