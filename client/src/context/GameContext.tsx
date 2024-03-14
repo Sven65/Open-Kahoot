@@ -35,6 +35,7 @@ export type IGameContext = {
 	timeLeft: [number, StateUpdater<number>],
 	timerInterval: [any, StateUpdater<any>],
 	scores: [Player[], StateUpdater<Player[]>],
+	scoreMap: [ScoreMap, StateUpdater<ScoreMap>],
 	playerNames: [string[], StateUpdater<string[]>],
 	gameState: [GameState, StateUpdater<GameState>],
 	// eslint-disable-next-line no-unused-vars
@@ -62,6 +63,7 @@ window.socket = socket
 
 
 export const GameContext = createContext<IGameContext>(null)
+export type ScoreMap = Record<AnswerColor, number>;
 
 
 export const GameContextProvider = ({
@@ -75,12 +77,14 @@ export const GameContextProvider = ({
 	let   [ timeLeft, setTimeLeft ] = useState(0)
 	const [ timerInterval, setTimerInterval ] = useState(null)
 	const [ scores, setScores ] = useState([])
+	const [ scoreMap, setScoreMap ] = useState<ScoreMap | null>(null)
 	const [ gameState, setGameState ] = useState<GameState>(GameState.STARTING)
 
 	const [ playerNames, setPlayerNames ] = useState<string[]>([])
 
 	const clearContext = () => {
 		setScores([])
+		setScoreMap(null)
 		setRoomId('')
 		setShowQuestion(false)
 		setCurrentQuestion(null)
@@ -128,8 +132,9 @@ export const GameContextProvider = ({
 		setScores([])
 	})
 
-	socket.on(SocketEvents.GetScores, (scores: Player[]) => {
+	socket.on(SocketEvents.GetScores, (scores: Player[], counts: ScoreMap) => {
 		setScores(scores)
+		setScoreMap(counts)
 		console.log('Got scores', scores)
 	})
 
@@ -170,6 +175,7 @@ export const GameContextProvider = ({
 			timeLeft: [ timeLeft, setTimeLeft ],
 			timerInterval: [ timerInterval, setTimerInterval ],
 			scores: [ scores, setScores ],
+			scoreMap: [ scoreMap, setScoreMap ],
 			playerNames: [ playerNames, setPlayerNames ],
 			gameState: [ gameState, setGameState ],
 			createRoom: () => {

@@ -16,6 +16,7 @@ pub struct Player {
 	pub points: f32,
 	pub name: Option<String>,
 	pub has_answered: bool,
+	pub answer_id: Option<String>,
 }
 
 impl Player {

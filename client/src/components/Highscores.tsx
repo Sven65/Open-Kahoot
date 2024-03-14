@@ -1,14 +1,18 @@
+import { ScoreMap } from '../context/GameContext'
 import { Player } from '../types'
 import { CenterText } from './CenterText'
 import './Highscores.scss'
 
 interface Props {
 	scores: Player[],
+	scoreMap: ScoreMap,
 }
 
 export const Highscores = ({
 	scores,
+	scoreMap,
 }: Props) => {
+	console.log('score', scoreMap)
 	return (
 		<div class="highscore-page">
 			<div class="header-container">

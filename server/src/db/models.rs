@@ -9,7 +9,7 @@ use crate::api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz};
 use super::schema::sql_types::AnswerColor;
 
 
-#[derive(Debug, Deserialize, SqlType, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Clone)]
+#[derive(Debug, Deserialize, SqlType, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Clone, Hash)]
 #[diesel(sql_type = AnswerColor)]
 pub enum RealAnswerColor {
     Red,

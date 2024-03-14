@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use tokio::sync::RwLock;
 use std::time::Instant;
 
-use crate::{api::quiz_types::ReturnedQuestion, player::Player};
+use crate::{api::quiz_types::ReturnedQuestion, db::models::RealAnswerColor, player::Player};
 
 
 #[derive(serde::Serialize, Clone, Debug)]
@@ -42,6 +42,7 @@ pub struct GameRoom {
 
 
 pub type GameRoomStore = HashMap<String, GameRoom>;
+
 
 impl GameRoom {
     pub fn get_current_question (&self) -> Option<&ReturnedQuestion> {
@@ -114,10 +115,6 @@ impl GameRoom {
         players_vec
     }
 
-    pub fn set_answer_count(&mut self, count: usize) {
-        self.state.answer_count = count;
-    } 
-
     pub fn has_all_players_answered(&self) -> bool {
         self.players.iter().all(|player| player.1.has_answered)
     }
@@ -132,6 +129,28 @@ impl GameRoom {
         for (_, mut player) in players {
             player.has_answered = false;
             self.insert_player(player);
+        }
+    }
+
+    pub fn count_answer_colors(&self) -> HashMap<RealAnswerColor, i32> {
+        let mut color_counts: HashMap<RealAnswerColor, i32> = HashMap::new();
+
+        for player in self.players.values() {
+            let color = self.answer_id_to_color(&player.answer_id.clone().unwrap());
+            *color_counts.entry(color).or_insert(0) += 1;
+        }
+
+        color_counts
+    }
+
+    pub fn answer_id_to_color(&self, answer_id: &String) -> RealAnswerColor {
+        let index = answer_id.chars().fold(0, |acc, c| acc + c as usize) % 4; // Assuming 4 colors
+        match index {
+            0 => RealAnswerColor::Red,
+            1 => RealAnswerColor::Green,
+            2 => RealAnswerColor::Blue,
+            3 => RealAnswerColor::Yellow,
+            _ => unreachable!(), // This should never happen
         }
     }
 }
@@ -171,12 +190,6 @@ impl RoomStore {
 
     }
 
-    // pub async fn add_player_to_room (&self, room_id: &String, player: &String) {
-    //     let mut binding = self.rooms.write().await;
-    //     let rooms = binding.entry(room_id.clone()).or_default();
-        
-    //     println!("Rooms are {:#?}", );
-    // }
 
     pub async fn insert(&self, room: GameRoom) {
         let mut rooms = self.rooms.write().await;

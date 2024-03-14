@@ -24,7 +24,7 @@ extern crate lazy_static;
 
 use crate::{api::{quiz::get_quiz_by_id, quiz_types::ReturnedQuestion}, db::establish_connection, game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, serde::Deserialize, Clone)]
 struct SentInAnswer {
     room_id: String,
     answer: String
@@ -124,6 +124,7 @@ async fn on_connect(socket: SocketRef) {
                 points: 0.0,
                 name: Some(data.name),
                 has_answered: false,
+                answer_id: None,
             };
             
             room.insert_player(player.clone());
@@ -235,24 +236,26 @@ async fn on_connect(socket: SocketRef) {
         socket.emit(SocketEventType::RoomCreated, room_code).unwrap();
     });
 
+    // Todo: Refactor this shit code
     socket.on(SocketEventType::SendAnswer, |socket: SocketRef, Data::<SentInAnswer>(data)| async move {
         // TODO: Check if player is in a room
-        let answer = data.answer;
+        let player_answer = data.answer;
         let room_id = data.room_id;
 
-        info!("Got answer {} for room id {}", answer, room_id);
+        info!("Got answer {} for room id {}", player_answer, room_id);
 
         if let Some(mut room) = GAMEROOM_STORE.get_room_clone(&room_id).await {
+            let cloned_room = room.clone();
             let question_started = room.state.question_started.unwrap(); // Clone the field
             info!("question started at {:#?}", question_started);
-            let question = room.get_current_question().unwrap();
+            let question = cloned_room.get_current_question().unwrap();
             info!("Question is {:#?}", question);
             if question.correct_answer_id.is_none() {
                 let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Question does not have a correct answer.".to_string(), error_type: SocketEventType::SendAnswer });
                 return
             }
 
-            if answer == question.correct_answer_id.clone().unwrap() {
+            if player_answer == question.correct_answer_id.clone().unwrap() {
                 let question_clone = question.clone();
                 if let Some(player) = room.get_player_mut(socket.id.to_string()) {
                     if player.has_answered {
@@ -260,11 +263,12 @@ async fn on_connect(socket: SocketRef) {
                         return
                     }
 
-                    info!("Player {:#?}", player);
                     let duration = question_started.elapsed(); // Use the cloned field
-                    let points = calculate_points(duration.as_secs_f32(), question_clone.max_time, 1000.0);
+                    let points = calculate_points(duration.as_secs_f32(), question_clone.max_time, question.max_points);
                     player.add_points(points);
                     player.has_answered = true;
+                    player.answer_id = Some(player_answer.clone());
+
     
                     // Insert the modified room back into the store
                     GAMEROOM_STORE.insert(room.clone()).await;
@@ -279,7 +283,8 @@ async fn on_connect(socket: SocketRef) {
                         GAMEROOM_STORE.insert(room.clone()).await;
 
                         let scores = room.get_players_sorted_by_score();
-                        let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores,));
+                        let answer_counts = room.count_answer_colors();
+                        let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores, answer_counts));
                     }
                 } else {
                     let _ = socket.emit(SocketEventType::SendPoints, 0);
@@ -292,6 +297,7 @@ async fn on_connect(socket: SocketRef) {
                     }
 
                     player.has_answered = true;
+                    player.answer_id = Some(player_answer.clone());
 
                     GAMEROOM_STORE.insert(room.clone()).await;
 
@@ -301,7 +307,8 @@ async fn on_connect(socket: SocketRef) {
                         GAMEROOM_STORE.insert(room.clone()).await;
     
                         let scores = room.get_players_sorted_by_score();
-                        let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores,));
+                        let answer_counts = room.count_answer_colors();
+                        let _ = socket.to(room.id).emit(SocketEventType::GetScores, (scores, answer_counts));
                     }
                 }
 

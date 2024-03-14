@@ -16,6 +16,7 @@ export const Host = () => {
 	const [roomId] = gameContext.roomId
 	const [currentQuestion] = gameContext.currentQuestion
 	const [scores] = gameContext.scores
+	const [scoreMap] = gameContext.scoreMap
 	const [gameState] = gameContext.gameState
 	const [playerNames] = gameContext.playerNames
 	
@@ -101,7 +102,7 @@ export const Host = () => {
 				{(scores && scores.length > 0) && (
 					<>
 						<Button color="green"  onClick={sendNextQuestion}>Next</Button>
-						<Highscores scores={scores} />
+						<Highscores scores={scores} scoreMap={scoreMap} />
 					</>
 				)}
 
