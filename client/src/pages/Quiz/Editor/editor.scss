@@ -5,7 +5,6 @@
 .editor-container {
 	display: grid;
 	grid-template-columns: repeat(3, 1fr);
-	grid-template-rows: repeat(2, 1fr);
 	grid-column-gap: 0px;
 	grid-row-gap: 0px; 
 
@@ -27,3 +26,41 @@
 }
 
 
+.row {
+	display: flex;
+	flex-wrap: wrap;
+	width: 100%;
+}
+
+.answer-editor {
+	display: grid;
+	grid-template-columns: 1fr 3fr;		
+}
+
+.white-label {
+	background-color: #fff;
+}
+
+.single-question-editor {
+	
+
+	.single-q-answer-editor {
+		.red-label {
+			background-color: var(--question-red);
+		}
+
+		.blue-label {
+			background-color: var(--question-blue);
+		}
+
+		.green-label {
+			background-color: var(--question-green);
+		}
+
+		.yellow-label {
+			background-color: var(--question-yellow);
+		}
+
+	
+	}
+}

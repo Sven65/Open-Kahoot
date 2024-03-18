@@ -14,16 +14,21 @@ export const Input = ({
 	onEnter,
 	label,
 	labelClass,
+	type,
 	...rest
-}: Props) => (
-	<>
-		{label && <label class={`ok-label ${labelClass}`}>{label}</label>}
-		<input
-			class={`ok-input ${label && 'has-label'}`}
-			onKeyDown={(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null}
-			{...rest}
-		>
-			{ children }
-		</input>
-	</>
-)
+}: Props) => {
+	return (
+		<>
+			{label && <label class={`ok-label ${labelClass}`}>{label}</label>}
+			<input
+				class={`ok-input ${label && 'has-label'}`}
+				type={type}
+				onKeyDown={
+					(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null}
+				{...rest}
+			>
+				{ children }
+			</input>
+		</>
+	)
+}

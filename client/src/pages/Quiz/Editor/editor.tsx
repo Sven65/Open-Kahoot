@@ -1,29 +1,28 @@
-import { useLocation, useRoute } from 'preact-iso'
+import { useRoute } from 'preact-iso'
 import { useContext, useEffect, useState } from 'preact/hooks'
 import { ApiContext } from '../../../context/ApiContext'
 
 import './editor.scss'
-import { QuestionEditor } from './QuestionsEditor'
 import { Button } from '../../../components/Form/Button'
-import { Question, Quiz } from '../../../types'
-import { SortableItem } from './SortableItem'
+import { Answer, AnswerColor, Question, Quiz } from '../../../types'
 import { QuestionsList } from './QuestionsList'
+import { Input } from '../../../components/Form/Input'
 
 export const QuizEditor = () => {
 	const apiContext = useContext(ApiContext)
 	const quiz = apiContext.quiz
-	const location = useLocation()
 	const route = useRoute()
 
 	const { getQuiz, saveQuiz } = apiContext
 
 	const [ editedQuiz, setEditedQuiz ] = useState<Quiz>(null)
-	const [ selectedQuestionId, setSelectedQuestionId ] = useState<string>(null)
 	const [ selectedQuestion, setSelectedQuestion ] = useState<Question>(null)
 
 
 	useEffect(() => {
+		// @ts-ignore
 		getQuiz(route.params.id)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
 	useEffect(() => {
@@ -40,16 +39,46 @@ export const QuizEditor = () => {
 		}
 	}
 
-	// const onEditQuestion = (newQuestion: Question) => {
-	// 	const editClone = Object.assign({}, editedQuiz)
-	// 	replaceObjectById(editClone.questions, selectedQuestion.id, newQuestion)
 
-	// 	setEditedQuiz(editClone)
-	// }
-	
-	console.log('quiz', apiContext.quiz)
+	const getAnswerForColor = (color: AnswerColor): Answer => {
+		return selectedQuestion.answers.find(answer => answer.answer_color === color)
+	}
 
-	console.log('ssllc', selectedQuestion)
+	const setSelectedQuestionValue = (value: any, prop: string) => {
+		const newSelectedQuestion = {
+			...selectedQuestion,
+			[prop]: value,
+		}
+
+		setSelectedQuestion(newSelectedQuestion)
+
+		replaceObjectById(editedQuiz.questions,	selectedQuestion.id, newSelectedQuestion)
+
+		setEditedQuiz(editedQuiz)
+	}
+
+	const setSelectedQuestionAnswer = (value: string, color: AnswerColor) => {
+		const colorIndex = selectedQuestion.answers.findIndex(answer => answer.answer_color === color)
+		const colorAnswer = selectedQuestion.answers[colorIndex]
+		const answerClone = [...selectedQuestion.answers]
+
+		answerClone[colorIndex] = {
+			...colorAnswer,
+			answer: value,
+		}
+
+		const newSelectedQuestion: Question = {
+			...selectedQuestion,
+			answers: answerClone,
+		}
+
+		setSelectedQuestion(newSelectedQuestion)
+
+		replaceObjectById(editedQuiz.questions,	selectedQuestion.id, newSelectedQuestion)
+
+		setEditedQuiz(editedQuiz)
+	}
+
 
 	return (
 		<div class="editor-container">
@@ -63,6 +92,9 @@ export const QuizEditor = () => {
 			</div>
 
 			<div class="editor-left-column">
+				<div class="row">
+					<h1>Question List</h1>
+				</div>
 				<QuestionsList
 					questions={editedQuiz.questions}
 					onEdit={(newQuestions: Question[]) => {
@@ -74,17 +106,117 @@ export const QuizEditor = () => {
 						setSelectedQuestion(quiz.questions.find(question => question.id === id))
 					}}
 				/>
+				<Button color='green'>New Question</Button>
 			</div>
 
 			<div class="editor-middle-column">
-				<QuestionEditor
-					question={selectedQuestion}
-					onEdit={() => null}
-				/>
+				{selectedQuestion ? (
+					<div class="single-question-editor">
+						<div class="row">
+							<h1>Answers & Question</h1>
+						</div>
+						<div class="row">
+							<div class="answer-editor">
+								<Input
+									label="Question"
+									labelClass='white-label'
+									placeholder={'Question'}
+									value={selectedQuestion.question}
+									// @ts-ignore
+									onInput={e => setSelectedQuestionValue(e.target.value, 'question')}
+								/>
+							</div>
+						</div>
+						<div class="row">
+
+							<div class="single-q-answer-editor">
+								<div class="row">
+									<div class="answer-editor red">
+										<Input
+											id="red-answer"
+											placeholder={'Answer'}
+											label={'Red'}
+											labelClass="red-label"
+											value={getAnswerForColor(AnswerColor.Red).answer}
+											// @ts-ignore
+											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Red)}
+										/>
+									</div>
+									<div class="answer-editor">
+										<Input
+											placeholder={'Answer'}
+											label={'Green'}
+											labelClass="green-label"
+											value={getAnswerForColor(AnswerColor.Green).answer}
+											// @ts-ignore
+											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Green)}
+										/>
+									</div>
+								</div>
+								<div class="row">
+									<div class="answer-editor">
+										<Input
+											placeholder={'Answer'}
+											label={'Blue'}
+											labelClass="blue-label"
+											value={getAnswerForColor(AnswerColor.Blue).answer}
+											// @ts-ignore
+											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Blue)}
+										/>
+									</div>
+									<div class="answer-editor">
+										<Input
+											placeholder={'Answer'}
+											label={'Yellow'}
+											labelClass="yellow-label"
+											value={getAnswerForColor(AnswerColor.Yellow).answer}
+											// @ts-ignore
+											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Yellow)}
+										/>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				) : (<h1>Please select a question</h1>)}
 			</div>
 
 			<div class="editor-right-column">
-				right
+				{selectedQuestion && (
+					<>
+						<div class="row">
+							<h1>Question Meta</h1>
+						</div>
+						<div class="row">
+							<div class="answer-editor">
+								<Input
+									label="Max Points"
+									placeholder={'1000'}
+									labelClass='white-label'
+									value={selectedQuestion.max_points}
+									// Todo: Prevent letters in here
+									// @ts-ignore
+									onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_points')}
+
+									type="number"
+								/>
+							</div>
+						</div>
+						<div class="row">
+							<div class="answer-editor">
+								<Input
+									label="Answer Time"
+									labelClass='white-label'
+									placeholder={'30'}
+									value={selectedQuestion.max_time}
+									// @ts-ignore
+									onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_time')}
+									type="number"
+								/>
+							</div>
+						</div>
+					</>
+				)}
 			</div>
 	
 
