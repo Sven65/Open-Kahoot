@@ -18,6 +18,9 @@ export const QuizEditor = () => {
 	const { getQuiz, saveQuiz } = apiContext
 
 	const [ editedQuiz, setEditedQuiz ] = useState<Quiz>(null)
+	const [ selectedQuestionId, setSelectedQuestionId ] = useState<string>(null)
+	const [ selectedQuestion, setSelectedQuestion ] = useState<Question>(null)
+
 
 	useEffect(() => {
 		getQuiz(route.params.id)
@@ -27,10 +30,26 @@ export const QuizEditor = () => {
 		setEditedQuiz(quiz)
 	}, [quiz])
 
+	
 	if (!editedQuiz) return <h1>Please wait...</h1>
+	
+	const replaceObjectById = (array: any[], idToReplace: string, newObject: Record<any, any>) => {
+		const index = array.findIndex(obj => obj.id === idToReplace)
+		if (index !== -1) {
+			array[index] = { ...newObject, id: idToReplace } // Preserving the original ID
+		}
+	}
 
+	// const onEditQuestion = (newQuestion: Question) => {
+	// 	const editClone = Object.assign({}, editedQuiz)
+	// 	replaceObjectById(editClone.questions, selectedQuestion.id, newQuestion)
+
+	// 	setEditedQuiz(editClone)
+	// }
 	
 	console.log('quiz', apiContext.quiz)
+
+	console.log('ssllc', selectedQuestion)
 
 	return (
 		<div class="editor-container">
@@ -51,12 +70,17 @@ export const QuizEditor = () => {
 						editedQuiz.questions = newQuestions
 						setEditedQuiz(editedQuiz)
 					}}
-					onClickQuestion={(id) => location.route(`${id}`, true)}
+					onClickQuestion={(id) => {
+						setSelectedQuestion(quiz.questions.find(question => question.id === id))
+					}}
 				/>
 			</div>
 
 			<div class="editor-middle-column">
-				{route.params.questionId && (<h1>{route.params.questionId}</h1>)}
+				<QuestionEditor
+					question={selectedQuestion}
+					onEdit={() => null}
+				/>
 			</div>
 
 			<div class="editor-right-column">

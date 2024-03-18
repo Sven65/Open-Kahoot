@@ -1,0 +1,41 @@
+.single-question-editor {
+
+	.white-label {
+		background-color: #fff;
+	}
+}
+
+.single-question-editor {
+	.row {
+		display: flex;
+		flex-wrap: wrap;
+		width: 100%;
+	}
+
+	.answer-editor {
+		display: grid;
+		grid-template-columns: 1fr 3fr;
+
+		
+	}
+
+	.single-q-answer-editor {
+		.red-label {
+			background-color: var(--question-red);
+		}
+
+		.blue-label {
+			background-color: var(--question-blue);
+		}
+
+		.green-label {
+			background-color: var(--question-green);
+		}
+
+		.yellow-label {
+			background-color: var(--question-yellow);
+		}
+
+		
+	}
+}

@@ -1,99 +1,100 @@
 import { useEffect, useState } from 'preact/hooks'
-import { Question } from '../../../types'
-import { DndContext, KeyboardSensor, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core'
-import { SortableContext, arrayMove, sortableKeyboardCoordinates, verticalListSortingStrategy } from '@dnd-kit/sortable'
-import { SortableItem } from './SortableItem'
+import { Answer, AnswerColor, Question } from '../../../types'
 import { Input } from '../../../components/Form/Input'
 
+import './QuestionsEditor.scss'
+
 interface Props {
-	questions: Question[],
-	onEdit: (newQuestions: Question[]) => void
+	question: Question,
+	onEdit: (newQuestion: Question) => void
 }
 
 export const QuestionEditor = ({
-	questions,
+	question,
 	onEdit,
 }: Props) => {
-	const [ items, setItems ] = useState(questions)
+	const [ editedQuestion, setEditedQuestion ] = useState(question)
 
 	useEffect(() => {
-		onEdit(items)
-	}, [items])
+		onEdit(editedQuestion)
+	}, [editedQuestion])
 
-	const sensors = useSensors(
-		useSensor(PointerSensor),
-		useSensor(KeyboardSensor, {
-			coordinateGetter: sortableKeyboardCoordinates,
-		}),
-	)
+	useEffect(() => {
+		setEditedQuestion(question)
+	}, [question])
 
-	const recalculateRanks = (questions: Question[]) => {
-		return questions.map((question, idx) => ({
-			...question,
-			question_rank: idx + 1,
-		}))
+	const setQuestion = (e) => {
+		setEditedQuestion({
+			...editedQuestion,
+			question: e.target.value,
+		})
+
+		// onEdit(editedQuestion)
 	}
 
-	const handleDragEnd = (event) => {
-		const { active, over } = event
-    
-		if (active.id !== over.id) {
-			setItems((items) => {
-				const oldIndex = items.findIndex(item => item.id == active.id)
-				const newIndex = items.findIndex(item => item.id == over.id)
-
-				return recalculateRanks(arrayMove(items, oldIndex, newIndex))
-			})
-		}
+	const getAnswerForColor = (color: AnswerColor): Answer => {
+		return editedQuestion.answers.find(answer => answer.answer_color === color)
 	}
 
-	console.log('items', items)
+
+	if (!editedQuestion) return <h1>Loading...</h1>
+
 
 	return (
-		<DndContext
-			sensors={sensors}
-			collisionDetection={closestCenter}
-			onDragEnd={handleDragEnd}
-		>
-			<SortableContext
-				items={items}
-				strategy={verticalListSortingStrategy}
-			>
-				{items.map(question => (
-					<SortableItem id={question.id} key={`sortable-${question.id}`}>
-						<div>
-							<form action="#" onSubmit={e => e.preventDefault()}>
-								<h1>{question.question}</h1>
-								<div class="question-editor">
-									<label for="question">Question</label>
-									<Input placeholder={'question'} name="question" />
-								</div>
-								<div class="answers">
-									<div class="red-answer-editor">
-										<label for="question">Red Answer</label>
-										<Input placeholder={'question'} />
-									</div>
-									<div class="green-answer-editor">
-										<label for="question">Green Answer</label>
+		<div class="single-question-editor">
+			<div class="row">
+				<div class="answer-editor">
+					<Input
+						label="Question"
+						labelClass='white-label'
+						placeholder={'Question'}
+						value={editedQuestion.question}
+						onInput={setQuestion}
+					/>
+				</div>
+			</div>
+			<div class="row">
 
-										<Input placeholder={'question'} />
-									</div>
-									<div class="blue-answer-editor">
-										<label for="question">Blue Answer</label>
-
-										<Input placeholder={'question'} />
-									</div>
-									<div class="yellow-answer-editor">
-										<label for="question">Yellow Answer</label>
-
-										<Input placeholder={'question'} />
-									</div>
-								</div>
-							</form>
+				<div class="single-q-answer-editor">
+					<div class="row">
+						<div class="answer-editor red">
+							<Input
+								id="red-answer"
+								placeholder={'Answer'}
+								label={'Red'}
+								labelClass="red-label"
+								value={getAnswerForColor(AnswerColor.Red).answer}
+							/>
 						</div>
-					</SortableItem>
-				))}
-			</SortableContext>
-		</DndContext>
+						<div class="answer-editor">
+							<Input
+								placeholder={'Answer'}
+								label={'Green'}
+								labelClass="green-label"
+								value={getAnswerForColor(AnswerColor.Green).answer}
+							/>
+						</div>
+					</div>
+					<div class="row">
+						<div class="answer-editor">
+							<Input
+								placeholder={'Answer'}
+								label={'Blue'}
+								labelClass="blue-label"
+								value={getAnswerForColor(AnswerColor.Blue).answer}
+							/>
+						</div>
+						<div class="answer-editor">
+							<Input
+								placeholder={'Answer'}
+								value={getAnswerForColor(AnswerColor.Yellow).answer}
+								label={'Yellow'}
+								labelClass="yellow-label"
+							/>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	)
 }

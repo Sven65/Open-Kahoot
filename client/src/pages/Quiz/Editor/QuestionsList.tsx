@@ -7,7 +7,7 @@ import { SortableItem } from './SortableItem'
 interface Props {
 	questions: Question[],
 	onEdit: (newQuestions: Question[]) => void
-	onClickQuestion: (id: String) => void,
+	onClickQuestion: (id: string) => void,
 }
 
 export const QuestionsList = ({
