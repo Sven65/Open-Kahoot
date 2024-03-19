@@ -7,13 +7,14 @@ import { Button } from '../../../components/Form/Button'
 import { Answer, AnswerColor, Question, Quiz, RecursivePartial } from '../../../types'
 import { QuestionsList } from './QuestionsList'
 import { Input } from '../../../components/Form/Input'
+import { deleteByKey, replaceObjectById } from '../../../util/modify'
 
 export const QuizEditor = () => {
 	const apiContext = useContext(ApiContext)
 	const quiz = apiContext.quiz
 	const route = useRoute()
 
-	const { getQuiz, saveQuiz } = apiContext
+	const { getQuiz, saveQuiz, deleteQuiz, deleteQuestion } = apiContext
 
 	const [ editedQuiz, setEditedQuiz ] = useState<Quiz>(null)
 	const [ selectedQuestion, setSelectedQuestion ] = useState<Question>(null)
@@ -32,14 +33,6 @@ export const QuizEditor = () => {
 	}, [quiz])
 	
 	if (!editedQuiz) return <h1>Please wait...</h1>
-	
-	const replaceObjectById = (array: any[], idToReplace: string, newObject: Record<any, any>) => {
-		const index = array.findIndex(obj => obj.id === idToReplace)
-		if (index !== -1) {
-			array[index] = { ...newObject, id: idToReplace } // Preserving the original ID
-		}
-	}
-
 
 	const getAnswerForColor = (color: AnswerColor): Answer | undefined => {
 		return selectedQuestion.answers.find(answer => answer.answer_color === color)
@@ -112,7 +105,24 @@ export const QuizEditor = () => {
 			...editedQuiz,
 			questions: newQuestions,
 		})
+	}
 
+	const deleteSingleQuestion = (id: string) => {
+		console.log('deleting id', id)
+
+		if (!id.startsWith('new')) deleteQuestion(id)
+
+		const newQuestions = deleteByKey([...quiz.questions], 'id', id)
+
+		console.log('newQuestions', newQuestions)
+
+		setSelectedQuestion(null)
+
+
+		setEditedQuiz({
+			...editedQuiz,
+			questions: newQuestions,
+		})
 
 	}
 
@@ -251,6 +261,9 @@ export const QuizEditor = () => {
 									type="number"
 								/>
 							</div>
+						</div>
+						<div class="row">
+							<Button color="red" onClick={() => deleteSingleQuestion(selectedQuestion.id)}>Delete Question</Button>
 						</div>
 					</>
 				)}

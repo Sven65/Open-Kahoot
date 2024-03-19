@@ -7,6 +7,8 @@ export type IApiContext = {
 	quiz: Quiz,
 	getQuiz: (id: number) => Promise<void>,
 	saveQuiz: (quiz: Quiz) => Promise<void>,
+	deleteQuiz: (id: String) => Promise<void>,
+	deleteQuestion: (id: String) => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -50,6 +52,23 @@ export const ApiContextProvider = ({
 					toast.error('Save failed.')
 				}
 			},
+			deleteQuestion: async (id: string) => {
+				if (id.startsWith('new-')) return
+
+				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/question/${id}`, {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				})
+
+				if (request.status === 201) {
+					toast.success('Delete OK!')
+				} else {
+					toast.error('Delete failed.')
+				}
+			},
+			deleteQuiz: async (id: string) => null,
 		}}>
 			{children}
 		</ApiContext.Provider>
