@@ -1,10 +1,10 @@
 import { useRoute } from 'preact-iso'
-import { useContext, useEffect, useState } from 'preact/hooks'
+import { useContext, useEffect, useRef, useState } from 'preact/hooks'
 import { ApiContext } from '../../../context/ApiContext'
 
 import './editor.scss'
 import { Button } from '../../../components/Form/Button'
-import { Answer, AnswerColor, Question, Quiz } from '../../../types'
+import { Answer, AnswerColor, Question, Quiz, RecursivePartial } from '../../../types'
 import { QuestionsList } from './QuestionsList'
 import { Input } from '../../../components/Form/Input'
 
@@ -18,6 +18,8 @@ export const QuizEditor = () => {
 	const [ editedQuiz, setEditedQuiz ] = useState<Quiz>(null)
 	const [ selectedQuestion, setSelectedQuestion ] = useState<Question>(null)
 
+	const listRef = useRef()
+
 
 	useEffect(() => {
 		// @ts-ignore
@@ -28,7 +30,6 @@ export const QuizEditor = () => {
 	useEffect(() => {
 		setEditedQuiz(quiz)
 	}, [quiz])
-
 	
 	if (!editedQuiz) return <h1>Please wait...</h1>
 	
@@ -40,7 +41,7 @@ export const QuizEditor = () => {
 	}
 
 
-	const getAnswerForColor = (color: AnswerColor): Answer => {
+	const getAnswerForColor = (color: AnswerColor): Answer | undefined => {
 		return selectedQuestion.answers.find(answer => answer.answer_color === color)
 	}
 
@@ -79,6 +80,41 @@ export const QuizEditor = () => {
 		setEditedQuiz(editedQuiz)
 	}
 
+	const createNewQuestion = () => {
+		const newQuestion: RecursivePartial<Question> = {
+			answers: [
+				{ answer: '', is_correct: false, answer_color: AnswerColor.Red },
+				{ answer: '', is_correct: false, answer_color: AnswerColor.Green },
+				{ answer: '', is_correct: false, answer_color: AnswerColor.Yellow },
+				{ answer: '', is_correct: false, answer_color: AnswerColor.Blue },
+			],
+			correct_answer_id: '',
+			quiz_id: editedQuiz.id,
+			question: 'New Question',
+			question_rank: editedQuiz.questions.length,
+			id: `new-${(Math.random() * 16).toString(16)}`,
+			max_points: 1000,
+			max_time: 30,
+		}
+
+		console.log('new', newQuestion)
+
+		setSelectedQuestion(newQuestion)
+
+		const newQuestions: Question[] = [
+			...editedQuiz.questions,
+			newQuestion,
+		]
+
+		console.log('new leng', newQuestions.length)
+
+		setEditedQuiz({
+			...editedQuiz,
+			questions: newQuestions,
+		})
+
+
+	}
 
 	return (
 		<div class="editor-container">
@@ -96,6 +132,7 @@ export const QuizEditor = () => {
 					<h1>Question List</h1>
 				</div>
 				<QuestionsList
+					ref={listRef}
 					questions={editedQuiz.questions}
 					onEdit={(newQuestions: Question[]) => {
 						if (!editedQuiz) return
@@ -103,10 +140,10 @@ export const QuizEditor = () => {
 						setEditedQuiz(editedQuiz)
 					}}
 					onClickQuestion={(id) => {
-						setSelectedQuestion(quiz.questions.find(question => question.id === id))
+						setSelectedQuestion(editedQuiz.questions.find(question => question.id === id))
 					}}
 				/>
-				<Button color='green'>New Question</Button>
+				<Button color='green' onClick={createNewQuestion}>New Question</Button>
 			</div>
 
 			<div class="editor-middle-column">
@@ -137,7 +174,7 @@ export const QuizEditor = () => {
 											placeholder={'Answer'}
 											label={'Red'}
 											labelClass="red-label"
-											value={getAnswerForColor(AnswerColor.Red).answer}
+											value={getAnswerForColor(AnswerColor.Red)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Red)}
 										/>
@@ -147,7 +184,7 @@ export const QuizEditor = () => {
 											placeholder={'Answer'}
 											label={'Green'}
 											labelClass="green-label"
-											value={getAnswerForColor(AnswerColor.Green).answer}
+											value={getAnswerForColor(AnswerColor.Green)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Green)}
 										/>
@@ -159,7 +196,7 @@ export const QuizEditor = () => {
 											placeholder={'Answer'}
 											label={'Blue'}
 											labelClass="blue-label"
-											value={getAnswerForColor(AnswerColor.Blue).answer}
+											value={getAnswerForColor(AnswerColor.Blue)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Blue)}
 										/>
@@ -169,7 +206,7 @@ export const QuizEditor = () => {
 											placeholder={'Answer'}
 											label={'Yellow'}
 											labelClass="yellow-label"
-											value={getAnswerForColor(AnswerColor.Yellow).answer}
+											value={getAnswerForColor(AnswerColor.Yellow)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Yellow)}
 										/>

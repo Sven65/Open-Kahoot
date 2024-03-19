@@ -21,6 +21,10 @@ export const QuestionsList = ({
 		onEdit(items)
 	}, [items])
 
+	useEffect(() => {
+		setItems(questions)
+	}, [questions])
+
 	const sensors = useSensors(
 		useSensor(PointerSensor),
 		useSensor(KeyboardSensor, {

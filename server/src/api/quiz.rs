@@ -42,7 +42,7 @@ async fn update_quiz(
 	for mut ret_question in new_quiz.questions {
 		let new_question_id = generate_short_uuid();
 
-		if ret_question.id.is_none() {
+		if ret_question.id.is_none() || ret_question.id.clone().unwrap().is_empty() {
 			ret_question.id = Some(new_question_id.clone())
 		}
 

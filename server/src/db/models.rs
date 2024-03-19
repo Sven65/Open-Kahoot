@@ -4,7 +4,7 @@ use chrono::Local;
 use diesel::{deserialize::{self, FromSql, FromSqlRow}, expression::AsExpression, pg::{Pg, PgValue}, prelude::*, serialize::{self, IsNull, Output, ToSql}, sql_types::SqlType};
 use serde::{Deserialize, Serialize};
 
-use crate::api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz};
+use crate::{api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz}, util::generate_short_uuid};
 
 use super::schema::sql_types::AnswerColor;
 

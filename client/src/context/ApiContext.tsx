@@ -10,7 +10,16 @@ export type IApiContext = {
 }
 
 export const ApiContext = createContext<IApiContext>(null)
-
+ 
+const removeNewQuestionIds = (quiz: Quiz): Quiz => {
+	return {
+		...quiz,
+		questions: quiz.questions.map(question => ({
+			...question,
+			id: question.id.startsWith('new-') ? '' : question.id,
+		})),
+	}
+}
 
 export const ApiContextProvider = ({
 	children,
@@ -32,7 +41,7 @@ export const ApiContextProvider = ({
 					headers: {
 						'Content-Type': 'application/json',
 					},
-					body: JSON.stringify(quiz),
+					body: JSON.stringify(removeNewQuestionIds(quiz)),
 				})
 
 				if (request.status === 200) {
