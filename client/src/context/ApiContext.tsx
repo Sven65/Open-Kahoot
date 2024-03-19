@@ -62,7 +62,7 @@ export const ApiContextProvider = ({
 					},
 				})
 
-				if (request.status === 201) {
+				if (request.status === 204) {
 					toast.success('Delete OK!')
 				} else {
 					toast.error('Delete failed.')

@@ -93,11 +93,10 @@ async fn delete_quiz(Path(_id): Path<i32>) -> &'static str {
 
 pub fn quiz_router() -> Router {
 	Router::new()
-		.route(
-			"/:id",
-			get(get_quiz)
-			.put(update_quiz)
-			.delete(delete_quiz)
-		)
-
-	}
+	.route(
+		"/:id",
+		get(get_quiz)
+		.put(update_quiz)
+		.delete(delete_quiz)
+	)
+}
