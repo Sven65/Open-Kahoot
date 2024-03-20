@@ -13,6 +13,7 @@ import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { QuizEditor } from './pages/Quiz/Editor/editor.js'
 import { ApiContextProvider } from './context/ApiContext.js'
+import { Register } from './pages/Register/index.js'
 
 export function App() {
 	return (
@@ -25,7 +26,7 @@ export function App() {
 						<Route path="/host" component={Host} />
 						<Route path="/play" component={Player} />
 						<Route path="/quiz/:id/edit" component={QuizEditor} />
-						<Route path="/quiz/:id/edit/:questionId" component={QuizEditor} />
+						<Route path="/register" component={Register} />
 						<Route default component={NotFound} />
 					</Router>
 				</ApiContextProvider>

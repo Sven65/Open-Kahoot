@@ -25,6 +25,10 @@
 	-webkit-appearance: textfield;
 	appearance: textfield;
 
+	&.full-width {
+		width: 100%;
+	}
+
 	&.has-label {
 		border-top-left-radius: unset;
 		border-bottom-left-radius: unset;
@@ -37,7 +41,7 @@
 	border: 2px solid #39393A;
 	border-top-left-radius: 8px;
 	border-bottom-left-radius: 8px;
-	background-color: #39393A;
+	background-color: #fff;
 	// padding: 15px 30px;
 	color: #39393A;
 	border-right: unset;
@@ -46,3 +50,9 @@
 	justify-content: center;
 	align-items: center;
 }
+
+
+.ok-input-container {
+	display: flex;
+}
+
