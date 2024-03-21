@@ -12,7 +12,7 @@ use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::util::json_response_with_cookie, db::{establish_connection, models::{Session, User}, schema::{session, users}}, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, db::{establish_connection, models::{Session, User}, schema::{session, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
 use super::util::{generic_error, generic_json_response, json_response};
 
@@ -157,12 +157,24 @@ async fn login(
 	}	
 }
 
-async fn test_cookie(
+async fn get_me(
 	Extension(current_session): Extension<CurrentSession>
 ) -> Response<axum::body::Body> {
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+	let current_session = current_session.session.unwrap();
+	
+	let conn = &mut establish_connection();
+	
 	info!("session ext {:#?}", current_session);
 
-	generic_json_response(StatusCode::OK, "yea")
+	match users::table.find(current_session.user_id).first::<User>(conn) {
+		Ok(user) => {json_response(StatusCode::OK, ReturnedUser {
+			id: user.id,
+			username: user.username,
+		})},
+		Err(_) => generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to login session.")
+	}
 }
 
 pub fn user_router() -> Router {
@@ -170,5 +182,5 @@ pub fn user_router() -> Router {
 		.route("/", get(root))
 		.route("/", post(create_user))
 		.route("/login", post(login))
-		.route("/test", get(test_cookie))
+		.route("/@me", get(get_me))
 }

@@ -15,6 +15,7 @@ import { QuizEditor } from './pages/Quiz/Editor/editor.js'
 import { ApiContextProvider } from './context/ApiContext.js'
 import { Register } from './pages/Register/index.js'
 import { Login } from './pages/Login/index.js'
+import { Me } from './pages/Me/index.js'
 
 export function App() {
 	return (
@@ -29,6 +30,7 @@ export function App() {
 						<Route path="/quiz/:id/edit" component={QuizEditor} />
 						<Route path="/register" component={Register} />
 						<Route path="/login" component={Login} />
+						<Route path="/@me" component={Me} />
 						<Route default component={NotFound} />
 					</Router>
 				</ApiContextProvider>
