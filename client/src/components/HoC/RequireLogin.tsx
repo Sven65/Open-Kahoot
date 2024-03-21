@@ -22,9 +22,10 @@ export const RequireLogin = (WrappedComponent: any) => {
 	}
 
 	const newComponent = (props) => {
+		// eslint-disable-next-line react-hooks/rules-of-hooks
 		const apiContext = useContext(ApiContext)
 
-
+		// eslint-disable-next-line react-hooks/rules-of-hooks
 		useEffect(() => {
 			apiContext.fetchMe()
 		}, [])

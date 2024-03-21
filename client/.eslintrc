@@ -19,6 +19,7 @@
 		"no-console": "off",
 		"indent": [ 2, "tab", { "SwitchCase": 1 } ],
 		"object-curly-spacing": ["error", "always"],
-		"array-bracket-spacing": ["error", "always", { "singleValue": false }]
+		"array-bracket-spacing": ["error", "always", { "singleValue": false }],
+        "react-hooks/exhaustive-deps": "off"
     }
 }

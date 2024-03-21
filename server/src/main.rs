@@ -61,7 +61,6 @@ const PLAYER_NAME_LENGTH_LIMIT: usize = 24;
 
 lazy_static! {
     static ref GAMEROOM_STORE: RoomStore = RoomStore::new();
-    static ref CURRENT_QUIZ_ID: String = "quiz_1".to_string();
 }
 
 async fn on_connect(socket: SocketRef) {
@@ -149,7 +148,7 @@ async fn on_connect(socket: SocketRef) {
         },
     );
 
-    socket.on(SocketEventType::CreateRoom, |socket: SocketRef| async move {
+    socket.on(SocketEventType::CreateRoom, |socket: SocketRef, Data::<String>(quiz_id)| async move {
         info!("Creating room");
         let room_code = util::generate_random_number_string(6);
 
@@ -159,7 +158,7 @@ async fn on_connect(socket: SocketRef) {
 
         let mut conn = establish_connection();
 
-        let quiz = get_quiz_by_id(CURRENT_QUIZ_ID.to_string(), &mut conn).await;
+        let quiz = get_quiz_by_id(quiz_id.to_string(), &mut conn).await;
 
         if quiz.is_err() {
             let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Tried to load a quiz that doesn't exist.".to_string(), error_type: SocketEventType::CreateRoom });
@@ -179,7 +178,7 @@ async fn on_connect(socket: SocketRef) {
                 created_at: Some(Utc::now().naive_utc()),
                 updated_at: Some(Utc::now().naive_utc()),
                 question_rank: 0,
-                quiz_id: CURRENT_QUIZ_ID.to_string(),
+                quiz_id: quiz_id.to_string(),
             }
         ];
 
@@ -212,7 +211,7 @@ async fn on_connect(socket: SocketRef) {
             created_at: Some(Utc::now().naive_utc()),
             updated_at: Some(Utc::now().naive_utc()),
             question_rank: std::i32::MAX,
-            quiz_id: CURRENT_QUIZ_ID.to_string(),
+            quiz_id: quiz_id.to_string(),
         });
 
         GAMEROOM_STORE.insert(GameRoom {

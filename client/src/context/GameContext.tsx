@@ -40,7 +40,8 @@ export type IGameContext = {
 	gameState: [GameState, StateUpdater<GameState>],
 	// eslint-disable-next-line no-unused-vars
 	join: (room_id: string, name: string) => void,
-	createRoom: () => void,
+	// eslint-disable-next-line no-unused-vars
+	createRoom: (quizId: string) => void,
 	// eslint-disable-next-line no-unused-vars
 	sendAnswer: (_answer: string) => void,
 	sendShowQuestion: () => void,
@@ -178,8 +179,8 @@ export const GameContextProvider = ({
 			scoreMap: [ scoreMap, setScoreMap ],
 			playerNames: [ playerNames, setPlayerNames ],
 			gameState: [ gameState, setGameState ],
-			createRoom: () => {
-				socket.emit(SocketEvents.CreateRoom)
+			createRoom: (quizId: string) => {
+				socket.emit(SocketEvents.CreateRoom, quizId)
 			},
 			sendAnswer: (answer: string) => {
 				socket.emit(SocketEvents.SendAnswer, roomId, answer)

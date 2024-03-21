@@ -10,6 +10,13 @@ interface Props {
 	correctAnswerColor: AnswerColor,
 }
 
+const getDefaultScoreMap = (): ScoreMap => ({
+	Blue: 0,
+	Green: 0,
+	Red: 0,
+	Yellow: 0,
+})
+
 export const Highscores = ({
 	scores,
 	scoreMap,
@@ -26,7 +33,7 @@ export const Highscores = ({
 			</div>
 			<div class="answer-breakdown">
 				{
-					Object.entries(scoreMap).map(([ color, count ]) => (
+					Object.entries(scoreMap || getDefaultScoreMap()).map(([ color, count ]) => (
 						<div
 							class={classNames('answer-count', {
 								[color]: true,

@@ -14,6 +14,7 @@ export type CreateUser = {
 export type IApiContext = {
 	quiz: Quiz,
 	user: User,
+	userQuizzes: Quiz[],
 	// eslint-disable-next-line no-unused-vars
 	getQuiz: (id: number) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
@@ -27,6 +28,7 @@ export type IApiContext = {
 	// eslint-disable-next-line no-unused-vars
 	login: (username: string, password: string) => Promise<void>,
 	fetchMe: () => Promise<void>,
+	fetchUserQuizzes: () => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -41,17 +43,33 @@ const removeNewQuestionIds = (quiz: Quiz): Quiz => {
 	}
 }
 
+// eslint-disable-next-line no-unused-vars
+const simpleDataFetch = async (url: string, setFn: (data: any) => void): Promise<void> => {
+	const request = await fetch(url, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	const data = await request.json()
+
+	if (request.status === 200) setFn(data)
+}
+
 export const ApiContextProvider = ({
 	children,
 }) => {
 	const [ quiz, setQuiz ] = useState<Quiz>(null)
 	const [ user, setUser ] = useState<User>(null)
+	const [ userQuizzes, setUserQuizzes ] = useState<Quiz[]>(null)
 	const location = useLocation()
 
 	return (
 		<ApiContext.Provider value={{
 			quiz,
 			user,
+			userQuizzes,
 			getQuiz: async (id: number) => {
 				const request = await fetch(`/api/quiz/${id}`)
 				const data = await request.json()
@@ -156,6 +174,7 @@ export const ApiContextProvider = ({
 					toast.error(`Login failed: ${data.error}`)
 				}
 			},
+			fetchUserQuizzes: () => simpleDataFetch('/api/user/@me/quizzes', setUserQuizzes),
 		}}>
 			{children}
 		</ApiContext.Provider>

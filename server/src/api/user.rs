@@ -12,7 +12,7 @@ use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, db::{establish_connection, models::{Session, User}, schema::{session, users}}, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, db::{establish_connection, models::{Quiz, Session, User}, schema::{quiz, session, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
 use super::util::{generic_error, generic_json_response, json_response};
 
@@ -177,10 +177,30 @@ async fn get_me(
 	}
 }
 
+async fn get_my_quizzes(
+	Extension(current_session): Extension<CurrentSession>
+) -> Response<axum::body::Body> {
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+	let current_session = current_session.session.unwrap();
+	
+	let conn = &mut establish_connection();
+	
+	info!("session ext {:#?}", current_session);
+
+	let quizzes = quiz::table.filter(quiz::owner_id.eq(current_session.user_id)).select(quiz::all_columns).load::<Quiz>(conn);
+	
+	match quizzes {
+		Ok(quizzes) => json_response(StatusCode::OK, quizzes),
+		Err(_) => generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to get quizzes.")
+	}
+}
+
 pub fn user_router() -> Router {
 	Router::new()
 		.route("/", get(root))
 		.route("/", post(create_user))
 		.route("/login", post(login))
 		.route("/@me", get(get_me))
+		.route("/@me/quizzes", get(get_my_quizzes))
 }

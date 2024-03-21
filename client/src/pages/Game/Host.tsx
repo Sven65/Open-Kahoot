@@ -131,7 +131,7 @@ export const Host = () => {
 
 			{gameState === GameState.PLAYING && <GameScreen />}
 
-			{gameState === GameState.ENDED && <Highscores scores={scores} />}
+			{gameState === GameState.ENDED && <Highscores scores={scores} scoreMap={scoreMap} correctAnswerColor={null} />}
 		</>
 	)
 }
