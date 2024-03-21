@@ -27,3 +27,4 @@ serde_millis = "0.1.1"
 dotenvy = "0.15.7"
 uuid = {version = "1.7.0", features = [ "v4", "fast-rng" ] }
 uuid-b64 = "0.1.1"
+email_address = "0.2.4"

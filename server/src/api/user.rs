@@ -9,6 +9,7 @@ use argon2::{
 
 use axum::{http::StatusCode, response::Response, routing::{get, post}, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper};
+use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 
 use crate::{db::{establish_connection, models::User, schema::users}, util::generate_short_uuid};
@@ -22,6 +23,7 @@ async fn root() -> &'static str {
 #[derive(Deserialize)]
 struct CreateUser {
     username: String,
+	email: String,
 	password: String,
 }
 
@@ -50,6 +52,10 @@ fn hash_password(password: &[u8]) -> Option<(String, String)> {
 async fn create_user(
 	Json(payload): Json<CreateUser>,
 ) -> Response<axum::body::Body> {	
+	if !EmailAddress::is_valid(&payload.email.clone()) {
+		return generic_error(StatusCode::BAD_REQUEST, "Email is invalid.")
+	}
+
 	let hash_tuple = hash_password(payload.password.as_bytes());
 
 	if hash_tuple.is_none() {
@@ -64,6 +70,7 @@ async fn create_user(
 	let new_user = User {
 		id: user_id,
 		salt,
+		email: payload.email.clone(),
 		password,
 		username: payload.username.clone(),
 	};
@@ -75,6 +82,14 @@ async fn create_user(
 
 	if result.is_err() {
 		let error = result.err().unwrap();
+
+		if error.to_string().contains("users_username_key") {
+			return generic_error(StatusCode::CONFLICT, "Username already exists.");
+		}
+
+		if error.to_string().contains("users_email_key") {
+			return generic_error(StatusCode::CONFLICT, "Email already exists.");
+		}
 
 		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, error.to_string().as_str());
 	}

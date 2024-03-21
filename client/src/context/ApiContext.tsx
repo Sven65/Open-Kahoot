@@ -3,12 +3,21 @@ import { Quiz } from '../types'
 import { useState } from 'preact/hooks'
 import { toast } from 'react-toastify'
 
+export type CreateUser = {
+	username: string,
+	password: string,
+	email: string,
+}
+
+
 export type IApiContext = {
 	quiz: Quiz,
 	getQuiz: (id: number) => Promise<void>,
 	saveQuiz: (quiz: Quiz) => Promise<void>,
 	deleteQuiz: (id: String) => Promise<void>,
 	deleteQuestion: (id: String) => Promise<void>,
+	createUser: (user: CreateUser) => Promise<void>,
+	login: () => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -69,6 +78,28 @@ export const ApiContextProvider = ({
 				}
 			},
 			deleteQuiz: async (id: string) => null,
+			createUser: async (user: CreateUser) => {
+				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/user`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(user),
+				})
+
+				const data = await request.json()
+
+				switch (request.status) {
+					case 201:
+						toast.success('User created!')
+						break
+					case 409:
+						toast.error(data.error)
+						break
+					default:
+						toast.error('User creation failed.')
+				}
+			},
 		}}>
 			{children}
 		</ApiContext.Provider>

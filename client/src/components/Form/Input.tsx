@@ -21,21 +21,24 @@ export const Input = ({
 	full,
 	flex,
 	...rest
-}: Props) => {
+}: Props) => {	
 	if (flex) {
 		return (
-			<div class="ok-input-container">
+			<fieldset class="ok-input-container">
 				{label && <label class={`ok-label ${labelClass}`}>{label}</label>}
 				<input
 					class={`ok-input ${label && 'has-label'} ${full ? 'full-width' : ''}`}
 					type={type}
 					onKeyDown={
-						(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null}
+						(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null
+					}
+					onInvalid={e => console.log('oninv', e)}
+
 					{...rest}
 				>
 					{ children }
 				</input>
-			</div>
+			</fieldset>
 		)
 	}
 	
@@ -46,7 +49,8 @@ export const Input = ({
 				class={`ok-input ${label && 'has-label'} ${full ? 'full-width' : ''}`}
 				type={type}
 				onKeyDown={
-					(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null}
+					(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null
+				}
 				{...rest}
 			>
 				{ children }

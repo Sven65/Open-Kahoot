@@ -4,7 +4,7 @@ use chrono::Local;
 use diesel::{deserialize::{self, FromSql, FromSqlRow}, expression::AsExpression, pg::{Pg, PgValue}, prelude::*, serialize::{self, IsNull, Output, ToSql}, sql_types::SqlType};
 use serde::{Deserialize, Serialize};
 
-use crate::{api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz}, util::generate_short_uuid};
+use crate::{api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz}};
 
 use super::schema::sql_types::AnswerColor;
 
@@ -50,6 +50,7 @@ impl FromSql<AnswerColor, Pg> for RealAnswerColor {
 pub struct User {
     pub id: String,
     pub username: String,
+    pub email: String,
     pub salt: String,
     pub password: String,
 }

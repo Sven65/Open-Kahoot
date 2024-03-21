@@ -35,6 +35,14 @@
 
 		border-left: unset;
 	}
+
+	&:invalid {
+		border-color: var(--question-red);
+	}
+
+	&:valid {
+		border-color: var(--question-green);
+	}
 }
 
 .ok-label {
@@ -54,5 +62,18 @@
 
 .ok-input-container {
 	display: flex;
+	border: none;
+
+	&:invalid {
+		.ok-label {
+			border-color: var(--question-red);
+		}
+	}
+
+	&:valid {
+		.ok-label {
+			border-color: var(--question-green);
+		}
+	}
 }
 
