@@ -1,16 +1,16 @@
 
 use argon2::{
     password_hash::{
-        rand_core::OsRng,
-        PasswordHasher, SaltString
+        rand_core::OsRng, PasswordHasher, Salt, SaltString
     },
-    Argon2
+    Argon2, PasswordHash, PasswordVerifier
 };
 
 use axum::{http::StatusCode, response::Response, routing::{get, post}, Json, Router};
-use diesel::{RunQueryDsl, SelectableHelper};
+use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 
 use crate::{db::{establish_connection, models::User, schema::users}, util::generate_short_uuid};
 
@@ -24,6 +24,13 @@ async fn root() -> &'static str {
 struct CreateUser {
     username: String,
 	email: String,
+	password: String,
+}
+
+
+#[derive(Deserialize, Clone, Debug)]
+struct LoginUser {
+    username: String,
 	password: String,
 }
 
@@ -49,9 +56,23 @@ fn hash_password(password: &[u8]) -> Option<(String, String)> {
 	}
 }
 
+fn validate_password (password: String, salt: String, hash: String) -> bool {
+	let argon2 = Argon2::default();
+	
+	let salt_bytes = Salt::from_b64(&salt).expect("Invalid base64 salt");
+    let mut password_hash = PasswordHash::new(&hash).expect("Invalid base64 hash");
+
+	password_hash.salt = Some(salt_bytes);
+
+	match argon2.verify_password(password.as_bytes(), &password_hash) {
+        Ok(()) => true,  // Password is valid
+        _ => false,  // Other errors (handle as invalid password for simplicity)
+    }
+}
+
 async fn create_user(
 	Json(payload): Json<CreateUser>,
-) -> Response<axum::body::Body> {	
+) -> Response<axum::body::Body> {
 	if !EmailAddress::is_valid(&payload.email.clone()) {
 		return generic_error(StatusCode::BAD_REQUEST, "Email is invalid.")
 	}
@@ -105,8 +126,34 @@ async fn create_user(
 
 }
 
+async fn login(
+	Json(payload): Json<LoginUser>
+) -> Response<axum::body::Body> {
+	let mut conn = establish_connection();
+
+	let user_result = users::table
+		.filter(users::username.eq(payload.clone().username))
+		.select((users::id, users::password, users::salt))
+		.get_result::<(String, String, String)>(&mut conn);
+
+	if user_result.is_err() {
+		info!("Error getting user");
+		return generic_error(StatusCode::BAD_REQUEST, "Username or password incorrect.");
+	}
+
+	let (id, password_hash, salt) = user_result.unwrap();
+
+	info!(id, password_hash, salt);
+
+	match validate_password(payload.clone().password, salt, password_hash) {
+		true => json_response(StatusCode::OK, "Logged in"),
+		false => generic_error(StatusCode::BAD_REQUEST, "Username or password incorrect.")
+	}	
+}
+
 pub fn user_router() -> Router {
 	Router::new()
 		.route("/", get(root))
+		.route("/login", post(login))
 		.route("/", post(create_user))
 }

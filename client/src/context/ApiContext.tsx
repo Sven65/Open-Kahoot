@@ -17,7 +17,7 @@ export type IApiContext = {
 	deleteQuiz: (id: String) => Promise<void>,
 	deleteQuestion: (id: String) => Promise<void>,
 	createUser: (user: CreateUser) => Promise<void>,
-	login: () => Promise<void>,
+	login: (username: string, password: string) => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -99,6 +99,29 @@ export const ApiContextProvider = ({
 					default:
 						toast.error('User creation failed.')
 				}
+			},
+			login: async (username: string, password: string) => {
+				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/user/login`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						username,
+						password,
+					}),
+				})
+
+				const data = await request.json()
+				console.log('data', data)
+
+				if (request.status === 200) {
+					toast.success('Logged in.')
+				} else {
+					toast.error(`Login failed: ${data.error}`)
+				}
+
+				
 			},
 		}}>
 			{children}
