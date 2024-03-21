@@ -4,7 +4,7 @@ import { HTMLAttributes } from 'preact/compat'
 import './Button.scss'
 
 export type Props = HTMLAttributes<HTMLButtonElement> & {
-	color: 'red' | 'green',
+	color?: 'red' | 'green',
 	full?: boolean
 }
 

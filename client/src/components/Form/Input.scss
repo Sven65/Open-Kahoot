@@ -36,6 +36,13 @@
 		border-left: unset;
 	}
 
+	&.has-suffix {
+		border-top-right-radius: unset;
+		border-bottom-right-radius: unset;
+
+		border-right: unset;
+	}
+
 	&:invalid {
 		border-color: var(--question-red);
 	}
@@ -43,6 +50,21 @@
 	&:valid {
 		border-color: var(--question-green);
 	}
+}
+
+.ok-input-suffix {
+	display: flex;
+
+	border: 2px solid #39393A;
+	border-top-right-radius: 8px;
+	border-bottom-right-radius: 8px;
+	background-color: #fff;
+	// padding: 15px 30px;
+	color: #39393A;
+	border-right: unset;
+
+	justify-content: center;
+  	align-content: center;
 }
 
 .ok-label {

@@ -126,6 +126,24 @@ export const QuizEditor = () => {
 
 	}
 
+	const changeCorrectAnswer = (e) => {
+		console.log('e', e.target.name, e.target.checked)
+
+		const newSelectedQuestion: Question = {
+			...selectedQuestion,
+			answers: selectedQuestion.answers.map(answer => ({
+				...answer,
+				is_correct: (e.target.name === answer.answer_color && e.target.checked),
+			})),
+		}
+
+		setSelectedQuestion(newSelectedQuestion)
+
+		replaceObjectById(editedQuiz.questions,	selectedQuestion.id, newSelectedQuestion)
+
+		setEditedQuiz(editedQuiz)
+	}
+
 	return (
 		<div class="editor-container">
 			<div class="editor-header">
@@ -187,6 +205,9 @@ export const QuizEditor = () => {
 											value={getAnswerForColor(AnswerColor.Red)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Red)}
+											suffix={(
+												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Red} checked={getAnswerForColor(AnswerColor.Red)?.is_correct} />
+											)}
 										/>
 									</div>
 									<div class="answer-editor">
@@ -197,6 +218,9 @@ export const QuizEditor = () => {
 											value={getAnswerForColor(AnswerColor.Green)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Green)}
+											suffix={(
+												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Green} checked={getAnswerForColor(AnswerColor.Green)?.is_correct} />
+											)}
 										/>
 									</div>
 								</div>
@@ -209,6 +233,9 @@ export const QuizEditor = () => {
 											value={getAnswerForColor(AnswerColor.Blue)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Blue)}
+											suffix={(
+												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Blue} checked={getAnswerForColor(AnswerColor.Blue)?.is_correct} />
+											)}
 										/>
 									</div>
 									<div class="answer-editor">
@@ -219,6 +246,9 @@ export const QuizEditor = () => {
 											value={getAnswerForColor(AnswerColor.Yellow)?.answer}
 											// @ts-ignore
 											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Yellow)}
+											suffix={(
+												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Yellow} checked={getAnswerForColor(AnswerColor.Yellow)?.is_correct} />
+											)}
 										/>
 									</div>
 								</div>

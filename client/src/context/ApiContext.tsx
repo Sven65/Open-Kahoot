@@ -29,6 +29,8 @@ export type IApiContext = {
 	login: (username: string, password: string) => Promise<void>,
 	fetchMe: () => Promise<void>,
 	fetchUserQuizzes: () => Promise<void>,
+	// eslint-disable-next-line no-unused-vars
+	createQuiz: (name: string) => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -175,6 +177,29 @@ export const ApiContextProvider = ({
 				}
 			},
 			fetchUserQuizzes: () => simpleDataFetch('/api/user/@me/quizzes', setUserQuizzes),
+			createQuiz: async (name: string) => {
+				const request = await fetch('/api/quiz/create', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						name,
+					}),
+				})
+
+				const data = await request.json()
+
+				if (request.status !== 201) {
+					toast.error('Failed to create quiz.')
+					return
+				}
+
+				toast.success('Created Quiz!')
+
+				location.route(`/quiz/${data.id}/edit`)
+
+			},
 		}}>
 			{children}
 		</ApiContext.Provider>

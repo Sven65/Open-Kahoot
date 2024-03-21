@@ -1,5 +1,6 @@
-use axum::{extract::Path, http::{Response, StatusCode}, routing::get, Extension, Json, Router};
+use axum::{extract::Path, http::{Response, StatusCode}, routing::{get, post}, Extension, Json, Router};
 use diesel::{prelude::*, QueryDsl};
+use serde::Deserialize;
 use tracing::info;
 
 
@@ -7,6 +8,10 @@ use crate::{api::util::{generic_error, generic_json_response, json_response}, db
 
 use super::quiz_types::ReturnedQuiz;
 
+#[derive(Deserialize)]
+struct InCreatedQuiz {
+	pub name: String,
+}
 
 pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgConnection) -> Result<ReturnedQuiz, diesel::result::Error> {
 	let quiz = quiz::table.find(quiz_id).first::<Quiz>(conn)?;
@@ -106,6 +111,30 @@ async fn update_quiz(
 		generic_json_response(StatusCode::OK, "Update OK")
 }
 
+async fn create_quiz(
+	Extension(current_session): Extension<CurrentSession>,
+	Json(new_quiz): Json<InCreatedQuiz>,
+) -> Response<axum::body::Body> {
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+	let current_session = current_session.session.unwrap();
+	
+	let mut conn = establish_connection();
+	let new_quiz_id = generate_short_uuid();
+
+	let result = diesel::insert_into(crate::api::quiz::quiz::dsl::quiz)
+		.values(Quiz::new(new_quiz_id, current_session.user_id, new_quiz.name))
+		.returning(Quiz::as_returning())
+		.get_result(&mut conn);
+
+	match result {
+		Ok(result) => json_response(StatusCode::CREATED, result),
+		Err(e) => {
+			info!("Quiz creation failed: {:#?}", e);
+			generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to create quiz.")
+		}
+	}
+}
 
 async fn delete_quiz(Path(_id): Path<i32>) -> &'static str {
 	"hello delete"
@@ -119,4 +148,5 @@ pub fn quiz_router() -> Router {
 		.put(update_quiz)
 		.delete(delete_quiz)
 	)
+	.route("/create", post(create_quiz))
 }

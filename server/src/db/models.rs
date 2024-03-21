@@ -125,6 +125,19 @@ pub struct Quiz {
     pub updated_at: chrono::NaiveDateTime,
 }
 
+impl Quiz {
+    pub fn new(id: String, owner_id: String, name: String) -> Self {
+        Self {
+            id,
+            owner_id,
+            name,
+            public: false,
+            created_at: Local::now().naive_local(),
+            updated_at: Local::now().naive_local(),
+        }
+    }
+}
+
 impl From<ReturnedQuiz> for Quiz {
     fn from(value: ReturnedQuiz) -> Self {
         Self {

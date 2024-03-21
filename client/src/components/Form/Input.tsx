@@ -6,9 +6,10 @@ import { h } from 'preact'
 export type Props = HTMLAttributes<HTMLInputElement> & {
 	onEnter?: () => void
 	labelClass?: string,
-	label: h.JSX.Element,
+	label?: h.JSX.Element,
 	flex?: boolean,
 	full?: boolean,
+	suffix?: h.JSX.Element,
 }
 
 
@@ -20,6 +21,7 @@ export const Input = ({
 	type,
 	full,
 	flex,
+	suffix,
 	...rest
 }: Props) => {	
 	if (flex) {
@@ -27,7 +29,7 @@ export const Input = ({
 			<fieldset class="ok-input-container">
 				{label && <label class={`ok-label ${labelClass}`}>{label}</label>}
 				<input
-					class={`ok-input ${label && 'has-label'} ${full ? 'full-width' : ''}`}
+					class={`ok-input ${label && 'has-label'} ${full ? 'full-width' : ''} ${suffix ? 'has-suffix' : ''}`}
 					type={type}
 					onKeyDown={
 						(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null
@@ -38,6 +40,7 @@ export const Input = ({
 				>
 					{ children }
 				</input>
+				{suffix && <span class="ok-input-suffix">{suffix}</span>}
 			</fieldset>
 		)
 	}
@@ -46,7 +49,7 @@ export const Input = ({
 		<>
 			{label && <label class={`ok-label ${labelClass}`}>{label}</label>}
 			<input
-				class={`ok-input ${label && 'has-label'} ${full ? 'full-width' : ''}`}
+				class={`ok-input ${label && 'has-label'} ${full ? 'full-width' : ''} ${suffix ? 'has-suffix' : ''}`}
 				type={type}
 				onKeyDown={
 					(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null
@@ -55,6 +58,7 @@ export const Input = ({
 			>
 				{ children }
 			</input>
+			{suffix && <span class="ok-input-suffix">{suffix}</span>}
 		</>
 	)
 }
