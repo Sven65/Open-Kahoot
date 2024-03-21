@@ -167,6 +167,14 @@ impl GameRoom {
             panic!("Room does not have question.");
         }
     }
+
+    pub fn is_host(&self, id: String) -> bool {
+        return self.host == id
+    }
+
+    pub fn has_player(&self, id: String) -> bool {
+        return self.get_player(id).is_some()
+    }
 }
 
 #[derive(Default)]

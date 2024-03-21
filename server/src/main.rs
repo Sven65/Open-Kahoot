@@ -97,7 +97,6 @@ async fn on_connect(socket: SocketRef) {
     socket.on(
         SocketEventType::Join,
         |socket: SocketRef, Data::<JoinMessage>(data)| async move {
-            // Todo: Add length limit for player names because players are stupid
             let room = GAMEROOM_STORE.get_room_clone(&data.room_id).await;
 
             if room.is_none() {
@@ -239,9 +238,13 @@ async fn on_connect(socket: SocketRef) {
         let player_answer = data.answer;
         let room_id = data.room_id;
 
-        info!("Got answer {} for room id {}", player_answer, room_id);
 
         if let Some(mut room) = GAMEROOM_STORE.get_room_clone(&room_id).await {
+            if !room.has_player(socket.id.to_string()) {
+                let _ = socket.emit(SocketEventType::Error, "Naughty! You're not in this room.");
+                return
+            }
+
             let cloned_room = room.clone();
             let question_started = room.state.question_started.unwrap(); // Clone the field
             let question = cloned_room.get_current_question().unwrap();
@@ -249,8 +252,6 @@ async fn on_connect(socket: SocketRef) {
                 let _ = socket.emit(SocketEventType::Error, SocketErrorMessage {error: "Question does not have a correct answer.".to_string(), error_type: SocketEventType::SendAnswer });
                 return
             }
-
-            info!("Player answer is {:#?}", player_answer);
 
             if player_answer == question.correct_answer_id.clone().unwrap() {
                 let question_clone = question.clone();
@@ -318,11 +319,14 @@ async fn on_connect(socket: SocketRef) {
     });
 
     socket.on(SocketEventType::NextQuestion, |socket: SocketRef, Data::<String>(room_id)| async move {
-        // TODO: Host check
-
         let room = GAMEROOM_STORE.get_room_clone(&room_id).await;
 
         if let Some(mut room) = room {
+            if !room.is_host(socket.id.to_string()) {
+                let _ = socket.emit(SocketEventType::Error, "Naughty! This isn't your room.");
+                return
+            }
+
             room.prepare_next_question();
 
             let question = room.get_current_question();
@@ -356,11 +360,12 @@ async fn on_connect(socket: SocketRef) {
     });
 
     socket.on(SocketEventType::ChangeState, |socket: SocketRef, Data::<ChangeStateMessage>(data)| async move {
-        // TODO: Host check
-
-        info!("Changing state for socket");
-
         if let Some(mut room) = GAMEROOM_STORE.get_room_clone(&data.room_id).await {
+            if !room.is_host(socket.id.to_string()) {
+                let _ = socket.emit(SocketEventType::Error, "Naughty! This isn't your room.");
+                return
+            }
+
             room.set_client_state(data.state.clone());
 
             GAMEROOM_STORE.insert(room).await;
