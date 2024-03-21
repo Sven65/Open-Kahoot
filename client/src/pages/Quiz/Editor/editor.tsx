@@ -8,6 +8,7 @@ import { Answer, AnswerColor, Question, Quiz, RecursivePartial } from '../../../
 import { QuestionsList } from './QuestionsList'
 import { Input } from '../../../components/Form/Input'
 import { deleteByKey, replaceObjectById } from '../../../util/modify'
+import { Modal } from '../../../components/Modal/Modal'
 
 export const QuizEditor = () => {
 	const apiContext = useContext(ApiContext)
@@ -18,6 +19,8 @@ export const QuizEditor = () => {
 
 	const [ editedQuiz, setEditedQuiz ] = useState<Quiz>(null)
 	const [ selectedQuestion, setSelectedQuestion ] = useState<Question>(null)
+	const [ showModal, setShowModal ] = useState(false)
+
 
 	const listRef = useRef()
 
@@ -137,8 +140,17 @@ export const QuizEditor = () => {
 		setEditedQuiz(editedQuiz)
 	}
 
+
 	return (
 		<div class="editor-container">
+			<Modal show={showModal} onClose={() => setShowModal(false)}>
+				<div class="join-modal-container">
+					<h1>Are you sure you want to delete this quiz?</h1>
+					<h3>This action can not be undone.</h3>
+					<Button color="green" onClick={() => setShowModal(false)}>Cancel</Button>
+					<Button color="red" onClick={() => deleteQuiz(editedQuiz.id)}>Delete</Button>
+				</div>
+			</Modal>
 			<div class="editor-header">
 				<div class="editor-header-left">
 					<h1>
@@ -151,6 +163,7 @@ export const QuizEditor = () => {
 				</div>
 				<div class="editor-header-right">
 					<Button color="green" onClick={() => saveQuiz(editedQuiz)}>Save</Button>
+					<Button color="red" onClick={() => setShowModal(true)}>Delete</Button>
 				</div>
 			</div>
 

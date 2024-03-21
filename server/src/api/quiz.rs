@@ -6,7 +6,7 @@ use tracing::info;
 
 use crate::{api::util::{generic_error, generic_json_response, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
-use super::quiz_types::ReturnedQuiz;
+use super::{quiz_types::ReturnedQuiz, util::generic_response};
 
 #[derive(Deserialize)]
 struct InCreatedQuiz {
@@ -136,8 +136,29 @@ async fn create_quiz(
 	}
 }
 
-async fn delete_quiz(Path(_id): Path<i32>) -> &'static str {
-	"hello delete"
+async fn delete_quiz(
+	Path(id): Path<String>,
+	Extension(current_session): Extension<CurrentSession>,
+) ->  Response<axum::body::Body> {
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+	let mut conn = establish_connection();
+
+	match get_quiz_by_id(id.clone(), &mut conn).await {
+		Ok(quiz) => {
+			if !current_session.match_user_id(quiz.owner.id) { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+			match diesel::delete(crate::api::quiz::quiz::dsl::quiz)
+				.filter(quiz::id.eq(id))
+				.execute(&mut conn) {
+					Ok(_) => {
+						info!("deleted");
+						return generic_json_response(StatusCode::OK, "Deleted.");
+					},
+					Err(_) => generic_json_response(StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete quiz.")
+				}
+		},
+		Err(_) => generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete quiz.")
+	}
 }
 
 pub fn quiz_router() -> Router {

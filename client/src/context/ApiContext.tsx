@@ -109,10 +109,23 @@ export const ApiContextProvider = ({
 					toast.error('Delete failed.')
 				}
 			},
-			// eslint-disable-next-line no-unused-vars
-			deleteQuiz: async (id: string) => null,
+			deleteQuiz: async (id: string) => {
+				const request = await fetch(`/api/quiz/${id}`, {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				})
+
+				if (request.status === 200) {
+					toast.success('Delete OK!')
+					location.route('/@me')
+				} else {
+					toast.error('Delete failed.')
+				}
+			},
 			createUser: async (user: CreateUser) => {
-				const request = await fetch('/§api/user', {
+				const request = await fetch('/api/user', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
