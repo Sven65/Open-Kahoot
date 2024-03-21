@@ -1,9 +1,9 @@
-use axum::{extract::Path, http::{Response, StatusCode}, routing::get, Json, Router};
+use axum::{extract::Path, http::{Response, StatusCode}, routing::get, Extension, Json, Router};
 use diesel::{prelude::*, QueryDsl};
 use tracing::info;
 
 
-use crate::{api::util::{generic_error, generic_json_response, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{questions, quiz, users, answers}}, util::generate_short_uuid};
+use crate::{api::util::{generic_error, generic_json_response, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
 use super::quiz_types::ReturnedQuiz;
 
@@ -21,23 +21,43 @@ pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgConnection) -> Result
 	Ok(ReturnedQuiz::new_from(quiz, questions, answers, owner))
 }
 
-async fn get_quiz(Path(id): Path<String>) -> Response<axum::body::Body> {
+async fn get_quiz(
+	Path(id): Path<String>,
+	Extension(current_session): Extension<CurrentSession>,
+) -> Response<axum::body::Body> {
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
 	let conn = &mut establish_connection();
 
 	match get_quiz_by_id(id, conn).await {
-		Ok(quiz) => json_response(StatusCode::OK, quiz),
+		Ok(quiz) => {
+			if !quiz.public {
+				if !current_session.match_user_id(quiz.owner.id.clone()) {
+					return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized.");
+				}
+			}
+			
+			json_response(StatusCode::OK, quiz)
+		},
 		Err(e) => generic_error(StatusCode::NOT_FOUND, e.to_string().as_str())
 	}
 }
 
 async fn update_quiz(
 	Path(_id): Path<String>,
+	Extension(current_session): Extension<CurrentSession>,
 	Json(new_quiz): Json<ReturnedQuiz>,
 ) -> Response<axum::body::Body> {
-	info!("Payload is {:#?}", new_quiz);
-
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+	
 	let mut conn = establish_connection();
 	let cloned_quiz = new_quiz.clone();
+
+	let db_quiz = get_quiz_by_id(cloned_quiz.clone().id.unwrap(), &mut conn).await;
+
+	if db_quiz.is_err() { return generic_error(StatusCode::NOT_FOUND, "Quiz to update not found."); }
+
+	if db_quiz.unwrap().owner.id != current_session.session.unwrap().user_id { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized.");  }
 
 	for mut ret_question in new_quiz.questions {
 		let new_question_id = generate_short_uuid();

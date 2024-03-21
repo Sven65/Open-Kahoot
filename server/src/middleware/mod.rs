@@ -8,7 +8,7 @@ use crate::db::{establish_connection, models::Session, schema::session};
 
 
 #[derive(Clone, Debug)]
-struct SessionInternal {
+pub struct SessionInternal {
 	pub user_id: String,
 	pub session_id: String,
 }
@@ -16,6 +16,15 @@ struct SessionInternal {
 #[derive(Clone, Debug)]
 pub struct CurrentSession {
 	pub session: Option<SessionInternal>
+}
+
+impl CurrentSession {
+	pub fn match_user_id (&self, user_id: String) -> bool {
+		match &self.session {
+			Some(session) => session.user_id == user_id,
+			None => false,
+		}
+	}
 }
 
 pub async fn auth_session<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {

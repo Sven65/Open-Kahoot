@@ -41,13 +41,13 @@ export const ApiContextProvider = ({
 		<ApiContext.Provider value={{
 			quiz,
 			getQuiz: async (id: number) => {
-				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/quiz/${id}`)
+				const request = await fetch(`/api/quiz/${id}`)
 				const data = await request.json()
 
 				setQuiz(data)
 			},
 			saveQuiz: async (quiz: Quiz) => {
-				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/quiz/${quiz.id}`, {
+				const request = await fetch(`/api/quiz/${quiz.id}`, {
 					method: 'PUT',
 					headers: {
 						'Content-Type': 'application/json',
@@ -64,7 +64,7 @@ export const ApiContextProvider = ({
 			deleteQuestion: async (id: string) => {
 				if (id.startsWith('new-')) return
 
-				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/question/${id}`, {
+				const request = await fetch(`/api/question/${id}`, {
 					method: 'DELETE',
 					headers: {
 						'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export const ApiContextProvider = ({
 			},
 			deleteQuiz: async (id: string) => null,
 			createUser: async (user: CreateUser) => {
-				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/user`, {
+				const request = await fetch('/§api/user', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
