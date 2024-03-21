@@ -108,16 +108,11 @@ export const QuizEditor = () => {
 	}
 
 	const deleteSingleQuestion = (id: string) => {
-		console.log('deleting id', id)
-
 		if (!id.startsWith('new')) deleteQuestion(id)
 
 		const newQuestions = deleteByKey([...quiz.questions], 'id', id)
 
-		console.log('newQuestions', newQuestions)
-
 		setSelectedQuestion(null)
-
 
 		setEditedQuiz({
 			...editedQuiz,
@@ -127,8 +122,6 @@ export const QuizEditor = () => {
 	}
 
 	const changeCorrectAnswer = (e) => {
-		console.log('e', e.target.name, e.target.checked)
-
 		const newSelectedQuestion: Question = {
 			...selectedQuestion,
 			answers: selectedQuestion.answers.map(answer => ({
@@ -148,7 +141,13 @@ export const QuizEditor = () => {
 		<div class="editor-container">
 			<div class="editor-header">
 				<div class="editor-header-left">
-					<h1>Editing quiz {quiz.name}</h1>
+					<h1>
+						Editing quiz
+						<Input value={editedQuiz.name} onChange={e => setEditedQuiz({
+							...editedQuiz,
+							name: e.target.value,
+						})} />
+					</h1>
 				</div>
 				<div class="editor-header-right">
 					<Button color="green" onClick={() => saveQuiz(editedQuiz)}>Save</Button>
