@@ -12,11 +12,7 @@ export function Home() {
 	const [ playerName, setPlayerName ] = useState('')
 	const [ showModal, setShowModal ] = useState(false)
 
-	console.log(gameContext)
-
-
 	const sendJoin = () => {
-		console.log('Joining game', gamePin, 'with name', playerName)
 		gameContext.join(gamePin, playerName)
 	}
 

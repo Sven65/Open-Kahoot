@@ -1,7 +1,7 @@
 use axum::{extract::Path, http::{Response, StatusCode}, routing::delete, Extension, Router};
 use diesel::prelude::*;
 
-use crate::{db::{establish_connection, models::Question, schema::questions::{self, question}}, middleware::CurrentSession};
+use crate::{db::{establish_connection, models::Question, schema::questions}, middleware::CurrentSession};
 
 use super::{quiz::get_quiz_by_id, util::{generic_error, generic_json_response}};
 

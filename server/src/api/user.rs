@@ -14,7 +14,7 @@ use tracing::info;
 
 use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, db::{establish_connection, models::{Quiz, Session, User}, schema::{quiz, session, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
-use super::util::{generic_error, generic_json_response, json_response};
+use super::util::{generic_error, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"

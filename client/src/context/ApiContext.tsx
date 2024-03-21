@@ -159,8 +159,7 @@ export const ApiContextProvider = ({
 				})
 
 				const data = await request.json()
-				console.log('data', data)
-
+				
 				if (request.status === 200) {
 					toast.success('Logged in.')
 

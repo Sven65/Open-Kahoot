@@ -6,7 +6,7 @@ use tracing::info;
 
 use crate::{api::util::{generic_error, generic_json_response, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
-use super::{quiz_types::ReturnedQuiz, util::generic_response};
+use super::quiz_types::ReturnedQuiz;
 
 #[derive(Deserialize)]
 struct InCreatedQuiz {

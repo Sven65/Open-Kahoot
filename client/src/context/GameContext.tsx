@@ -96,14 +96,12 @@ export const GameContextProvider = ({
 	}
 
 	socket.on(SocketEvents.RoomCreated, (roomCode: string) => {
-		console.log('room_code', roomCode)
 		setRoomId(roomCode)
 
 		location.route('/host')
 	})
 
 	socket.on(SocketEvents.RoomJoined, (roomCode: string) => {
-		console.log('Room joined successfully', roomCode)
 		setRoomId(roomCode)
 
 		location.route('/play')
@@ -125,9 +123,7 @@ export const GameContextProvider = ({
 		setShowQuestion(false)
 	})
 
-	socket.on(SocketEvents.SendQuestion, (question: Question) => {
-		console.log('question has length', question.answers.length)
-		
+	socket.on(SocketEvents.SendQuestion, (question: Question) => {		
 		setCurrentQuestion(question)
 
 		setScores([])
@@ -136,7 +132,6 @@ export const GameContextProvider = ({
 	socket.on(SocketEvents.GetScores, (scores: Player[], counts: ScoreMap) => {
 		setScores(scores)
 		setScoreMap(counts)
-		console.log('Got scores', scores)
 	})
 
 	socket.on(SocketEvents.RoomClosed, () => {
@@ -160,12 +155,10 @@ export const GameContextProvider = ({
 		setGameState(state)
 	})
 
-	console.log('qcurrent q in game ctx', currentQuestion)
 
 	return (
 		<GameContext.Provider value={{
 			join: (room_id: string, name: string) => {
-				console.log('Senfing the join', room_id, name)
 				socket.emit(SocketEvents.Join, {
 					room_id,
 					name,
@@ -198,7 +191,6 @@ export const GameContextProvider = ({
 				socket.emit(SocketEvents.GetScores, roomId)
 			},
 			sendStartGame: () => {
-				console.log('starting game')
 				socket.emit(SocketEvents.ChangeState, { room_id: roomId, state: GameState.PLAYING })
 				socket.emit(SocketEvents.NextQuestion, roomId)
 			},

@@ -93,7 +93,6 @@ export const QuizEditor = () => {
 			max_time: 30,
 		}
 
-		console.log('new', newQuestion)
 
 		setSelectedQuestion(newQuestion)
 
@@ -101,9 +100,7 @@ export const QuizEditor = () => {
 			...editedQuiz.questions,
 			newQuestion,
 		]
-
-		console.log('new leng', newQuestions.length)
-
+		
 		setEditedQuiz({
 			...editedQuiz,
 			questions: newQuestions,

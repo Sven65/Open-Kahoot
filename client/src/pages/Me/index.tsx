@@ -11,7 +11,6 @@ const InternalMe = () => {
 	const apiContext = useContext(ApiContext)
 	const gameContext = useContext(GameContext)
 	const location = useLocation()
-	console.log('apiContext', apiContext)
 
 	useEffect(() => {
 		if (!apiContext.userQuizzes) {

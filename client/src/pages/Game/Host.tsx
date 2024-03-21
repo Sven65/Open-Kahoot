@@ -21,8 +21,6 @@ export const Host = () => {
 	const [playerNames] = gameContext.playerNames
 	
 
-	console.log('gameContext', gameContext)
-
 	const location = useLocation()
 
 	const { sendNextQuestion, sendGetHighscores, sendStartGame } = gameContext
@@ -43,7 +41,6 @@ export const Host = () => {
 	useEffect(() => {
 		if (!timerRef.current) return
 		if (scores && scores.length > 0) {
-			console.log('stop timer')
 			timerRef.current.pause()
 			return
 		}

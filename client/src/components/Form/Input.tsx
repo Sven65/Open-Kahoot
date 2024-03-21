@@ -34,8 +34,6 @@ export const Input = ({
 					onKeyDown={
 						(e) => (e.key === 'Enter' && onEnter) ? onEnter() : null
 					}
-					onInvalid={e => console.log('oninv', e)}
-
 					{...rest}
 				>
 					{ children }
