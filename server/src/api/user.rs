@@ -6,15 +6,15 @@ use argon2::{
     Argon2, PasswordHash, PasswordVerifier
 };
 
-use axum::{http::StatusCode, response::Response, routing::{get, post}, Json, Router};
+use axum::{http::StatusCode, response::Response, routing::{get, post}, Extension, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::util::json_response_with_cookie, db::{establish_connection, models::{Session, User}, schema::{session, users}}, util::generate_short_uuid};
+use crate::{api::util::json_response_with_cookie, db::{establish_connection, models::{Session, User}, schema::{session, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
-use super::util::{generic_error, json_response};
+use super::util::{generic_error, generic_json_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -157,9 +157,18 @@ async fn login(
 	}	
 }
 
+async fn test_cookie(
+	Extension(current_session): Extension<CurrentSession>
+) -> Response<axum::body::Body> {
+	info!("session ext {:#?}", current_session);
+
+	generic_json_response(StatusCode::OK, "yea")
+}
+
 pub fn user_router() -> Router {
 	Router::new()
 		.route("/", get(root))
-		.route("/login", post(login))
 		.route("/", post(create_user))
+		.route("/login", post(login))
+		.route("/test", get(test_cookie))
 }

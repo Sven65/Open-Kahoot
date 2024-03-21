@@ -1,4 +1,5 @@
 mod util;
+mod middleware;
 mod socket_type;
 mod game_room;
 mod player;
@@ -12,6 +13,7 @@ use game_room::{Question, RoomStore};
 use socketioxide::{
     extract::{Data, SocketRef}, socket::DisconnectReason, SocketIo
 };
+
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tracing::info;
@@ -390,7 +392,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ServiceBuilder::new()
             .layer(CorsLayer::permissive())
             .layer(layer)
-        );
+        )
+        .layer(axum::middleware::from_fn(crate::middleware::auth_session));
 
     info!("Starting server on port {}", "3000");
 
