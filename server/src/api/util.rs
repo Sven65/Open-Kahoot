@@ -1,4 +1,4 @@
-use axum::http::{Response, StatusCode};
+use axum::http::{header::SET_COOKIE, Response, StatusCode};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -23,6 +23,19 @@ pub fn json_response<T: Serialize>(status: StatusCode, data: T) -> Response<axum
 	Response::builder()
 		.status(status)
 		.header("Content-Type", "application/json")
+		.body(axum::body::Body::from(
+			serde_json::to_string(&data)
+				.expect("Failed to serialize data")
+		))
+		.expect("Failed to build response")
+}
+
+
+pub fn json_response_with_cookie<T: Serialize>(status: StatusCode, data: T, cookie: &str) -> Response<axum::body::Body> {
+	Response::builder()
+		.status(status)
+		.header("Content-Type", "application/json")
+		.header(SET_COOKIE, cookie)
 		.body(axum::body::Body::from(
 			serde_json::to_string(&data)
 				.expect("Failed to serialize data")

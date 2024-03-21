@@ -12,7 +12,7 @@ use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{db::{establish_connection, models::User, schema::users}, util::generate_short_uuid};
+use crate::{api::util::json_response_with_cookie, db::{establish_connection, models::User, schema::users}, util::generate_short_uuid};
 
 use super::util::{generic_error, json_response};
 
@@ -137,16 +137,16 @@ async fn login(
 		.get_result::<(String, String, String)>(&mut conn);
 
 	if user_result.is_err() {
-		info!("Error getting user");
 		return generic_error(StatusCode::BAD_REQUEST, "Username or password incorrect.");
 	}
 
 	let (id, password_hash, salt) = user_result.unwrap();
 
-	info!(id, password_hash, salt);
+	let session_id = generate_short_uuid();
+
 
 	match validate_password(payload.clone().password, salt, password_hash) {
-		true => json_response(StatusCode::OK, "Logged in"),
+		true => json_response_with_cookie(StatusCode::OK, "Logged in", &format!("login_session={};Path=/", session_id)),
 		false => generic_error(StatusCode::BAD_REQUEST, "Username or password incorrect.")
 	}	
 }

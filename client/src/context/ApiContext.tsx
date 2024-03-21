@@ -101,7 +101,7 @@ export const ApiContextProvider = ({
 				}
 			},
 			login: async (username: string, password: string) => {
-				const request = await fetch(`${window.__env__.REACT_APP_BACKEND_URL}/api/user/login`, {
+				const request = await fetch('/api/user/login', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json',
