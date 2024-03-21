@@ -46,12 +46,21 @@ diesel::table! {
 }
 
 diesel::table! {
+    session (id) {
+        id -> Varchar,
+        user_id -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Varchar,
         username -> Varchar,
-        email -> Varchar,
         salt -> Varchar,
         password -> Varchar,
+        email -> Varchar,
     }
 }
 
@@ -63,5 +72,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     answers,
     questions,
     quiz,
+    session,
     users,
 );

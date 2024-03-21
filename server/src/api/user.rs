@@ -12,7 +12,7 @@ use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::util::json_response_with_cookie, db::{establish_connection, models::User, schema::users}, util::generate_short_uuid};
+use crate::{api::util::json_response_with_cookie, db::{establish_connection, models::{Session, User}, schema::{session, users}}, util::generate_short_uuid};
 
 use super::util::{generic_error, json_response};
 
@@ -146,7 +146,13 @@ async fn login(
 
 
 	match validate_password(payload.clone().password, salt, password_hash) {
-		true => json_response_with_cookie(StatusCode::OK, "Logged in", &format!("login_session={};Path=/", session_id)),
+		true => {
+			let _ = diesel::insert_into(session::table)
+				.values(Session::new(session_id.clone(), id))
+				.execute(&mut conn);
+
+			json_response_with_cookie(StatusCode::OK, "Logged in", &format!("login_session={};Path=/", session_id))
+		},
 		false => generic_error(StatusCode::BAD_REQUEST, "Username or password incorrect.")
 	}	
 }

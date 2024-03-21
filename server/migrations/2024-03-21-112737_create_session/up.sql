@@ -1,0 +1,7 @@
+-- Your SQL goes here
+CREATE TABLE session (
+  id VARCHAR PRIMARY KEY,
+  user_id VARCHAR NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

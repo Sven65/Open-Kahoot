@@ -137,3 +137,24 @@ impl From<ReturnedQuiz> for Quiz {
         }
     }
 }
+
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, AsChangeset)]
+#[diesel(table_name = crate::db::schema::session)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct Session {
+    pub id: String,
+    pub user_id: String,
+    pub created_at: chrono::NaiveDateTime,
+    pub updated_at: chrono::NaiveDateTime,
+}
+
+impl Session {
+    pub fn new(id: String, user_id: String) -> Self {
+        Self {
+            id,
+            user_id,
+            created_at: Local::now().naive_local(),
+            updated_at: Local::now().naive_local()
+        }
+    }
+}
