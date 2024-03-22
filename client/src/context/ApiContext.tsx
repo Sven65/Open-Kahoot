@@ -138,6 +138,7 @@ export const ApiContextProvider = ({
 				switch (request.status) {
 					case 201:
 						toast.success('User created!')
+						location.route('/@me')
 						break
 					case 409:
 						toast.error(data.error)
