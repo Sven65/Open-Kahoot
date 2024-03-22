@@ -13,7 +13,7 @@ RUN npm run build
 
 # Create nginx image
 
-FROM nginx:alpine
+FROM --platform="linux/amd64"  nginx:alpine
 
 COPY --from=builder /usr/src/app/dist/ /usr/share/nginx/html
 COPY --from=builder /usr/src/app/public/ /usr/share/nginx/html/public
