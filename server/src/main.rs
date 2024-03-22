@@ -25,6 +25,7 @@ extern crate lazy_static;
 
 use crate::{api::{quiz::get_quiz_by_id, quiz_types::ReturnedQuestion}, db::establish_connection, game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
 
+
 #[derive(Debug, serde::Deserialize, Clone)]
 struct SentInAnswer {
     room_id: String,

@@ -6,9 +6,20 @@
 
 	border: 2px solid #39393A;
 
+	h1, h2, h3 {
+		color: var(--text-color-primary);
+	}
+
 	border-radius: 8px;
 
+	display: flex;
+	flex-direction: column;
+
 	.card-inner {
+		flex: 1;
 		padding: 8px;
+		//height: 90%;
+		position: relative;
+		top: 0;
 	}
 }

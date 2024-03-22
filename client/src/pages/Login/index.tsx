@@ -7,6 +7,9 @@ import { Input } from '../../components/Form/Input'
 import { ApiContext } from '../../context/ApiContext'
 import { toast } from 'react-toastify'
 
+import './Login.scss'
+import { useLocation } from 'preact-iso'
+
 export const Login = () => {
 	const [ username, setUsername ] = useState(null)
 	const [ password, setPassword ] = useState(null)
@@ -14,6 +17,7 @@ export const Login = () => {
 	const formRef = useRef()
 
 	const apiContext = useContext(ApiContext)
+	const location = useLocation()
 
 
 	const submitForm = () => {
@@ -27,13 +31,16 @@ export const Login = () => {
 
 	return (
 		<Center horizontal vertical>
-			<Card className="register-card">
+			<Card className="login-card">
 				<h1>Login</h1>
 				<form class="register-form" ref={formRef} onSubmit={e => e.preventDefault()}>
 					<Input required placeholder={'Username'} label="Username" flex full value={username} onChange={(e) => setUsername(e.target.value)} />
 					<Input required placeholder={'Password'} label="Password" flex full value={password} onChange={(e) => setPassword(e.target.value)} type="password" />
-					<Button color='green' full onClick={submitForm}>Login</Button>
 				</form>
+				<footer>
+					<Button color='green' full onClick={submitForm}>Login</Button>
+					<Button full onClick={() => location.route('/register')}>Register</Button>
+				</footer>
 			</Card>
 		</Center>
 	)

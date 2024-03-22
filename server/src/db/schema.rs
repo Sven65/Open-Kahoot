@@ -58,9 +58,9 @@ diesel::table! {
     users (id) {
         id -> Varchar,
         username -> Varchar,
+        email -> Varchar,
         salt -> Varchar,
         password -> Varchar,
-        email -> Varchar,
     }
 }
 
