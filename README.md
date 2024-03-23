@@ -117,10 +117,15 @@ Installation instructions can be found in the client and server directories, res
 <!-- ROADMAP -->
 ## Roadmap
 
-- [ ] Feature 1
-- [ ] Feature 2
-- [ ] Feature 3
-    - [ ] Nested Feature
+- [ ] Email support
+	- [ ] Confirmation emails
+	- [ ] Password change request
+- [ ] Refactoring
+	- [ ] Refactor out socket events to own files in server
+- [ ] Client UI Redesign
+	- [ ] Player view
+	- [ ] Host view
+	- [ ] Quiz editor
 
 See the [open issues](https://github.com/Sven65/open-kahoot/issues) for a full list of proposed features (and known issues).
 
