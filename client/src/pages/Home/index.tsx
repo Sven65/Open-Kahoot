@@ -69,7 +69,6 @@ export function Home() {
 					>
 						Enter
 					</Button>
-					<Button color="" type={'button'} onClick={gameContext.createRoom}>Host</Button>
 				</form>
 			</div>
 		</div>
