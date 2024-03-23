@@ -1,3 +1,21 @@
+import type colors from 'tailwindcss/colors'
+
+type FlattenKeys<T extends Record<string, any>, Prefix extends string = ''> = {
+	[K in keyof T]-?: T[K] extends Record<string, any>  // @ts-ignore
+	  ? FlattenKeys<T[K], `${Prefix}${Prefix extends '' ? '' : '-'}${K}`> // @ts-ignore
+	  : `${Prefix}${Prefix extends '' ? '' : '-'}${K}`;
+}[keyof T];
+  
+  
+export type TailwindColor = FlattenKeys<typeof colors>;
+
+export type TailwindComponentColors = {
+	bgColor?: TailwindColor,
+	textColor?: TailwindColor,
+	hoverColor?: TailwindColor,
+	focusColor?: TailwindColor,
+}
+
 export type RecursivePartial<T> = {
 	[P in keyof T]?:
 	  T[P] extends (infer U)[] ? RecursivePartial<U>[] :
