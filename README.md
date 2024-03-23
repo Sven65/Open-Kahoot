@@ -123,7 +123,7 @@ Installation instructions can be found in the client and server directories, res
     - [ ] Confirmation emails
     - [ ] Password change request
   - [ ] Refactoring
-    - [ ] Refactor out socket events to own files in server
+    - [x] Refactor out socket events to own files in server
 - [ ] Client
   - [ ] UI Redesign
     - [ ] Player view

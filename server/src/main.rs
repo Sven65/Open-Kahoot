@@ -1,6 +1,5 @@
 mod util;
 mod middleware;
-mod socket_type;
 mod game_room;
 mod player;
 mod db;
@@ -27,7 +26,7 @@ use crate::{app_state::AppState, socket::{change_state::change_state, create_roo
 #[macro_use]
 extern crate lazy_static;
 
-use crate::socket_type::SocketEventType;
+use crate::socket::socket_type::SocketEventType;
 
 const LAST_QUESTION_ID: &str = "LAST-QUESTION";
 const FIRST_QUESTION_ID: &str = "FIRST-QUESTION";

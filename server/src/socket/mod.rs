@@ -1,3 +1,4 @@
+pub mod socket_type;
 pub mod on_disconnect;
 pub mod join;
 pub mod create_room;

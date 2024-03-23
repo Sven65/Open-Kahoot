@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{
-   extract::State, http::{Request, StatusCode}, middleware::Next, response::Response, Extension
+   extract::State, http::{Request, StatusCode}, middleware::Next, response::Response
 };
 
 use axum_extra::extract::CookieJar;

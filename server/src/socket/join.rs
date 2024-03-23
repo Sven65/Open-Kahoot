@@ -1,7 +1,9 @@
 use socketioxide::extract::{Data, SocketRef};
 use tracing::info;
 
-use crate::{player::Player, socket_type::{SocketErrorMessage, SocketEventType}, GAMEROOM_STORE, PLAYER_NAME_LENGTH_LIMIT};
+use super::socket_type::{SocketErrorMessage, SocketEventType};
+
+use crate::{player::Player, GAMEROOM_STORE, PLAYER_NAME_LENGTH_LIMIT};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct JoinMessage {

@@ -1,7 +1,9 @@
 use socketioxide::{extract::SocketRef, socket::DisconnectReason};
 use tracing::info;
 
-use crate::{socket_type::SocketEventType, GAMEROOM_STORE};
+use super::socket_type::SocketEventType;
+
+use crate::GAMEROOM_STORE;
 
 pub async fn on_disconnect(socket: SocketRef, reason: DisconnectReason) {
 	info!("Disconnected socket was in rooms {:#?}, because {:#?}", socket.rooms(), reason);

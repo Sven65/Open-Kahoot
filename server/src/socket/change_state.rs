@@ -1,7 +1,11 @@
 use socketioxide::extract::{Data, SocketRef};
 use tracing::info;
 
-use crate::{socket_type::{SocketErrorMessage, SocketEventType}, GAMEROOM_STORE};
+use crate::{socket::socket_type::SocketErrorMessage, GAMEROOM_STORE};
+use super::socket_type::SocketEventType;
+
+
+
 
 
 #[derive(Debug, serde::Deserialize)]

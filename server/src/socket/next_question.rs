@@ -1,8 +1,8 @@
 use std::time::Instant;
 
 use socketioxide::extract::{Data, SocketRef};
-
-use crate::{socket_type::{SocketErrorMessage, SocketEventType}, GAMEROOM_STORE};
+use super::socket_type::{SocketErrorMessage, SocketEventType};
+use crate::GAMEROOM_STORE;
 
 pub async fn next_question(
 	socket: SocketRef,

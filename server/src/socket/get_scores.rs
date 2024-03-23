@@ -1,6 +1,9 @@
 use socketioxide::extract::{Data, SocketRef};
 
-use crate::{socket_type::{SocketErrorMessage, SocketEventType}, GAMEROOM_STORE};
+use crate::GAMEROOM_STORE;
+
+use super::socket_type::{SocketErrorMessage, SocketEventType};
+
 
 pub async fn get_scores(
 	socket: SocketRef,

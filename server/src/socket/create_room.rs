@@ -4,7 +4,8 @@ use chrono::Utc;
 use socketioxide::extract::{Data, SocketRef, State};
 use tracing::info;
 
-use crate::{api::{quiz::get_quiz_by_id, quiz_types::ReturnedQuestion}, app_state::AppState, game_room::{GameRoom, GameState}, socket_type::{SocketErrorMessage, SocketEventType}, util, FIRST_QUESTION_ID, GAMEROOM_STORE, LAST_QUESTION_ID};
+use crate::{api::{quiz::get_quiz_by_id, quiz_types::ReturnedQuestion}, app_state::AppState, game_room::{GameRoom, GameState}, socket::socket_type::SocketErrorMessage, util, FIRST_QUESTION_ID, GAMEROOM_STORE, LAST_QUESTION_ID};
+use super::socket_type::SocketEventType;
 
 pub async fn create_room(
 	socket: SocketRef,

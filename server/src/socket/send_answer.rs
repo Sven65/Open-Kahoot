@@ -1,7 +1,8 @@
 use socketioxide::extract::{Data, SocketRef};
 use tracing::info;
 
-use crate::{player::calculate_points, socket_type::{SocketErrorMessage, SocketEventType}, GAMEROOM_STORE};
+use super::socket_type::{SocketErrorMessage, SocketEventType};
+use crate::{player::calculate_points, GAMEROOM_STORE};
 
 #[derive(Debug, serde::Deserialize, Clone)]
 pub struct SentInAnswer {
