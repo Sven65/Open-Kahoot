@@ -1,5 +1,5 @@
 {
-	"name": "open-kahoot/client",
+	"name": "@open-kahoot/client",
 	"version": "1.0.2",
 	"private": true,
 	"type": "module",
