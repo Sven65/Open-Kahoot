@@ -75,9 +75,6 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
-
-
 Open Kahoot aims to be an open source, self-hostable kahoot-like trivia system.
 
 It consists of two parts, the server and the client.
