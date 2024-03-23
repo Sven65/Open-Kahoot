@@ -6,7 +6,6 @@ use axum::{
 
 use axum_extra::extract::CookieJar;
 use diesel::{prelude::*, QueryDsl};
-use tracing::info;
 use crate::{app_state::AppState, db::{models::Session, schema::session}};
 
 
@@ -38,8 +37,6 @@ pub async fn auth_session<B>(
 	let headers = req.headers();
 
 	let cookies = CookieJar::from_headers(headers);
-
-
 
 	match cookies.get("login_session") {
 		Some(session_id) => {
