@@ -1,4 +1,6 @@
 
+use std::sync::Arc;
+
 use argon2::{
     password_hash::{
         rand_core::OsRng, PasswordHasher, Salt, SaltString
@@ -6,13 +8,13 @@ use argon2::{
     Argon2, PasswordHash, PasswordVerifier
 };
 
-use axum::{http::StatusCode, response::Response, routing::{get, post}, Extension, Json, Router};
+use axum::{extract::State, http::StatusCode, response::Response, routing::{get, post}, Extension, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, db::{establish_connection, models::{Quiz, Session, User}, schema::{quiz, session, users}}, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{Quiz, Session, User}, schema::{quiz, session, users}}, middleware::CurrentSession, util::generate_short_uuid};
 
 use super::util::{generic_error, json_response};
 
@@ -71,6 +73,7 @@ fn validate_password (password: String, salt: String, hash: String) -> bool {
 }
 
 async fn create_user(
+	State(state): State<Arc<AppState>>,
 	Json(payload): Json<CreateUser>,
 ) -> Response<axum::body::Body> {
 	if !EmailAddress::is_valid(&payload.email.clone()) {
@@ -86,7 +89,7 @@ async fn create_user(
 	let (salt, password) = hash_tuple.unwrap();	
 	let user_id = generate_short_uuid();
 
-	let conn = &mut establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let new_user = User {
 		id: user_id,
@@ -99,7 +102,7 @@ async fn create_user(
 	let result = diesel::insert_into(users::table)
 		.values(&new_user)
 		.returning(User::as_returning())
-		.get_result(conn);
+		.get_result(&mut conn);
 
 	if result.is_err() {
 		let error = result.err().unwrap();
@@ -127,9 +130,10 @@ async fn create_user(
 }
 
 async fn login(
+	State(state): State<Arc<AppState>>,
 	Json(payload): Json<LoginUser>
 ) -> Response<axum::body::Body> {
-	let mut conn = establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let user_result = users::table
 		.filter(users::username.eq(payload.clone().username))
@@ -158,17 +162,18 @@ async fn login(
 }
 
 async fn get_me(
-	Extension(current_session): Extension<CurrentSession>
+	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 
 	let current_session = current_session.session.unwrap();
 	
-	let conn = &mut establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool.");
 	
 	info!("session ext {:#?}", current_session);
 
-	match users::table.find(current_session.user_id).first::<User>(conn) {
+	match users::table.find(current_session.user_id).first::<User>(&mut conn) {
 		Ok(user) => {json_response(StatusCode::OK, ReturnedUser {
 			id: user.id,
 			username: user.username,
@@ -178,17 +183,18 @@ async fn get_me(
 }
 
 async fn get_my_quizzes(
-	Extension(current_session): Extension<CurrentSession>
+	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 
 	let current_session = current_session.session.unwrap();
 	
-	let conn = &mut establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 	
 	info!("session ext {:#?}", current_session);
 
-	let quizzes = quiz::table.filter(quiz::owner_id.eq(current_session.user_id)).select(quiz::all_columns).load::<Quiz>(conn);
+	let quizzes = quiz::table.filter(quiz::owner_id.eq(current_session.user_id)).select(quiz::all_columns).load::<Quiz>(&mut conn);
 	
 	match quizzes {
 		Ok(quizzes) => json_response(StatusCode::OK, quizzes),
@@ -196,11 +202,12 @@ async fn get_my_quizzes(
 	}
 }
 
-pub fn user_router() -> Router {
+pub fn user_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", get(root))
 		.route("/", post(create_user))
 		.route("/login", post(login))
 		.route("/@me", get(get_me))
 		.route("/@me/quizzes", get(get_my_quizzes))
+		.with_state(state)
 }

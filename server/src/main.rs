@@ -5,25 +5,28 @@ mod game_room;
 mod player;
 mod db;
 mod api;
+mod app_state;
 
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, sync::Arc, time::Instant};
 
 use chrono::Utc;
+use dotenvy::dotenv;
 use game_room::{Question, RoomStore};
 use socketioxide::{
-    extract::{Data, SocketRef}, socket::DisconnectReason, SocketIo
+    extract::{Data, SocketRef, State}, socket::DisconnectReason, SocketIo
 };
 
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tracing::info;
 use tracing_subscriber::FmtSubscriber;
+use crate::app_state::AppState;
 
 
 #[macro_use]
 extern crate lazy_static;
 
-use crate::{api::{quiz::get_quiz_by_id, quiz_types::ReturnedQuestion}, db::establish_connection, game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
+use crate::{api::{quiz::get_quiz_by_id, quiz_types::ReturnedQuestion}, game_room::{GameRoom, GameState}, player::{calculate_points, Player}, socket_type::{SocketErrorMessage, SocketEventType}};
 
 
 #[derive(Debug, serde::Deserialize, Clone)]
@@ -148,7 +151,11 @@ async fn on_connect(socket: SocketRef) {
         },
     );
 
-    socket.on(SocketEventType::CreateRoom, |socket: SocketRef, Data::<String>(quiz_id)| async move {
+    socket.on(SocketEventType::CreateRoom, |
+        socket: SocketRef,
+        state: State<Arc<AppState>>,
+        Data::<String>(quiz_id),
+    | async move {
         info!("Creating room");
         let room_code = util::generate_random_number_string(6);
 
@@ -156,7 +163,7 @@ async fn on_connect(socket: SocketRef) {
         let _ = socket.join(room_code.clone());
         info!("Rooms are now {:#?}", socket.rooms());
 
-        let mut conn = establish_connection();
+        let mut conn = state.db_pool.get().expect("Failed to get database pool");
 
         let quiz = get_quiz_by_id(quiz_id.to_string(), &mut conn).await;
 
@@ -386,19 +393,24 @@ async fn on_connect(socket: SocketRef) {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::subscriber::set_global_default(FmtSubscriber::default())?;
 
-    let (layer, io) = SocketIo::builder().build_layer();
+    dotenv().ok();
+
+    let state = Arc::new(AppState::new());
+    let socket_state = Arc::clone(&state);
+
+    let (layer, io) = SocketIo::builder().with_state(socket_state).build_layer();
 
     io.ns("/", on_connect);
 
     let app = axum::Router::new()
         .with_state(io)
-        .nest("/api", api::api_router())
+        .nest("/api", api::api_router(Arc::clone(&state)))
         .layer(
             ServiceBuilder::new()
             .layer(CorsLayer::permissive())
             .layer(layer)
         )
-        .layer(axum::middleware::from_fn(crate::middleware::auth_session));
+        .layer(axum::middleware::from_fn_with_state(Arc::clone(&state), crate::middleware::auth_session));
 
     info!("Starting server on port {}", "3000");
 

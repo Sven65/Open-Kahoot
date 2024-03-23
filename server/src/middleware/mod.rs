@@ -1,10 +1,13 @@
+use std::sync::Arc;
+
 use axum::{
-   http::{Request, StatusCode}, middleware::Next, response::Response
+   extract::State, http::{Request, StatusCode}, middleware::Next, response::Response, Extension
 };
 
 use axum_extra::extract::CookieJar;
 use diesel::{prelude::*, QueryDsl};
-use crate::db::{establish_connection, models::Session, schema::session};
+use tracing::info;
+use crate::{app_state::AppState, db::{models::Session, schema::session}};
 
 
 #[derive(Clone, Debug)]
@@ -27,15 +30,20 @@ impl CurrentSession {
 	}
 }
 
-pub async fn auth_session<B>(mut req: Request<B>, next: Next<B>) -> Result<Response, StatusCode> {
+pub async fn auth_session<B>(
+	state: State<Arc<AppState>>,
+	mut req: Request<B>,
+	next: Next<B>
+) -> Result<Response, StatusCode> {	
 	let headers = req.headers();
 
 	let cookies = CookieJar::from_headers(headers);
 
 
+
 	match cookies.get("login_session") {
 		Some(session_id) => {
-			let mut conn = establish_connection();
+			let mut conn = state.db_pool.get().expect("Failed to get database pool.");
 			match session::table.find(session_id.clone().value()).first::<Session>(&mut conn) {
 				Ok(session) => {
 					req.extensions_mut().insert(CurrentSession {

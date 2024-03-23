@@ -1,10 +1,12 @@
-use axum::{extract::Path, http::{Response, StatusCode}, routing::{get, post}, Extension, Json, Router};
+use std::sync::Arc;
+
+use axum::{extract::{Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Json, Router};
 use diesel::{prelude::*, QueryDsl};
 use serde::Deserialize;
 use tracing::info;
 
 
-use crate::{api::util::{generic_error, generic_json_response, json_response}, db::{establish_connection, models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::util::{generic_error, generic_json_response, json_response}, app_state::PgPooledConn, db::{models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid, AppState};
 
 use super::quiz_types::ReturnedQuiz;
 
@@ -13,7 +15,7 @@ struct InCreatedQuiz {
 	pub name: String,
 }
 
-pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgConnection) -> Result<ReturnedQuiz, diesel::result::Error> {
+pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgPooledConn) -> Result<ReturnedQuiz, diesel::result::Error> {
 	let quiz = quiz::table.find(quiz_id).first::<Quiz>(conn)?;
     let questions = Question::belonging_to(&quiz).load::<Question>(conn)?;
 	let answers = Answer::belonging_to(&questions).load::<Answer>(conn)?;
@@ -26,15 +28,17 @@ pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgConnection) -> Result
 	Ok(ReturnedQuiz::new_from(quiz, questions, answers, owner))
 }
 
+
 async fn get_quiz(
 	Path(id): Path<String>,
 	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 
-	let conn = &mut establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
-	match get_quiz_by_id(id, conn).await {
+	match get_quiz_by_id(id, &mut conn).await {
 		Ok(quiz) => {
 			if !quiz.public {
 				if !current_session.match_user_id(quiz.owner.id.clone()) {
@@ -51,11 +55,12 @@ async fn get_quiz(
 async fn update_quiz(
 	Path(_id): Path<String>,
 	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
 	Json(new_quiz): Json<ReturnedQuiz>,
 ) -> Response<axum::body::Body> {
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 	
-	let mut conn = establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 	let cloned_quiz = new_quiz.clone();
 
 	let db_quiz = get_quiz_by_id(cloned_quiz.clone().id.unwrap(), &mut conn).await;
@@ -113,13 +118,14 @@ async fn update_quiz(
 
 async fn create_quiz(
 	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
 	Json(new_quiz): Json<InCreatedQuiz>,
 ) -> Response<axum::body::Body> {
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 
 	let current_session = current_session.session.unwrap();
 	
-	let mut conn = establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 	let new_quiz_id = generate_short_uuid();
 
 	let result = diesel::insert_into(crate::api::quiz::quiz::dsl::quiz)
@@ -139,9 +145,10 @@ async fn create_quiz(
 async fn delete_quiz(
 	Path(id): Path<String>,
 	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
 ) ->  Response<axum::body::Body> {
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
-	let mut conn = establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	match get_quiz_by_id(id.clone(), &mut conn).await {
 		Ok(quiz) => {
@@ -161,7 +168,7 @@ async fn delete_quiz(
 	}
 }
 
-pub fn quiz_router() -> Router {
+pub fn quiz_router(state: Arc<AppState>) -> Router {
 	Router::new()
 	.route(
 		"/:id",
@@ -170,4 +177,5 @@ pub fn quiz_router() -> Router {
 		.delete(delete_quiz)
 	)
 	.route("/create", post(create_quiz))
+	.with_state(state)
 }

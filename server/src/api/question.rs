@@ -1,7 +1,9 @@
-use axum::{extract::Path, http::{Response, StatusCode}, routing::delete, Extension, Router};
+use std::sync::Arc;
+
+use axum::{extract::{Path, State}, http::{Response, StatusCode}, routing::delete, Extension, Router};
 use diesel::prelude::*;
 
-use crate::{db::{establish_connection, models::Question, schema::questions}, middleware::CurrentSession};
+use crate::{app_state::{AppState, PgPooledConn}, db::{models::Question, schema::questions}, middleware::CurrentSession};
 
 use super::{quiz::get_quiz_by_id, util::{generic_error, generic_json_response}};
 
@@ -9,7 +11,7 @@ use super::{quiz::get_quiz_by_id, util::{generic_error, generic_json_response}};
 /// Gets a question by it's ID
 /// 
 /// * question_id The ID of the question to get
-pub async fn get_question_by_id (question_id: String, conn: &mut PgConnection) -> Result<Question, diesel::result::Error> {
+pub async fn get_question_by_id (question_id: String, conn: &mut PgPooledConn) -> Result<Question, diesel::result::Error> {
 	let returned_question = questions::table.find(question_id).first::<Question>(conn)?;
 
 	Ok(returned_question)
@@ -18,10 +20,11 @@ pub async fn get_question_by_id (question_id: String, conn: &mut PgConnection) -
 async fn delete_question(
 	Path(id): Path<String>,
 	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {	
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 	
-	let mut conn = establish_connection();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let db_question = get_question_by_id(id.clone(), &mut conn).await;
 
@@ -43,10 +46,11 @@ async fn delete_question(
 		}
 }
 
-pub fn question_router() -> Router {
+pub fn question_router(state: Arc<AppState>) -> Router {
 	Router::new()
 	.route(
 		"/:id",
 		delete(delete_question)
 	)
+	.with_state(state)
 }
