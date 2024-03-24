@@ -1,6 +1,4 @@
 import { useContext, useRef, useState } from 'preact/hooks'
-import { Card } from '../../components/Card/Card'
-import { Center } from '../../components/Center'
 import { Button } from '../../components/Form/Button'
 import { Input } from '../../components/Form/Input'
 
