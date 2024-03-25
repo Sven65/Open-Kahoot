@@ -11,5 +11,10 @@ export default {
 	plugins: [
 		require('@tailwindcss/forms'),
 	],
+	safelist: [
+		{
+			pattern: /bg-.+/,
+		},
+	],
 }
 

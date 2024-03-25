@@ -22,9 +22,9 @@ export const Button = ({
 		type="submit"
 		class={
 			classNames(
-				'flex justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
+				`bg-${bgColor} flex justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`,
 				{ 'w-full': full },
-				[ `bg-${bgColor}`, `text-${textColor}`, `hover:bg-${hoverColor}`, `focus-visible:outline-${focusColor}` ],
+				[ `text-${textColor}`, `hover:bg-${hoverColor}`, `focus-visible:outline-${focusColor}` ],
 			)
 		}
 		{...rest}
