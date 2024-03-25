@@ -34,17 +34,17 @@ async fn get_quiz(
 	Extension(current_session): Extension<CurrentSession>,
 	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {
-	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+	// if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	match get_quiz_by_id(id, &mut conn).await {
 		Ok(quiz) => {
-			if !quiz.public {
-				if !current_session.match_user_id(quiz.owner.id.clone()) {
-					return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized.");
-				}
-			}
+			// // if !quiz.public {
+			// 	if !current_session.match_user_id(quiz.owner.id.clone()) {
+			// 		return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized.");
+			// 	}
+			// }
 			
 			json_response(StatusCode::OK, quiz)
 		},

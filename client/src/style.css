@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+	input[type="number"] {
+		-moz-appearance: textfield;
+		-webkit-appearance: textfield;
+		appearance: textfield;
+	}
+  }
+
 :root {
 	font-family: Futura, system-ui, Avenir, Helvetica, Arial, sans-serif;
 	line-height: 1.5;

@@ -6,7 +6,7 @@ export const DashboardLayout = ({
 	children,
 }: Props) => {
 	return (
-		<div class="flex bg-gray-100 text-gray-900">
+		<div class="flex bg-gray-100 text-gray-900 max-h-full">
 			<aside class="flex h-screen w-20 flex-col items-center border-r border-gray-200 bg-white">
 				<div class="flex h-[4.5rem] w-full items-center justify-center border-b border-gray-200 p-2">
 					<img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThsapwuIZ2JPUVRaWSoX_xoEIOHWxneY7EupS8gsFriA&s" />
@@ -28,13 +28,14 @@ export const DashboardLayout = ({
 					</a>
 				</nav>
 
-				<div class="flex flex-col items-center gap-y-4 py-10">
+				{/* User avatar: */}
+				{/* <div class="flex flex-col items-center gap-y-4 py-10">
 					<button class="mt-2 rounded-full bg-gray-100">
-						<img class="h-10 w-10 rounded-full" src="https://avatars.githubusercontent.com/u/35387401?v=4" alt="" />
+						<img class="h-10 w-10 rounded-full" src="" alt="" />
 					</button>
-				</div>
+				</div> */}
 			</aside>
-			<aside class="w-full max-h-screen">
+			<aside class="w-full max-h-full">
 				{children}
 			</aside>
 		</div>

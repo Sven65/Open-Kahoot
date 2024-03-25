@@ -6,6 +6,7 @@ import { TailwindComponentColors } from '../../types'
 
 export type Props = HTMLAttributes<HTMLButtonElement> & TailwindComponentColors & {
 	full?: boolean
+	className?: string,
 }
 
 
@@ -16,6 +17,7 @@ export const Button = ({
 	textColor = 'white',
 	hoverColor = 'indigo-700',
 	focusColor = 'green-100',
+	className,
 	...rest
 }: Props) => (
 	<button
@@ -25,6 +27,7 @@ export const Button = ({
 				`bg-${bgColor} flex justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`,
 				{ 'w-full': full },
 				[ `text-${textColor}`, `hover:bg-${hoverColor}`, `focus-visible:outline-${focusColor}` ],
+				className,
 			)
 		}
 		{...rest}
