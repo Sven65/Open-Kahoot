@@ -243,46 +243,41 @@ export const QuizEditor = () => {
 										</Card>
 									</div>
 									<div class="w-full max-w-full px-3 mb-6 lg:w-2/12 sm:flex-none xl:mb-0">
-										<div class="rounded-xl border border-gray-200 bg-white py-4 px-2 shadow-md shadow-gray-100 max-h-full h-full overflow-y-scroll">
-											<div class="flex items-center justify-between px-2 text-base font-medium text-gray-700">
-												<div>Question data</div>
-											</div>
-											<div class="mt-4">
-												<div>
-													<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">Max Points</label>
-													<div class="mt-2">
-														<Input
-															required
-															placeholder={'1000'}
-															value={selectedQuestion.max_points}
-															// Todo: Prevent letters in here
-															// @ts-ignore
-															onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_points')}
-															type="number"
-														/>
-													</div>
-												</div>
-												<div>
-													<label for="answerTime" class="block text-sm font-medium leading-6 text-gray-900">Answer Time</label>
-													<div class="mt-2">
-														<Input
-															required
-															placeholder={'30'}
-															value={selectedQuestion.max_time}
-															// Todo: Prevent letters in here
-															// @ts-ignore
-															onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_time')}
-															type="number"
-														/>
-													</div>
-												</div>
-												<div>
-													<div class="mt-2">
-														<Button full bgColor="red-500" onClick={() => deleteSingleQuestion(selectedQuestion.id)}>Delete Question</Button>
-													</div>
+										<Card title="Question data">
+											<div>
+												<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">Max Points</label>
+												<div class="mt-2">
+													<Input
+														required
+														placeholder={'1000'}
+														value={selectedQuestion.max_points}
+														// Todo: Prevent letters in here
+														// @ts-ignore
+														onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_points')}
+														type="number"
+													/>
 												</div>
 											</div>
-										</div>
+											<div>
+												<label for="answerTime" class="block text-sm font-medium leading-6 text-gray-900">Answer Time</label>
+												<div class="mt-2">
+													<Input
+														required
+														placeholder={'30'}
+														value={selectedQuestion.max_time}
+														// Todo: Prevent letters in here
+														// @ts-ignore
+														onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_time')}
+														type="number"
+													/>
+												</div>
+											</div>
+											<div>
+												<div class="mt-2">
+													<Button full bgColor="red-500" onClick={() => deleteSingleQuestion(selectedQuestion.id)}>Delete Question</Button>
+												</div>
+											</div>
+										</Card>
 									</div>
 								</>
 							)}
