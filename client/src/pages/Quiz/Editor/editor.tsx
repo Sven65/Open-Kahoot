@@ -1,14 +1,15 @@
-import { useRoute } from 'preact-iso'
 import { useContext, useEffect, useRef, useState } from 'preact/hooks'
+import { DashboardLayout } from '../../../components/Layouts/Dashboard/Dashboard'
 import { ApiContext } from '../../../context/ApiContext'
-
-import './editor.scss'
-import { Button } from '../../../components/Form/Button'
+import { useRoute } from 'preact-iso'
 import { Answer, AnswerColor, Question, Quiz, RecursivePartial } from '../../../types'
 import { QuestionsList } from './QuestionsList'
+import { Button } from '../../../components/Form/Button'
 import { Input } from '../../../components/Form/Input'
 import { deleteByKey, replaceObjectById } from '../../../util/modify'
-import { Modal } from '../../../components/Modal/Modal'
+import { Card } from '../../../components/Card/Card'
+import { AnswerInput } from '../../../components/Form/AnswerInput'
+import { DangerModal } from '../../../components/Modal/DangerModal'
 
 export const QuizEditor = () => {
 	const apiContext = useContext(ApiContext)
@@ -22,8 +23,8 @@ export const QuizEditor = () => {
 	const [ showModal, setShowModal ] = useState(false)
 
 
-	const listRef = useRef()
 
+	const listRef = useRef()
 
 	useEffect(() => {
 		// @ts-ignore
@@ -34,8 +35,13 @@ export const QuizEditor = () => {
 	useEffect(() => {
 		setEditedQuiz(quiz)
 	}, [quiz])
-	
-	if (!editedQuiz) return <h1>Please wait...</h1>
+
+
+	if (!editedQuiz) return (
+		<DashboardLayout>
+			<h1>Please wait...</h1>
+		</DashboardLayout>
+	)
 
 	const getAnswerForColor = (color: AnswerColor): Answer | undefined => {
 		return selectedQuestion.answers.find(answer => answer.answer_color === color)
@@ -107,20 +113,6 @@ export const QuizEditor = () => {
 		})
 	}
 
-	const deleteSingleQuestion = (id: string) => {
-		if (!id.startsWith('new')) deleteQuestion(id)
-
-		const newQuestions = deleteByKey([...quiz.questions], 'id', id)
-
-		setSelectedQuestion(null)
-
-		setEditedQuiz({
-			...editedQuiz,
-			questions: newQuestions,
-		})
-
-	}
-
 	const changeCorrectAnswer = (e) => {
 		const newSelectedQuestion: Question = {
 			...selectedQuestion,
@@ -137,179 +129,167 @@ export const QuizEditor = () => {
 		setEditedQuiz(editedQuiz)
 	}
 
+	const deleteSingleQuestion = (id: string) => {
+		if (!id.startsWith('new')) deleteQuestion(id)
+
+		const newQuestions = deleteByKey([...quiz.questions], 'id', id)
+
+		setSelectedQuestion(null)
+
+		setEditedQuiz({
+			...editedQuiz,
+			questions: newQuestions,
+		})
+	}
 
 	return (
-		<div class="editor-container">
-			<Modal show={showModal} onClose={() => setShowModal(false)}>
-				<div class="join-modal-container">
-					<h1>Are you sure you want to delete this quiz?</h1>
-					<h3>This action can not be undone.</h3>
-					<Button color="green" onClick={() => setShowModal(false)}>Cancel</Button>
-					<Button color="red" onClick={() => deleteQuiz(editedQuiz.id)}>Delete</Button>
-				</div>
-			</Modal>
-			<div class="editor-header">
-				<div class="editor-header-left">
-					<h1>
-						Editing quiz
-						<Input value={editedQuiz.name} onChange={e => setEditedQuiz({
-							...editedQuiz,
-							name: e.target.value,
-						})} />
-					</h1>
-				</div>
-				<div class="editor-header-right">
-					<Button color="green" onClick={() => saveQuiz(editedQuiz)}>Save</Button>
-					<Button color="red" onClick={() => setShowModal(true)}>Delete</Button>
-				</div>
-			</div>
+		<DashboardLayout>
+			<DangerModal
+				show={showModal}
+				onClose={() => setShowModal(false)}
+				title={'Are you sure?'}
+				text={'Are you sure you want to delete this quiz? This action can not be undone.'}
+				onAction={() => deleteQuiz(editedQuiz.id)}
+				actionText='Delete'
+			/>
 
-			<div class="editor-left-column">
-				<div class="row">
-					<h1>Question List</h1>
-				</div>
-				<QuestionsList
-					ref={listRef}
-					questions={editedQuiz.questions}
-					onEdit={(newQuestions: Question[]) => {
-						if (!editedQuiz) return
-						editedQuiz.questions = newQuestions
-						setEditedQuiz(editedQuiz)
-					}}
-					onClickQuestion={(id) => {
-						setSelectedQuestion(editedQuiz.questions.find(question => question.id === id))
-					}}
-				/>
-				<Button color='green' onClick={createNewQuestion}>New Question</Button>
-			</div>
-
-			<div class="editor-middle-column">
-				{selectedQuestion ? (
-					<div class="single-question-editor">
-						<div class="row">
-							<h1>Answers & Question</h1>
-						</div>
-						<div class="row">
-							<div class="answer-editor">
-								<Input
-									label="Question"
-									labelClass='white-label'
-									placeholder={'Question'}
-									value={selectedQuestion.question}
-									// @ts-ignore
-									onInput={e => setSelectedQuestionValue(e.target.value, 'question')}
+			<div class="grid grid-rows-[max-content_1fr] grid-flow-col gap-4">
+				<div class="">
+					<nav id="relative flex flex-wrap items-center">
+						<div class="rounded-xl border border-gray-200 bg-white mt-2 mx-6 py-2 px-2 shadow-md shadow-gray-100 max-h-full h-full flex">
+							<div class="flex items-center grow">
+								<h1>Editing quiz: </h1>
+								<input
+									type="text"
+									class="ml-2 block p-2.5 text-sm text-gray-900 rounded-e-lg rounded-s-gray-100 rounded border border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+									required
+									value={editedQuiz.name}
 								/>
 							</div>
-						</div>
-						<div class="row">
-
-							<div class="single-q-answer-editor">
-								<div class="row">
-									<div class="answer-editor red">
-										<Input
-											id="red-answer"
-											placeholder={'Answer'}
-											label={'Red'}
-											labelClass="red-label"
-											value={getAnswerForColor(AnswerColor.Red)?.answer}
-											// @ts-ignore
-											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Red)}
-											suffix={(
-												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Red} checked={getAnswerForColor(AnswerColor.Red)?.is_correct} />
-											)}
-										/>
-									</div>
-									<div class="answer-editor">
-										<Input
-											placeholder={'Answer'}
-											label={'Green'}
-											labelClass="green-label"
-											value={getAnswerForColor(AnswerColor.Green)?.answer}
-											// @ts-ignore
-											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Green)}
-											suffix={(
-												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Green} checked={getAnswerForColor(AnswerColor.Green)?.is_correct} />
-											)}
-										/>
-									</div>
-								</div>
-								<div class="row">
-									<div class="answer-editor">
-										<Input
-											placeholder={'Answer'}
-											label={'Blue'}
-											labelClass="blue-label"
-											value={getAnswerForColor(AnswerColor.Blue)?.answer}
-											// @ts-ignore
-											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Blue)}
-											suffix={(
-												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Blue} checked={getAnswerForColor(AnswerColor.Blue)?.is_correct} />
-											)}
-										/>
-									</div>
-									<div class="answer-editor">
-										<Input
-											placeholder={'Answer'}
-											label={'Yellow'}
-											labelClass="yellow-label"
-											value={getAnswerForColor(AnswerColor.Yellow)?.answer}
-											// @ts-ignore
-											onChange={e => setSelectedQuestionAnswer(e.target.value, AnswerColor.Yellow)}
-											suffix={(
-												<input type="checkbox" onChange={changeCorrectAnswer} name={AnswerColor.Yellow} checked={getAnswerForColor(AnswerColor.Yellow)?.is_correct} />
-											)}
-										/>
-									</div>
-								</div>
+							<div class="float-right flex">
+								<Button bgColor="green-500" onClick={() => saveQuiz(editedQuiz)}>Save</Button>
+								<Button bgColor="red-500" onClick={() => setShowModal(true)}>Delete</Button>
 							</div>
+						</div>
+					</nav>
+				</div>
+				<div class="max-h-full flex flex-col mt-0 mt-[-10px]">
+					<div class="w-full px-6 py-6 mx-auto drop-zone">
+						<div class="flex flex-wrap -mx-3 mb-5 max-h-screen h-full">
+							<div class="w-full max-w-full px-3 mb-6 lg:w-2/12 sm:flex-none xl:mb-0 max-h-screen h-[90vh] grow-0">
+								<QuestionsList
+									ref={listRef}
+									questions={editedQuiz.questions}
+									onEdit={(newQuestions: Question[]) => {
+										if (!editedQuiz) return
+										editedQuiz.questions = newQuestions
+										setEditedQuiz(editedQuiz)
+									}}
+									onClickQuestion={(id) => {
+										setSelectedQuestion(editedQuiz.questions.find(question => question.id === id))
+									}}
+									onAddQuestion={createNewQuestion}
+								/>
+							</div>
+							{!selectedQuestion ? (
+								<>
+									<div class="w-full max-w-full px-3 mb-6 lg:w-10/12 sm:flex-none xl:mb-0 flex flex-row min-h-screen justify-center items-center">
+										Please select a question
+									</div>
+								</>
+							) : (
+								<>
+									<div class="w-full max-w-full px-3 mb-6 lg:w-8/12 sm:flex-none xl:mb-0">
+										<Card title="Editor">
+											<div>
+												<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">Question</label>
+												<div class="mt-2">
+													<Input
+														required
+														placeholder={'Question'}
+														value={selectedQuestion.question}
+														// @ts-ignore
+														onInput={e => setSelectedQuestionValue(e.target.value, 'question')}
+														type="text"
+													/>
+												</div>
+											</div>
+											<div class="mt-4">
+												<AnswerInput
+													changeCorrectAnswer={changeCorrectAnswer}
+													color={AnswerColor.Red}
+													setSelectedQuestionAnswer={setSelectedQuestionAnswer}
+													answer={getAnswerForColor(AnswerColor.Red)}
+												/>
+												<AnswerInput
+													changeCorrectAnswer={changeCorrectAnswer}
+													color={AnswerColor.Green}
+													setSelectedQuestionAnswer={setSelectedQuestionAnswer}
+													answer={getAnswerForColor(AnswerColor.Green)}
+												/>
+												<AnswerInput
+													changeCorrectAnswer={changeCorrectAnswer}
+													color={AnswerColor.Blue}
+													setSelectedQuestionAnswer={setSelectedQuestionAnswer}
+													answer={getAnswerForColor(AnswerColor.Blue)}
+												/>
+												<AnswerInput
+													changeCorrectAnswer={changeCorrectAnswer}
+													color={AnswerColor.Yellow}
+													setSelectedQuestionAnswer={setSelectedQuestionAnswer}
+													answer={getAnswerForColor(AnswerColor.Yellow)}
+												/>
+											</div>
+										</Card>
+									</div>
+									<div class="w-full max-w-full px-3 mb-6 lg:w-2/12 sm:flex-none xl:mb-0">
+										<div class="rounded-xl border border-gray-200 bg-white py-4 px-2 shadow-md shadow-gray-100 max-h-full h-full overflow-y-scroll">
+											<div class="flex items-center justify-between px-2 text-base font-medium text-gray-700">
+												<div>Question data</div>
+											</div>
+											<div class="mt-4">
+												<div>
+													<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">Max Points</label>
+													<div class="mt-2">
+														<Input
+															required
+															placeholder={'1000'}
+															value={selectedQuestion.max_points}
+															// Todo: Prevent letters in here
+															// @ts-ignore
+															onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_points')}
+															type="number"
+														/>
+													</div>
+												</div>
+												<div>
+													<label for="answerTime" class="block text-sm font-medium leading-6 text-gray-900">Answer Time</label>
+													<div class="mt-2">
+														<Input
+															required
+															placeholder={'30'}
+															value={selectedQuestion.max_time}
+															// Todo: Prevent letters in here
+															// @ts-ignore
+															onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_time')}
+															type="number"
+														/>
+													</div>
+												</div>
+												<div>
+													<div class="mt-2">
+														<Button full bgColor="red-500" onClick={() => deleteSingleQuestion(selectedQuestion.id)}>Delete Question</Button>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</>
+							)}
 						</div>
 					</div>
-				) : (<h1>Please select a question</h1>)}
-			</div>
-
-			<div class="editor-right-column">
-				{selectedQuestion && (
-					<>
-						<div class="row">
-							<h1>Question Meta</h1>
-						</div>
-						<div class="row">
-							<div class="answer-editor">
-								<Input
-									label="Max Points"
-									placeholder={'1000'}
-									labelClass='white-label'
-									value={selectedQuestion.max_points}
-									// Todo: Prevent letters in here
-									// @ts-ignore
-									onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_points')}
-
-									type="number"
-								/>
-							</div>
-						</div>
-						<div class="row">
-							<div class="answer-editor">
-								<Input
-									label="Answer Time"
-									labelClass='white-label'
-									placeholder={'30'}
-									value={selectedQuestion.max_time}
-									// @ts-ignore
-									onChange={(e) => setSelectedQuestionValue(parseInt(e.target.value, 10), 'max_time')}
-									type="number"
-								/>
-							</div>
-						</div>
-						<div class="row">
-							<Button color="red" onClick={() => deleteSingleQuestion(selectedQuestion.id)}>Delete Question</Button>
-						</div>
-					</>
-				)}
-			</div>
-	
-
-			
-		</div>
+				</div>
+			</div> 
+		</DashboardLayout>
 	)
 }
