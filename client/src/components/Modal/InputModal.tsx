@@ -1,3 +1,4 @@
+import { h } from 'preact'
 import { ComponentChildren } from 'preact'
 
 import './Modal.scss'
@@ -12,6 +13,8 @@ type Props =  {
 	children?: ComponentChildren,
 	text?: string
 	actionText?: string
+	placeholder?: string,
+	icon?: h.JSX.Element,
 }
 
 export const InputModal = ({
@@ -19,6 +22,8 @@ export const InputModal = ({
 	title,
 	text,
 	actionText,
+	placeholder,
+	icon,
 	onAction,
 	onClose,
 }: Props) => {
@@ -35,7 +40,7 @@ export const InputModal = ({
 							<div class="sm:flex sm:items-start">
 								<div class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
 									<svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-										<path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+										{icon}
 									</svg>
 								</div>
 								<div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
@@ -43,7 +48,7 @@ export const InputModal = ({
 									<div class="mt-2">
 										<p class="text-sm text-gray-500">{text}</p>
 										<Input
-											placeholder={'My Awesome Quiz'}
+											placeholder={placeholder}
 											value={value}
 											onChange={e => setValue(e.target.value)}
 										/>

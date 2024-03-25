@@ -5,6 +5,7 @@ import './style.scss'
 import { GameContext } from '../../context/GameContext'
 import { Modal } from '../../components/Modal/Modal'
 import { toast } from 'react-toastify'
+import { InputModal } from '../../components/Modal/InputModal'
 
 
 const people = [
@@ -32,34 +33,27 @@ const people = [
 export function Home() {
 	const gameContext = useContext(GameContext)
 	const [ gamePin, setGamePin ] = useState('')
-	const [ playerName, setPlayerName ] = useState('')
 	const [ showModal, setShowModal ] = useState(false)
 
-	const sendJoin = () => {
+	const sendJoin = (playerName: string) => {
+		if (!playerName || playerName.length === 0) {
+			toast.error('Please enter a name!')
+			return
+		} 
 		gameContext.join(gamePin, playerName)
 	}
 
 	return (
 		<div class="home">
-			<Modal show={showModal} onClose={() => setShowModal(false)}>
-				<div class="join-modal-container">
-					<h1>Enter name</h1>
-					<Input
-						name="player-name"
-						placeholder={'Player Name'}
-						value={playerName}
-						onChange={(evt) => setPlayerName(evt.target.value)}
-						onEnter={sendJoin}
-					/>
-					<Button
-						color="green"
-						onClick={sendJoin}
-						type={'button'}
-					>
-						Enter
-					</Button>
-				</div>
-			</Modal>
+			<InputModal
+				show={showModal}
+				onClose={() => setShowModal(false)}
+				onAction={sendJoin}
+				title="Enter name"
+				actionText='Enter'
+				placeholder='Mike'
+				icon={(<path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />)}
+			/>
 			<div class="form-container">
 				<h1>Open Kahoot</h1>
 				<form class={'code-form'} action="#" onSubmit={(e) => e.preventDefault()}>
