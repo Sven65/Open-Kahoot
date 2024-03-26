@@ -126,9 +126,9 @@ Installation instructions can be found in the client and server directories, res
     - [x] Refactor out socket events to own files in server
 - [ ] Client
   - [ ] UI Redesign
-    - [ ] Player view
-    - [ ] Host view
-    - [ ] Quiz editor
+    - [x] Player view
+    - [x] Host view
+    - [x] Quiz editor
 
 See the [open issues](https://github.com/Sven65/open-kahoot/issues) for a full list of proposed features (and known issues).
 

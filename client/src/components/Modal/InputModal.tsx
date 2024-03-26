@@ -51,6 +51,7 @@ export const InputModal = ({
 											placeholder={placeholder}
 											value={value}
 											onChange={e => setValue(e.target.value)}
+											onKeyDown={e => {e.key === 'Enter' ? onAction(value) : null}}
 										/>
 									</div>
 								</div>

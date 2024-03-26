@@ -5,6 +5,7 @@ import './Player.scss'
 import { useLocation } from 'preact-iso'
 import { CenterText } from '../../components/CenterText'
 import { Answer, AnswerColor } from '../../types'
+import { Layout } from '../../components/Layouts/Layout'
 
 interface GamePlayerProps {
 	onSelect: () => void,
@@ -45,11 +46,21 @@ const GamePlayer = ({
 	)
 }
 
-const PlayerWaiter = () => (
-	<div class="player-waiter">
-		<CenterText>
-			<h1>Please wait for your host to advance.</h1>
-		</CenterText>
+const PlayerWaiter = ({
+	roomId,
+}: {roomId: string}) => (
+	<div class="player-waiter w-full">
+		<div class="bg-white flex justify-center items-center m-24 h-[10%]">
+			<div class="float-right flex grow ml-8">
+				<></>
+			</div>
+			<div class="float-middle flex grow">
+				<h1 className={'text-4xl'}>Please wait for your host to advance.</h1>
+			</div>
+			<div class="float-right mr-8">
+				Game PIN - {roomId}
+			</div>
+		</div>
 	</div>
 )
 
@@ -76,12 +87,12 @@ export const Player = () => {
 
 
 	return (
-		<>
-			<h1>Player of game {roomId}</h1>
+		<Layout className='bg-slate-600'> 
+			{/* <h1>Player of game {roomId}</h1> */}
 
 			{/* TODO: Varying messages about waiting for host and points and stuff */}
 
-			{(showQuestion && !hasSelected)  ? <GamePlayer onSelect={() => setHasSelected(true)} /> : <PlayerWaiter />}
-		</>
+			{(showQuestion && !hasSelected)  ? <GamePlayer onSelect={() => setHasSelected(true)} /> : <PlayerWaiter roomId={roomId} />}
+		</Layout>
 	)
 }

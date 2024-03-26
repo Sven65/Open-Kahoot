@@ -3,6 +3,7 @@ import { Quiz, User } from '../types'
 import { useState } from 'preact/hooks'
 import { toast } from 'react-toastify'
 import { useLocation } from 'preact-iso'
+import { deleteByKey } from '../util/modify'
 
 export type CreateUser = {
 	username: string,
@@ -119,6 +120,9 @@ export const ApiContextProvider = ({
 
 				if (request.status === 200) {
 					toast.success('Delete OK!')
+					setUserQuizzes(deleteByKey([
+						...userQuizzes,
+					], 'id', id))
 					location.route('/@me')
 				} else {
 					toast.error('Delete failed.')
@@ -209,6 +213,11 @@ export const ApiContextProvider = ({
 				}
 
 				toast.success('Created Quiz!')
+
+				setUserQuizzes([
+					...userQuizzes,
+					data,
+				])
 
 				location.route(`/quiz/${data.id}/edit`)
 

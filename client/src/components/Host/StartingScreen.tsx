@@ -30,7 +30,7 @@ export const StartingScreen = ({
 				</div>
 			</div>
 			<div class="game-start-button">
-				<Button color="green" onClick={onStartGame}>Start game</Button>
+				<Button onClick={onStartGame}>Start game</Button>
 			</div>
 		</div>
 	)
