@@ -29,8 +29,8 @@ export const InnerTimer = ({
 
 
 	return (
-		<div>
-			Seconds left: {timer.totalSeconds}
+		<div class="bg-teal-500 rounded-full w-24 h-24 flex justify-center items-center">
+			<span class="text-5xl">{timer.totalSeconds}</span>
 		</div>
 	)
 }

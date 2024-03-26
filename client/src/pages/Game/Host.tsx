@@ -10,6 +10,7 @@ import { Answer, AnswerColor, GameState } from '../../types'
 import { StartingScreen } from '../../components/Host/StartingScreen'
 
 import './Host.scss'
+import { Layout } from '../../components/Layouts/Layout'
 
 export const Host = () => {
 	const gameContext = useContext(GameContext)
@@ -19,6 +20,7 @@ export const Host = () => {
 	const [scoreMap] = gameContext.scoreMap
 	const [gameState] = gameContext.gameState
 	const [playerNames] = gameContext.playerNames
+
 	
 
 	const location = useLocation()
@@ -74,19 +76,33 @@ export const Host = () => {
 		
 	
 		return (
-			<div>
-				{currentQuestion && (<h1>Question is: {currentQuestion?.question}</h1>)}
-
-				{timerRef && (<Timer timerRef={timerRef} time={currentQuestion?.max_time} onExpire={onTimerExpire} />)}
-
-				<div className={'answer-shower'}>
-					<div class="row">
-						<span class="answer-red">{redAnswer && redAnswer.answer}</span>
-						<span class="answer-green" >{greenAnswer && greenAnswer.answer}</span>
+			<div class="grid grid-rows-3 h-full">
+				<div class="bg-white flex justify-center items-center m-24 h-[30%]">
+					<div class="float-left flex grow ml-8">
+						{timerRef && (<Timer timerRef={timerRef} time={currentQuestion?.max_time} onExpire={onTimerExpire} />)}
 					</div>
-					<div class="row">
-						<span class="answer-blue">{blueAnswer && blueAnswer.answer}</span>
-						<span class="answer-yellow">{yellowAnswer && yellowAnswer.answer}</span>
+					<div class="float-middle flex grow">
+						<h1 class="text-4xl">{currentQuestion?.question}</h1>
+					</div>
+					<div class="float-right mr-8">
+						Game PIN - {roomId}
+					</div>
+				</div>
+
+				<div>
+					<></>
+				</div>
+
+
+
+				<div className={'answer-shower grid grid-rows-2'}>
+					<div class="grid grid-cols-2">
+						<span class="answer-red flex justify-center items-center grow">{redAnswer && redAnswer.answer}</span>
+						<span class="answer-green flex justify-center items-center grow">{greenAnswer && greenAnswer.answer}</span>
+					</div>
+					<div class="grid grid-cols-2">
+						<span class="answer-blue flex justify-center items-center grow">{blueAnswer && blueAnswer.answer}</span>
+						<span class="answer-yellow flex justify-center items-center grow">{yellowAnswer && yellowAnswer.answer}</span>
 					</div>
 				</div>
 			</div>
@@ -101,34 +117,38 @@ export const Host = () => {
 	
 
 		return (
-			<>
+			<div class="bg-slate-600 text-gray-900 max-h-full h-full">
 				{(scores && scores.length > 0) && (
-					<>
-						<Button color="green"  onClick={sendNextQuestion}>Next</Button>
-						<Highscores scores={scores} scoreMap={scoreMap} correctAnswerColor={getCorrectAnswerColor()} />
-					</>
+					<div>
+						<Highscores
+							onNext={sendNextQuestion}
+							scores={scores}
+							scoreMap={scoreMap}
+							correctAnswerColor={getCorrectAnswerColor()}
+						/>
+					</div>
 				)}
 
 				<QuestionPart />
-			</>
+			</div>
 		)
 	}
 
 	return (
 		<>
 			{gameState === GameState.STARTING && (
-				<>
+				<Layout className="flex justify-center bg-slate-600">
 					<StartingScreen
 						roomId={roomId}
 						names={playerNames}
 						onStartGame={sendStartGame}
 					/>
-				</>
+				</Layout>
 			)} 
 
 			{gameState === GameState.PLAYING && <GameScreen />}
 
-			{gameState === GameState.ENDED && <Highscores scores={scores} scoreMap={scoreMap} correctAnswerColor={null} />}
+			{gameState === GameState.ENDED && <Highscores scores={scores} scoreMap={scoreMap} correctAnswerColor={null} onNext={() => null} />}
 		</>
 	)
 }

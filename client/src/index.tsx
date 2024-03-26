@@ -11,11 +11,11 @@ import { Player } from './pages/Game/Player.js'
 import { ToastContainer } from 'react-toastify'
 
 import 'react-toastify/dist/ReactToastify.css'
-import { QuizEditor } from './pages/Quiz/Editor/editor.js'
 import { ApiContextProvider } from './context/ApiContext.js'
 import { Register } from './pages/Register/index.js'
 import { Login } from './pages/Login/index.js'
 import { Me } from './pages/Me/index.js'
+import { QuizEditor } from './pages/Quiz/Editor/editor'
 
 export function App() {
 	return (
@@ -40,3 +40,19 @@ export function App() {
 }
 
 render(<App />, document.getElementById('app'))
+
+// On page load or when changing themes, best to add inline in `head` to avoid FOUC
+if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+	document.documentElement.classList.add('dark')
+} else {
+	document.documentElement.classList.remove('dark')
+}
+  
+// Whenever the user explicitly chooses light mode
+localStorage.theme = 'light'
+  
+// Whenever the user explicitly chooses dark mode
+localStorage.theme = 'dark'
+  
+// Whenever the user explicitly chooses to respect the OS preference
+localStorage.removeItem('theme')

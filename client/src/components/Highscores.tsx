@@ -3,11 +3,13 @@ import { ScoreMap } from '../context/GameContext'
 import { AnswerColor, Player } from '../types'
 import { CenterText } from './CenterText'
 import './Highscores.scss'
+import { Button } from './Form/Button'
 
 interface Props {
 	scores: Player[],
 	scoreMap: ScoreMap,
 	correctAnswerColor: AnswerColor,
+	onNext: () => void,
 }
 
 const getDefaultScoreMap = (): ScoreMap => ({
@@ -21,6 +23,7 @@ export const Highscores = ({
 	scores,
 	scoreMap,
 	correctAnswerColor,
+	onNext,
 }: Props) => {
 	return (
 		<div class="highscore-page">
@@ -31,20 +34,29 @@ export const Highscores = ({
 					</div>
 				</CenterText>
 			</div>
-			<div class="answer-breakdown">
-				{
-					Object.entries(scoreMap || getDefaultScoreMap()).map(([ color, count ]) => (
-						<div
-							class={classNames('answer-count', {
-								[color]: true,
-								muted: color !== correctAnswerColor,
-							})} key={`answer-${color}`}>
-							<div class="answer-count-inner">
-								<span>{count}</span>
+			<div>
+				<div class="answer-breakdown">
+					{
+						Object.entries(scoreMap || getDefaultScoreMap()).map(([ color, count ]) => (
+							<div
+								class={classNames('answer-count', {
+									[color]: true,
+									muted: color !== correctAnswerColor,
+								})} key={`answer-${color}`}>
+								<div class="answer-count-inner">
+									<span>{count}</span>
+								</div>
 							</div>
-						</div>
-					))
-				}
+						))
+					}
+				</div>
+				<div class="flex justify-center">
+					<div class="w-[5.5%]">
+						<Button full onClick={onNext} bgColor='green-500' hoverColor='green-800'>
+							Next
+						</Button>
+					</div>
+				</div>
 			</div>
 
 			<div class="highscore-container">
