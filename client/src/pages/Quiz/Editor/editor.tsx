@@ -153,11 +153,6 @@ export const QuizEditor = () => {
 
 		setSelectedQuestionValue('image', url)
 
-		setSelectedQuestion({
-			...selectedQuestion,
-			image: url,
-		})
-
 	}
 
 	return (
