@@ -81,7 +81,7 @@ async fn upload_file(
 
 		let webp_image = convert_to_webp(data);
 
-		let result = DiskStorage::new().upload_file(webp_image.as_slice(), name).await;
+		let result = state.filestorage.upload_file(webp_image.as_slice(), name).await;
 
 		if result.is_err() {
 			return generic_json_response(StatusCode::INTERNAL_SERVER_ERROR, "Failed to upload file.");
