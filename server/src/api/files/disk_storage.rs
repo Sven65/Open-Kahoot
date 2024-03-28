@@ -49,4 +49,8 @@ impl FileStorageEngine for DiskStorage {
 		let _ = output_file.write_all(&data);
 		Ok(path)
 	}
+
+	async fn serve_file(&self, file_id: String) -> Result<String, std::io::Error> {
+		Ok("test".to_string())
+	}
 }

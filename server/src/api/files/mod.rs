@@ -105,12 +105,22 @@ async fn upload_file(
 	generic_json_response(StatusCode::OK, "File uploaded.")
 }
 
+async fn serve_file(
+	Extension(current_session): Extension<CurrentSession>,
+	Path(id): Path<String>,
+	State(state): State<Arc<AppState>>,
+) -> Response<axum::body::Body> {
+	let file = state.filestorage.serve_file(id).await;
+
+	generic_json_response(StatusCode::OK, file.unwrap().as_str())
+}
+
 pub fn files_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", 
 			get(root)
 			.post(get_temp_path_id)
 		)
-		.route("/:id", post(upload_file))
+		.route("/:id", post(upload_file).get(serve_file))
 		.with_state(state)
 }
