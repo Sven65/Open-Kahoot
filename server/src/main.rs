@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     dotenv().ok();
 
-    let state = Arc::new(AppState::new());
+    let state = Arc::new(AppState::new().await);
     let socket_state = Arc::clone(&state);
 
     let (layer, io) = SocketIo::builder().with_state(socket_state).build_layer();

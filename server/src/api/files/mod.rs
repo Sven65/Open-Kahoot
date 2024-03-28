@@ -1,14 +1,15 @@
 pub mod file_storage_engine;
 pub mod disk_storage;
 pub mod file_utils;
+pub mod s3_storage;
 
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use axum::{extract::{Multipart, Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Router};
 use diesel::{ExpressionMethods, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
-use crate::{api::{files::{disk_storage::DiskStorage, file_storage_engine::FileStorageEngine, file_utils::convert_to_webp}, util::generic_json_response}, app_state::AppState, db::{models::{FileHostProvider, Files}, schema::files}, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{files::file_utils::convert_to_webp, util::generic_json_response}, app_state::AppState, db::{models::{FileHostProvider, Files}, schema::files}, middleware::CurrentSession, util::generate_short_uuid};
 
 use super::util::{generic_error, json_response};
 
@@ -38,7 +39,11 @@ async fn get_temp_path_id(
 		.values(Files::new(
 			id.clone(),
 			current_session.user_id,
-			FileHostProvider::Disk,
+			match env::var("FILE_STORAGE_ENGINE").expect("File storage engine must be set.").to_lowercase().as_str() {
+				"s3" => FileHostProvider::S3,
+				"disk" => FileHostProvider::Disk,
+				_ => panic!("File storage engine must be set in env"),
+			}
 		))
 		.execute(&mut conn);
 	
