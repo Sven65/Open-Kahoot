@@ -70,8 +70,6 @@ impl FileStorageEngine for S3Storage {
 			key: file_name,
 			..Default::default()
 		};
-		let expiration_time = Utc::now() + Duration::try_minutes(15).unwrap();
-
 
 		// Generate a pre-signed URL for the object
 		let presigned_url = request.get_presigned_url(&self.region, &self.credentials, &PreSignedRequestOption::default());

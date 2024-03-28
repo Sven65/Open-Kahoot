@@ -110,9 +110,24 @@ async fn serve_file(
 	Path(id): Path<String>,
 	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {
-	let file = state.filestorage.serve_file(id).await;
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+	
+	let current_session = current_session.session.unwrap();
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
-	generic_json_response(StatusCode::OK, file.unwrap().as_str())
+	let file = Files::get_by_id(id, &mut conn).await;
+
+	if file.is_err() { return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to get file from DB."); }
+
+	let file = file.unwrap();
+
+	if file.owner_id != current_session.user_id { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+	let file_url = state.filestorage.serve_file(file.file_location.unwrap()).await;
+
+	if file_url.is_err() { return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to get file from storage."); }
+
+	generic_json_response(StatusCode::OK, file_url.unwrap().as_str())
 }
 
 pub fn files_router(state: Arc<AppState>) -> Router {
