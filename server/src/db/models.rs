@@ -6,7 +6,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz};
 
-use super::schema::sql_types::AnswerColor;
+use super::schema::{files, sql_types::AnswerColor};
+use super::schema::sql_types::Filehostprovider;
 
 
 #[derive(Debug, Deserialize, SqlType, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Clone, Hash)]
@@ -38,6 +39,34 @@ impl FromSql<AnswerColor, Pg> for RealAnswerColor {
             b"Green" => Ok(RealAnswerColor::Green),
             b"Red" => Ok(RealAnswerColor::Red),
             b"Yellow" => Ok(RealAnswerColor::Yellow),
+            _ => Err("Unrecognized enum variant".into()),
+        }
+    }
+}
+
+#[derive(Debug, Deserialize, SqlType, PartialEq, FromSqlRow, AsExpression, Eq, Serialize, Clone, Hash)]
+#[diesel(sql_type = Filehostprovider)]
+pub enum FileHostProvider {
+    Disk,
+    S3,
+}
+
+
+impl ToSql<Filehostprovider, Pg> for FileHostProvider {
+    fn to_sql<'b>(&'b self, out: &mut Output<'b, '_, Pg>) -> serialize::Result {
+        match *self {
+            FileHostProvider::Disk => out.write_all(b"disk")?,
+            FileHostProvider::S3 => out.write_all(b"s3")?,
+        }
+        Ok(IsNull::No)
+    }
+}
+
+impl FromSql<Filehostprovider, Pg> for FileHostProvider {
+    fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
+        match bytes.as_bytes() {
+            b"disk" => Ok(FileHostProvider::Disk),
+            b"s3" => Ok(FileHostProvider::S3),
             _ => Err("Unrecognized enum variant".into()),
         }
     }
@@ -169,5 +198,39 @@ impl Session {
             created_at: Local::now().naive_local(),
             updated_at: Local::now().naive_local()
         }
+    }
+}
+
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, AsChangeset)]
+#[diesel(table_name = crate::db::schema::files)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct Files {
+    pub id: String,
+    pub owner_id: String,
+    pub question_id: Option<String>,
+    pub file_location: Option<String>,
+    pub host: FileHostProvider,
+    pub has_upload: bool,
+    pub created_at: chrono::NaiveDateTime,
+    pub updated_at: chrono::NaiveDateTime,
+}
+
+impl Files {
+    pub fn new(id: String, owner_id: String, host: FileHostProvider) -> Self {
+        Self {
+            id,
+            owner_id,
+            question_id: None,
+            host,
+            file_location: None,
+            has_upload: false,
+            created_at: Local::now().naive_local(),
+            updated_at: Local::now().naive_local()
+        }
+    }
+
+    pub async fn get_by_id(id: String, conn: &mut PgConnection) -> Result<Files, diesel::result::Error> {
+        let file = files::table.find(id).first::<Files>(conn)?;
+        Ok(file)
     }
 }

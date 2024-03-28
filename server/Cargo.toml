@@ -10,7 +10,7 @@ socketioxide = { version = "0.8", features = ["state"] }
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
-axum = {version = "0.6", features = ["macros"] }
+axum = {version = "0.6", features = ["macros", "multipart"] }
 axum-extra = {version = "0.6", features = ["cookie"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
@@ -30,3 +30,6 @@ uuid = {version = "1.7.0", features = [ "v4", "fast-rng" ] }
 uuid-b64 = "0.1.1"
 email_address = "0.2.4"
 futures-util = "0.3.30"
+async-trait = "0.1.79"
+image = "^0.24.0"
+webp = "0.2.6"
