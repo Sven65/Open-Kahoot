@@ -77,4 +77,8 @@ impl FileStorageEngine for S3Storage {
 
 		Ok(presigned_url)
 	}
+
+	fn get_file_path(&self) -> String {
+		panic!("Not implemented");
+	}
 }

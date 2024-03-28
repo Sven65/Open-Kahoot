@@ -8,6 +8,7 @@ use std::{env, sync::Arc};
 use axum::{extract::{Multipart, Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Router};
 use diesel::{ExpressionMethods, RunQueryDsl};
 use serde::{Deserialize, Serialize};
+use tokio::{fs::File, io::AsyncReadExt};
 
 use crate::{api::{files::file_utils::convert_to_webp, util::generic_json_response}, app_state::AppState, db::{models::{FileHostProvider, Files}, schema::files}, middleware::CurrentSession, util::generate_short_uuid};
 
@@ -130,6 +131,41 @@ async fn serve_file(
 	generic_json_response(StatusCode::OK, file_url.unwrap().as_str())
 }
 
+async fn file_handler(
+	Path(file_name): Path<String>,
+	State(state): State<Arc<AppState>>,
+) -> Response<axum::body::Body> {
+
+	let path = format!("./{}/{}", state.filestorage.get_file_path(), file_name);
+
+	println!("path is {}", path);
+	
+	let file = File::open(path).await;
+
+	if file.is_err() {
+		println!("res {:#?}", file.err());
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to open file");
+	}
+
+	let mut file = file.unwrap();
+
+    let mut contents = vec![];
+    let res = file.read_to_end(&mut contents).await;
+
+	if res.is_err()  {
+		println!("res {:#?}", res.err());
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to read file");
+	}
+
+	Response::builder()
+		.status(StatusCode::OK)
+		.header("Content-Type", "image/webp")
+		.body(axum::body::Body::from(
+			contents
+		))
+		.expect("Failed to build response")
+}
+
 pub fn files_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", 
@@ -137,5 +173,6 @@ pub fn files_router(state: Arc<AppState>) -> Router {
 			.post(get_temp_path_id)
 		)
 		.route("/:id", post(upload_file).get(serve_file))
+		.route("/f/:file_name", get(file_handler))
 		.with_state(state)
 }

@@ -47,10 +47,14 @@ impl FileStorageEngine for DiskStorage {
 			.unwrap();
 
 		let _ = output_file.write_all(&data);
-		Ok(path)
+		Ok(file_name)
 	}
 
-	async fn serve_file(&self, file_id: String) -> Result<String, std::io::Error> {
-		Ok("test".to_string())
+	async fn serve_file(&self, file_name: String) -> Result<String, std::io::Error> {
+		Ok(format!("/files/f/{}", file_name))
+	}
+
+	fn get_file_path(&self) -> String {
+		self.file_folder.clone()
 	}
 }
