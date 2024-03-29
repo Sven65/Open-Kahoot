@@ -32,6 +32,10 @@ export type IApiContext = {
 	fetchUserQuizzes: () => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	createQuiz: (name: string) => Promise<void>,
+	// eslint-disable-next-line no-unused-vars
+	getTempId: () => Promise<string>,
+	// eslint-disable-next-line no-unused-vars
+	uploadFile: (id: string, file: any) => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -220,7 +224,38 @@ export const ApiContextProvider = ({
 				])
 
 				location.route(`/quiz/${data.id}/edit`)
+			},
+			getTempId: async (): Promise<string> => {
+				const request = await fetch('/api/files', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				})
 
+				const data = await request.json()
+
+				if (request.status !== 200) {
+					toast.error('Failed to get file ID')
+					return
+				}
+
+				return data.id
+			},
+			uploadFile: async (id: string, file: any) => {
+				const data = new FormData()
+				data.append('file', file)
+
+				const request = await fetch(`/api/files/${id}`, {
+					method: 'POST',
+					body: data,
+				})
+
+				if (request.status !== 200) {
+					toast.error('Failed to upload file')
+					return
+				} 
+				toast.success('File uploaded')
 			},
 		}}>
 			{children}

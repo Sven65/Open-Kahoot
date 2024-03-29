@@ -6,7 +6,7 @@ use serde::Deserialize;
 use tracing::info;
 
 
-use crate::{api::util::{generic_error, generic_json_response, json_response}, app_state::PgPooledConn, db::{models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid, AppState};
+use crate::{api::util::{generic_error, generic_json_response, json_response}, app_state::PgPooledConn, db::{models::{Answer, Question, Quiz}, schema::{answers, files, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid, AppState};
 
 use super::quiz_types::ReturnedQuiz;
 
@@ -76,8 +76,16 @@ async fn update_quiz(
 			ret_question.id = Some(new_question_id.clone())
 		}
 
-		let update_question = Question::from(ret_question.clone());
+		if ret_question.image_id.is_some() && !ret_question.image_id.clone().unwrap().is_empty() {
+			let image_id = ret_question.image_id.clone().unwrap();
 
+			let _ = diesel::update(crate::api::quiz::files::dsl::files)
+				.filter(crate::api::quiz::files::id.eq(image_id))
+				.set(crate::api::quiz::files::question_id.eq(ret_question.clone().id))
+				.execute(&mut conn);
+		}
+
+		let update_question = Question::from(ret_question.clone());
 		
 		let _ = diesel::insert_into(crate::api::quiz::questions::dsl::questions)
 			.values(&update_question)

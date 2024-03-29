@@ -42,6 +42,7 @@ pub struct ReturnedQuestion {
 	pub question_rank: i32,
 	pub max_time: f32,
     pub max_points: f32,
+	pub image_id: Option<String>,
 	pub created_at: Option<NaiveDateTime>,
 	pub updated_at: Option<NaiveDateTime>,
 }
@@ -92,6 +93,7 @@ impl ReturnedQuiz {
 					created_at: Some(map_question.created_at),
 					updated_at: Some(map_question.updated_at),
 					question_rank: map_question.question_rank,
+					image_id: None,
 					correct_answer_id,
 					max_points: map_question.max_points,
 					max_time: map_question.max_time,

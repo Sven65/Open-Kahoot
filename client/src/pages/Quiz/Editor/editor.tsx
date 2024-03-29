@@ -146,14 +146,27 @@ export const QuizEditor = () => {
 		})
 	}
 
-	const onChangeFile = (e) => {
-		console.log('e', e)
-		console.log('e target', e.target.files)
+	const onChangeFile = async (e) => {
 		const url = URL.createObjectURL(e.target.files[0])
 
-		setSelectedQuestionValue('image', url)
+		const id = await apiContext.getTempId()
 
+		const newSelectedQuestion = {
+			...selectedQuestion,
+			image: url,
+			image_id: id,
+		}
+
+		setSelectedQuestion(newSelectedQuestion)
+
+		replaceObjectById(editedQuiz.questions,	selectedQuestion.id, newSelectedQuestion)
+
+		setEditedQuiz(editedQuiz)
+
+		apiContext.uploadFile(id, e.target.files[0])
 	}
+
+	console.log('selectedQuestion', selectedQuestion)
 
 	return (
 		<DashboardLayout>
@@ -267,7 +280,7 @@ export const QuizEditor = () => {
 												<div id="preview" class="my-4 flex">
 													{selectedQuestion.image  ? (
 														<div>
-															<img src={selectedQuestion.image} />
+															<img src={selectedQuestion.image} alt="Preview" />
 														</div>
 													) : null}
 												</div>
