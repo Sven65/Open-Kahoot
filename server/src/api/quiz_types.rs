@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 
-use crate::db::models::{Answer, Question, Quiz, RealAnswerColor};
+use crate::db::models::{Answer, Files, Question, Quiz, RealAnswerColor};
 
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -65,7 +65,7 @@ pub struct ReturnedQuiz {
 }
 
 impl ReturnedQuiz {
-	pub fn new_from(quiz: Quiz, questions: Vec<Question>, answers: Vec<Answer>, owner: (String, String)) -> Self {
+	pub fn new_from(quiz: Quiz, questions: Vec<Question>, answers: Vec<Answer>, owner: (String, String), files: Vec<Files>) -> Self {
 		let mut collected_questions = questions
 			.into_iter().map(|map_question| {
 				let answers_for_question = answers.clone().into_iter().filter_map(|answer| {
@@ -84,6 +84,11 @@ impl ReturnedQuiz {
 					correct_answer_id = correct_answer.id.clone()
 				}
 
+				let question_file = files.iter().find(|file| {
+					file.question_id.clone().unwrap() == map_question.id
+				});
+
+				let image_id = if question_file.is_none() { None } else { Some(question_file.cloned().unwrap().id) };
 
 				return ReturnedQuestion {
 					answers: Some(answers_for_question.clone()),
@@ -93,8 +98,8 @@ impl ReturnedQuiz {
 					created_at: Some(map_question.created_at),
 					updated_at: Some(map_question.updated_at),
 					question_rank: map_question.question_rank,
-					image_id: None,
 					correct_answer_id,
+					image_id,
 					max_points: map_question.max_points,
 					max_time: map_question.max_time,
 				};

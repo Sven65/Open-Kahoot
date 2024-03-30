@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use axum::{extract::{Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Json, Router};
-use diesel::{prelude::*, QueryDsl};
+use diesel::{associations::HasTable, prelude::*, QueryDsl};
 use serde::Deserialize;
 use tracing::info;
 
 
-use crate::{api::util::{generic_error, generic_json_response, json_response}, app_state::PgPooledConn, db::{models::{Answer, Question, Quiz}, schema::{answers, files, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid, AppState};
+use crate::{api::util::{generic_error, generic_json_response, json_response}, app_state::PgPooledConn, db::{models::{Answer, Files, Question, Quiz}, schema::{answers, files, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid, AppState};
 
 use super::quiz_types::ReturnedQuiz;
 
@@ -17,7 +17,7 @@ struct InCreatedQuiz {
 
 pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgPooledConn) -> Result<ReturnedQuiz, diesel::result::Error> {
 	let quiz = quiz::table.find(quiz_id).first::<Quiz>(conn)?;
-    let questions = Question::belonging_to(&quiz).load::<Question>(conn)?;
+    let questions: Vec<Question> = Question::belonging_to(&quiz).load::<Question>(conn)?;
 	let answers = Answer::belonging_to(&questions).load::<Answer>(conn)?;
 	let owner = users::table
 		.filter(users::id.eq(quiz.clone().owner_id))
@@ -25,7 +25,19 @@ pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgPooledConn) -> Result
 		.get_result::<(String, String)>(conn)?;
 
 
-	Ok(ReturnedQuiz::new_from(quiz, questions, answers, owner))
+
+
+	let files = questions.clone().iter().filter_map(|question| {
+		let file: Result<Files, diesel::result::Error> = files::table.filter(files::question_id.eq(&question.id)).select(files::table::all_columns()).first::<Files>(conn);
+
+		if file.is_ok() {
+			return Some(file.unwrap());
+		}
+
+		None
+	}).collect::<Vec<Files>>();
+
+	Ok(ReturnedQuiz::new_from(quiz, questions, answers, owner, files))
 }
 
 
