@@ -77,7 +77,6 @@ export const getImageUrl = async (id: string): Promise<string> => {
 	const data = await request.json()
 
 	if (request.status !== 200) {
-		toast.error('Failed to get file link')
 		return
 	}
 
