@@ -66,7 +66,7 @@ const simpleDataFetch = async (url: string, setFn: (data: any) => void): Promise
 	if (request.status === 200) setFn(data)
 }
 
-const getImageUrl = async (id: string): Promise<string> => {
+export const getImageUrl = async (id: string): Promise<string> => {
 	const request = await fetch(`/api/files/${id}`, {
 		method: 'GET',
 		headers: {
@@ -104,7 +104,7 @@ export const ApiContextProvider = ({
 				data.questions = await Promise.all(data.questions.map(async (question) => {
 					if (question.image_id) {
 						const url = await getImageUrl(question.image_id)
-						
+
 						if (url) {
 						// @ts-ignore
 							question.image = url.startsWith('http') ? url : `${window.__env__.REACT_APP_BACKEND_URL}/api${url}`
