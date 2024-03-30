@@ -166,8 +166,6 @@ export const QuizEditor = () => {
 		apiContext.uploadFile(id, e.target.files[0])
 	}
 
-	console.log('selectedQuestion', selectedQuestion)
-
 	return (
 		<DashboardLayout>
 			<DangerModal

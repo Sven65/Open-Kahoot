@@ -36,6 +36,8 @@ export type IApiContext = {
 	getTempId: () => Promise<string>,
 	// eslint-disable-next-line no-unused-vars
 	uploadFile: (id: string, file: any) => Promise<void>,
+	// eslint-disable-next-line no-unused-vars
+	getImageUrl: (id: string) => Promise<string>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -64,6 +66,24 @@ const simpleDataFetch = async (url: string, setFn: (data: any) => void): Promise
 	if (request.status === 200) setFn(data)
 }
 
+const getImageUrl = async (id: string): Promise<string> => {
+	const request = await fetch(`/api/files/${id}`, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	const data = await request.json()
+
+	if (request.status !== 200) {
+		toast.error('Failed to get file link')
+		return
+	}
+
+	return data.message
+}
+
 export const ApiContextProvider = ({
 	children,
 }) => {
@@ -79,7 +99,20 @@ export const ApiContextProvider = ({
 			userQuizzes,
 			getQuiz: async (id: number) => {
 				const request = await fetch(`/api/quiz/${id}`)
-				const data = await request.json()
+				const data: Quiz = await request.json()
+
+				data.questions = await Promise.all(data.questions.map(async (question) => {
+					if (question.image_id) {
+						const url = await getImageUrl(question.image_id)
+						
+						if (url) {
+						// @ts-ignore
+							question.image = url.startsWith('http') ? url : `${window.__env__.REACT_APP_BACKEND_URL}/api${url}`
+						}
+					}
+
+					return question
+				}))
 
 				setQuiz(data)
 			},
@@ -257,6 +290,7 @@ export const ApiContextProvider = ({
 				} 
 				toast.success('File uploaded')
 			},
+			getImageUrl,
 		}}>
 			{children}
 		</ApiContext.Provider>
