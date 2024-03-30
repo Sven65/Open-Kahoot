@@ -149,7 +149,7 @@ export const QuizEditor = () => {
 	const onChangeFile = async (e) => {
 		const url = URL.createObjectURL(e.target.files[0])
 
-		const id = await apiContext.getTempId()
+		const id = selectedQuestion.image_id ? selectedQuestion.image_id : await apiContext.getTempId()
 
 		const newSelectedQuestion = {
 			...selectedQuestion,
