@@ -1,9 +1,11 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-	content: [
-		'./index.html',
-		'./src/**/*.{js,ts,jsx,tsx,css,scss}',
-	],
+	content: {
+		files: [
+			'./index.html',
+			'./src/**/*.{js,ts,jsx,tsx,css,scss}',
+		],
+	},
 	darkMode: 'selector',
 	theme: {
 		extend: {},

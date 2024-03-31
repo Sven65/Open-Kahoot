@@ -59,8 +59,10 @@ const URL = window.__env__.REACT_APP_BACKEND_URL
 
 export const socket = io(URL)
 
-// @ts-ignore  
-window.socket = socket
+if (process.env.NODE_ENV === 'development') {
+	// @ts-ignore  
+	window.socket = socket
+}
 
 
 export const GameContext = createContext<IGameContext>(null)

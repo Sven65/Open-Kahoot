@@ -4,6 +4,7 @@ WORKDIR /usr/src/app
 
 COPY tsconfig.json package*.json ./
 COPY vite.config.ts ./
+COPY tailwind.config.js ./
 COPY src ./src
 COPY index.html ./
 COPY public ./public
