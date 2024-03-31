@@ -19,14 +19,11 @@ const InternalMe = () => {
 		}
 	}, [])
 
-	const [ quizName, setQuizName ] = useState('')
 	const [ showModal, setShowModal ] = useState(false)
 
 
 	if (!apiContext.user) return <h1>Please wait, logging in.</h1>
 	if (!apiContext.userQuizzes) return <h1>Please wait, loading quizzes.</h1>
-
-	console.log('apiContext.userQuizzes', apiContext)
 
 	return (
 		<DashboardLayout>
