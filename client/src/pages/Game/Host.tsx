@@ -99,8 +99,8 @@ export const Host = () => {
 					</div>
 				</div>
 
-				<div>
-					<img src={imageUrl} class="h-full w-full max-h-full max-w-full" />
+				<div class="flex justify-center">
+					<img src={imageUrl} class="h-full max-h-full max-w-full" />
 				</div>
 
 
