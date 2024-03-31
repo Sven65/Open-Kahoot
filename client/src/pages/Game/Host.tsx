@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'preact/hooks'
+import { useCallback, useContext, useEffect, useState } from 'preact/hooks'
 import { GameContext } from '../../context/GameContext'
 import { Button } from '../../components/Form/Button'
 import { Timer } from '../../components/Timer'
@@ -11,6 +11,7 @@ import { StartingScreen } from '../../components/Host/StartingScreen'
 
 import './Host.scss'
 import { Layout } from '../../components/Layouts/Layout'
+import { getImageUrl } from '../../context/ApiContext'
 
 export const Host = () => {
 	const gameContext = useContext(GameContext)
@@ -54,12 +55,21 @@ export const Host = () => {
 	}
 
 	const onTimerExpire = () => {
-		toast('timer expited')
-
 		sendGetHighscores()
 	}
 
 	const QuestionPart = () => {
+		const [ imageUrl, setImageUrl ] = useState('')
+		const fetchImageUrl = useCallback(async () => {
+			let url = await getImageUrl(currentQuestion.image_id)
+
+			setImageUrl(url.startsWith('http') ? url : `${window.__env__.REACT_APP_BACKEND_URL}/api${url}`)
+		  }, [])
+
+		useEffect(() => {
+			fetchImageUrl()
+		}, [fetchImageUrl])
+
 		if (currentQuestion === null) return null
 		if (scores && scores.length > 0) return null
 
@@ -89,8 +99,8 @@ export const Host = () => {
 					</div>
 				</div>
 
-				<div>
-					<></>
+				<div class="flex justify-center">
+					<img src={imageUrl} class="h-full max-h-full max-w-full" />
 				</div>
 
 

@@ -80,6 +80,7 @@ export type Question = {
 	correct_answer_id: string,
 	answers: Answer[],
 	question_rank: number,
+	image_id?: string,
 	max_time: number,
     max_points: number,
 	created_at: Date,

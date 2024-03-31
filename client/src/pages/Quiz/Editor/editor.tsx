@@ -22,6 +22,10 @@ export const QuizEditor = () => {
 	const [ selectedQuestion, setSelectedQuestion ] = useState<Question>(null)
 	const [ showModal, setShowModal ] = useState(false)
 
+	const [ imagePreview, setImagePreview ] = useState('')
+
+	const fileUploadRef = useRef()
+
 
 
 	const listRef = useRef()
@@ -142,6 +146,26 @@ export const QuizEditor = () => {
 		})
 	}
 
+	const onChangeFile = async (e) => {
+		const url = URL.createObjectURL(e.target.files[0])
+
+		const id = selectedQuestion.image_id ? selectedQuestion.image_id : await apiContext.getTempId()
+
+		const newSelectedQuestion = {
+			...selectedQuestion,
+			image: url,
+			image_id: id,
+		}
+
+		setSelectedQuestion(newSelectedQuestion)
+
+		replaceObjectById(editedQuiz.questions,	selectedQuestion.id, newSelectedQuestion)
+
+		setEditedQuiz(editedQuiz)
+
+		apiContext.uploadFile(id, e.target.files[0])
+	}
+
 	return (
 		<DashboardLayout>
 			<DangerModal
@@ -239,6 +263,25 @@ export const QuizEditor = () => {
 													setSelectedQuestionAnswer={setSelectedQuestionAnswer}
 													answer={getAnswerForColor(AnswerColor.Yellow)}
 												/>
+											</div>
+											<div class="mt-4">
+												<div class="border border-dashed border-gray-500 relative">
+													<input type="file" class="cursor-pointer relative block opacity-0 w-full h-full p-20 z-50" onChange={onChangeFile} ref={fileUploadRef} />
+													<div class="text-center p-10 absolute top-0 right-0 left-0 m-auto">
+														<h4>
+															Drop files anywhere to upload
+															<br />or
+															<p class="">Select Files</p>
+														</h4>
+													</div>
+												</div>
+												<div id="preview" class="my-4 flex">
+													{selectedQuestion.image  ? (
+														<div>
+															<img src={selectedQuestion.image} alt="Preview" />
+														</div>
+													) : null}
+												</div>
 											</div>
 										</Card>
 									</div>

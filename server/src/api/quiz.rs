@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use axum::{extract::{Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Json, Router};
-use diesel::{prelude::*, QueryDsl};
+use diesel::{associations::HasTable, prelude::*, QueryDsl};
 use serde::Deserialize;
 use tracing::info;
 
 
-use crate::{api::util::{generic_error, generic_json_response, json_response}, app_state::PgPooledConn, db::{models::{Answer, Question, Quiz}, schema::{answers, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid, AppState};
+use crate::{api::util::{generic_error, generic_json_response, json_response}, app_state::PgPooledConn, db::{models::{Answer, Files, Question, Quiz}, schema::{answers, files, questions, quiz, users}}, middleware::CurrentSession, util::generate_short_uuid, AppState};
 
 use super::quiz_types::ReturnedQuiz;
 
@@ -17,7 +17,7 @@ struct InCreatedQuiz {
 
 pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgPooledConn) -> Result<ReturnedQuiz, diesel::result::Error> {
 	let quiz = quiz::table.find(quiz_id).first::<Quiz>(conn)?;
-    let questions = Question::belonging_to(&quiz).load::<Question>(conn)?;
+    let questions: Vec<Question> = Question::belonging_to(&quiz).load::<Question>(conn)?;
 	let answers = Answer::belonging_to(&questions).load::<Answer>(conn)?;
 	let owner = users::table
 		.filter(users::id.eq(quiz.clone().owner_id))
@@ -25,7 +25,19 @@ pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgPooledConn) -> Result
 		.get_result::<(String, String)>(conn)?;
 
 
-	Ok(ReturnedQuiz::new_from(quiz, questions, answers, owner))
+
+
+	let files = questions.clone().iter().filter_map(|question| {
+		let file: Result<Files, diesel::result::Error> = files::table.filter(files::question_id.eq(&question.id)).select(files::table::all_columns()).first::<Files>(conn);
+
+		if file.is_ok() {
+			return Some(file.unwrap());
+		}
+
+		None
+	}).collect::<Vec<Files>>();
+
+	Ok(ReturnedQuiz::new_from(quiz, questions, answers, owner, files))
 }
 
 
@@ -34,17 +46,17 @@ async fn get_quiz(
 	Extension(current_session): Extension<CurrentSession>,
 	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {
-	// if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	match get_quiz_by_id(id, &mut conn).await {
 		Ok(quiz) => {
-			// // if !quiz.public {
-			// 	if !current_session.match_user_id(quiz.owner.id.clone()) {
-			// 		return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized.");
-			// 	}
-			// }
+			if !quiz.public {
+				if !current_session.match_user_id(quiz.owner.id.clone()) {
+					return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized.");
+				}
+			}
 			
 			json_response(StatusCode::OK, quiz)
 		},
@@ -76,8 +88,16 @@ async fn update_quiz(
 			ret_question.id = Some(new_question_id.clone())
 		}
 
-		let update_question = Question::from(ret_question.clone());
+		if ret_question.image_id.is_some() && !ret_question.image_id.clone().unwrap().is_empty() {
+			let image_id = ret_question.image_id.clone().unwrap();
 
+			let _ = diesel::update(crate::api::quiz::files::dsl::files)
+				.filter(crate::api::quiz::files::id.eq(image_id))
+				.set(crate::api::quiz::files::question_id.eq(ret_question.clone().id))
+				.execute(&mut conn);
+		}
+
+		let update_question = Question::from(ret_question.clone());
 		
 		let _ = diesel::insert_into(crate::api::quiz::questions::dsl::questions)
 			.values(&update_question)
