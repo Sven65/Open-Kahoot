@@ -7,9 +7,10 @@ pub mod files;
 
 use std::sync::Arc;
 
-use axum::{routing::get, Router};
+use axum::{routing::{get, post}, Router};
+use tracing::info;
 
-use crate::AppState;
+use crate::{email::Email, AppState};
 
 use self::{files::files_router, question::question_router, quiz::quiz_router, user::user_router};
 
@@ -17,9 +18,22 @@ async fn root() -> &'static str {
 	"Hello world"
 }
 
+async fn send_email() -> &'static str {
+	let mail = Email::new().unwrap();
+
+	let result = mail.send("Test Email", "thormax5@gmail.com", "Hello, this is a test email").await;
+
+	if result.is_err() {
+		info!("Error sending email {:#?}", result.err());
+	}
+
+	"Email sent"
+}
+
 pub fn api_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", get(root))
+		.route("/email", post(send_email))
 		.nest("/user", user_router(Arc::clone(&state)))
 		.nest("/quiz", quiz_router(Arc::clone(&state)))
 		.nest("/question", question_router(Arc::clone(&state)))
