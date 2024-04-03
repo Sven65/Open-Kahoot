@@ -1,3 +1,4 @@
+use chrono::{Duration, Local, NaiveDateTime, Utc};
 use rand::Rng;
 use uuid_b64::UuidB64;
 
@@ -13,4 +14,11 @@ pub fn generate_short_uuid() -> String {
     let as_b64 = UuidB64::new();
 
     as_b64.to_string()
+}
+
+pub fn has_duration_passed(created_at: NaiveDateTime, duration: Duration) -> bool {
+    let future_time = created_at + duration;
+    let now = Local::now().naive_local();
+
+    future_time <= now
 }

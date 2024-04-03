@@ -1,5 +1,5 @@
 
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use argon2::{
     password_hash::{
@@ -11,12 +11,13 @@ use argon2::{
 use axum::{extract::State, http::StatusCode, response::Response, routing::{get, post}, Extension, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
+use pretty_duration::{pretty_duration, PrettyDurationOptions, PrettyDurationOutputFormat};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{Quiz, Session, User}, schema::{quiz, session, users}}, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
 
-use super::util::{generic_error, json_response};
+use super::util::{generic_error, generic_json_response, generic_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -41,6 +42,17 @@ struct LoginUser {
 struct CreatedUser {
     id: String,
     username: String,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+struct SingleEmail {
+	email: String,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+struct PasswordResetRequest {
+	new_password: String,
+	token: String,
 }
 
 fn hash_password(password: &[u8]) -> Option<(String, String)> {
@@ -72,6 +84,12 @@ fn validate_password (password: String, salt: String, hash: String) -> bool {
     }
 }
 
+fn get_default_verification_status() -> bool {
+	let res = env::var("ENABLE_EMAIL_VERIFICATION").expect("Expected ENABLE_EMAIL_VERIFICATION to be set.");
+
+	res != "true"
+}
+
 async fn create_user(
 	State(state): State<Arc<AppState>>,
 	Json(payload): Json<CreateUser>,
@@ -92,11 +110,12 @@ async fn create_user(
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let new_user = User {
-		id: user_id,
+		id: user_id.clone(),
 		salt,
 		email: payload.email.clone(),
 		password,
 		username: payload.username.clone(),
+		verified_email: Some(get_default_verification_status()),
 	};
 
 	let result = diesel::insert_into(users::table)
@@ -124,6 +143,29 @@ async fn create_user(
 		id: result.id,
 		username: result.username
 	};
+
+	if env::var("ENABLE_EMAIL_VERIFICATION").unwrap() == "true" {
+		let verification = EmailVerification::new(user_id);
+
+		let res = verification.clone().insert_into(crate::db::schema::email_verification::table).execute(&mut conn);
+
+		if res.is_err() {
+			info!("res is {:#?}", res.err());
+			return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to create verification token");
+		}
+
+		let email = Email::new().unwrap();
+
+		let _ = email.send(
+			"Please verify your email.",
+			payload.email.clone().as_str(),
+			format!(
+				"Plase use the following link to verify ypur email: {}/v/{}",
+				env::var("FRONTEND_URL").expect("Expected FRONTEND_URL to be set."),
+				verification.verification_token,
+			).as_str()
+		).await;
+	}
 
 	json_response(StatusCode::CREATED, user)
 
@@ -170,8 +212,6 @@ async fn get_me(
 	let current_session = current_session.session.unwrap();
 	
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool.");
-	
-	info!("session ext {:#?}", current_session);
 
 	match users::table.find(current_session.user_id).first::<User>(&mut conn) {
 		Ok(user) => {json_response(StatusCode::OK, ReturnedUser {
@@ -202,6 +242,131 @@ async fn get_my_quizzes(
 	}
 }
 
+async fn request_password_reset(	
+	State(state): State<Arc<AppState>>,
+	Json(payload): Json<SingleEmail>
+) -> Response<axum::body::Body> {
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
+
+	let user: Option<User> = match users::table.filter(users::email.eq(payload.email.clone().to_lowercase())).first::<User>(&mut conn) {
+		Ok(user) => Some(user),
+		Err(_) => None,
+	};
+
+	if user.is_none() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Password reset request failed");
+	}
+
+	let user = user.unwrap();
+
+	let reset_row: Option<PasswordReset> = match password_reset::table.filter(password_reset::user_id.eq(user.id.clone())).first::<PasswordReset>(&mut conn) {
+		Ok(row) => Some(row),
+		Err(_) => None,
+	};
+
+	
+	if reset_row.is_some() {
+		let reset_row = reset_row.unwrap();
+
+		if !has_duration_passed(reset_row.created_at, state.app_config.password_reset_request_time.unwrap()) {
+			return generic_error(StatusCode::BAD_REQUEST, "Please try again later.")
+		} else {
+			let _ = diesel::delete(password_reset::table).filter(password_reset::id.eq(reset_row.id)).execute(&mut conn);
+		}
+	}
+
+	let request = PasswordReset::new(user.id);
+
+	let _ = request.clone().insert_into(crate::db::schema::password_reset::table).execute(&mut conn);
+
+	let valid_string = pretty_duration(&state.app_config.password_reset_valid_time.unwrap().to_std().unwrap(), Some(PrettyDurationOptions {
+        output_format: Some(PrettyDurationOutputFormat::Expanded),
+        singular_labels: None,
+        plural_labels: None,
+    }));
+
+	let email = Email::new().unwrap().send(
+		"Password reset request",
+		payload.email.clone().to_lowercase().as_str(), 
+		format!(r#"
+		Hello,
+		We received a request to reset your password. If you did not request this, you can safely ignore this email.
+
+		To reset your password, click on the following link:
+
+		{}/p/{}
+
+		This link will expire in {}, so please reset your password as soon as possible.
+		"#, state.app_config.frontend_url, request.reset_token, valid_string).as_str()
+	).await;
+
+	if email.is_err() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to send email.")
+	}
+
+	generic_json_response(StatusCode::OK, "Request made")
+}
+
+async fn reset_password(
+	State(state): State<Arc<AppState>>,
+	Json(payload): Json<PasswordResetRequest>
+) ->  Response<axum::body::Body> {
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
+
+	let reset_row: Option<PasswordReset> = match password_reset::table.filter(password_reset::reset_token.eq(payload.token)).first::<PasswordReset>(&mut conn) {
+		Ok(row) => Some(row),
+		Err(_) => None,
+	};
+
+	if reset_row.is_none() {
+		return generic_error(StatusCode::NOT_FOUND, "Invalid token or email provided.");
+	}
+
+	let reset_row = reset_row.unwrap();
+
+	let user: Option<User> = match users::table.filter(users::id.eq(reset_row.user_id)).first::<User>(&mut conn) {
+		Ok(user) => Some(user),
+		Err(_) => None,
+	};
+
+	if user.is_none() {
+		return generic_error(StatusCode::NOT_FOUND, "Invalid token or email provided.");
+	}
+
+	let user = user.unwrap();
+
+	if has_duration_passed(reset_row.created_at, state.app_config.password_reset_valid_time.unwrap()) {
+		let _ = diesel::delete(password_reset::table)
+			.filter(password_reset::id.eq(reset_row.id))
+			.execute(&mut conn);
+
+		return generic_error(StatusCode::BAD_REQUEST, "Password reset has timed out.");
+	}
+
+	let hash_tuple = hash_password(payload.new_password.as_bytes());
+
+	if hash_tuple.is_none() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Invalid hashing data");
+	}
+
+	let (salt, password) = hash_tuple.unwrap();	
+
+	let res = diesel::update(users::table)
+		.filter(users::id.eq(user.id))
+		.set((users::password.eq(password), users::salt.eq(salt)))
+		.execute(&mut conn);
+
+	if res.is_err() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to save user.");
+	}
+
+	let _ = diesel::delete(password_reset::table)
+		.filter(password_reset::id.eq(reset_row.id))
+		.execute(&mut conn);
+
+	generic_json_response(StatusCode::OK, "Password updated.")
+}
+
 pub fn user_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", get(root))
@@ -209,5 +374,7 @@ pub fn user_router(state: Arc<AppState>) -> Router {
 		.route("/login", post(login))
 		.route("/@me", get(get_me))
 		.route("/@me/quizzes", get(get_my_quizzes))
+		.route("/password/reset", post(reset_password))
+		.route("/password/reset/request", post(request_password_reset))
 		.with_state(state)
 }

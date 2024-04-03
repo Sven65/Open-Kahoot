@@ -114,7 +114,7 @@ export const GameContextProvider = ({
 	})
 
 	socket.on(SocketEvents.JoinFailed, (data) => {
-		console.log('join fail', data)
+		console.log('join failed', data)
 	})
 
 	socket.on(SocketEvents.ShowQuestion, () => {

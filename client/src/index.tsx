@@ -16,6 +16,8 @@ import { Register } from './pages/Register/index.js'
 import { Login } from './pages/Login/index.js'
 import { Me } from './pages/Me/index.js'
 import { QuizEditor } from './pages/Quiz/Editor/editor'
+import { VerifyEmail } from './pages/VerifyEmail/index.js'
+import { ResetPassword } from './pages/PasswordReset/index.js'
 
 export function App() {
 	return (
@@ -31,6 +33,8 @@ export function App() {
 						<Route path="/register" component={Register} />
 						<Route path="/login" component={Login} />
 						<Route path="/@me" component={Me} />
+						<Route path="/v/:id" component={VerifyEmail} />
+						<Route path="/p/:id" component={ResetPassword} />
 						<Route default component={NotFound} />
 					</Router>
 				</ApiContextProvider>

@@ -83,6 +83,46 @@ export const getImageUrl = async (id: string): Promise<string> => {
 	return data.message
 }
 
+export const verifyEmail = async (token: string) => {
+	const res = await fetch(`/api/email/${token}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	return await res.json()
+}
+
+export const requestResetPassword = async (email: string) => {
+	const res = await fetch('/api/user/password/reset/request', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			email,
+		}),
+	})
+
+	return await res.json()
+}
+
+export const resetPassword = async (token: string, new_password: string) => {
+	const res = await fetch('/api/user/password/reset', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			new_password,
+			token,
+		}),
+	})
+
+	return await res.json()
+}
+
 export const ApiContextProvider = ({
 	children,
 }) => {
@@ -175,9 +215,11 @@ export const ApiContextProvider = ({
 
 				const data = await request.json()
 
+				toast.info('Creating, please wait...')
+
 				switch (request.status) {
 					case 201:
-						toast.success('User created!')
+						toast.success('User created, please check your emails!')
 						location.route('/@me')
 						break
 					case 409:
