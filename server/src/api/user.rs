@@ -11,6 +11,7 @@ use argon2::{
 use axum::{extract::State, http::StatusCode, response::Response, routing::{get, post}, Extension, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
+use pretty_duration::{pretty_duration, PrettyDurationOptions, PrettyDurationOutputFormat};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
@@ -241,7 +242,7 @@ async fn request_password_reset(
 ) -> Response<axum::body::Body> {
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
-	let user: Option<User> = match users::table.filter(users::email.eq(payload.email.to_lowercase())).first::<User>(&mut conn) {
+	let user: Option<User> = match users::table.filter(users::email.eq(payload.email.clone().to_lowercase())).first::<User>(&mut conn) {
 		Ok(user) => Some(user),
 		Err(_) => None,
 	};
@@ -270,7 +271,32 @@ async fn request_password_reset(
 
 	let request = PasswordReset::new(user.id);
 
-	let _ = request.insert_into(crate::db::schema::password_reset::table).execute(&mut conn);
+	let _ = request.clone().insert_into(crate::db::schema::password_reset::table).execute(&mut conn);
+
+	let valid_string = pretty_duration(&state.app_config.password_reset_valid_time.unwrap().to_std().unwrap(), Some(PrettyDurationOptions {
+        output_format: Some(PrettyDurationOutputFormat::Expanded),
+        singular_labels: None,
+        plural_labels: None,
+    }));
+
+	let email = Email::new().unwrap().send(
+		"Password reset request",
+		payload.email.clone().to_lowercase().as_str(), 
+		format!(r#"
+		Hello,
+		We received a request to reset your password. If you did not request this, you can safely ignore this email.
+
+		To reset your password, click on the following link:
+
+		{}/p/{}
+
+		This link will expire in {}, so please reset your password as soon as possible.
+		"#, state.app_config.frontend_url, request.reset_token, valid_string).as_str()
+	).await;
+
+	if email.is_err() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to send email.")
+	}
 
 	generic_response(StatusCode::OK, "Request made")
 }

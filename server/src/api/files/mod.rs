@@ -137,13 +137,10 @@ async fn file_handler(
 ) -> Response<axum::body::Body> {
 
 	let path = format!("./{}/{}", state.filestorage.get_file_path(), file_name);
-
-	println!("path is {}", path);
 	
 	let file = File::open(path).await;
 
 	if file.is_err() {
-		println!("res {:#?}", file.err());
 		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to open file");
 	}
 
@@ -153,7 +150,6 @@ async fn file_handler(
     let res = file.read_to_end(&mut contents).await;
 
 	if res.is_err()  {
-		println!("res {:#?}", res.err());
 		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to read file");
 	}
 

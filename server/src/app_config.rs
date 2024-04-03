@@ -124,8 +124,6 @@ impl AppConfig {
 			Err(_) => None,
 		};
 	
-		println!("password_reset_request_time {:#?}", password_reset_request_time);
-
 		let password_reset_valid_time = match env::var("PASSWORD_RESET_VALID_TIME") {
 			Ok(val) => {
 				match parse_duration::parse(val.as_str()) {
