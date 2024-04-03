@@ -14,7 +14,7 @@ use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
 
 use super::util::{generic_error, generic_response, json_response};
 
@@ -239,7 +239,6 @@ async fn request_password_reset(
 	State(state): State<Arc<AppState>>,
 	Json(payload): Json<SingleEmail>
 ) -> Response<axum::body::Body> {
-
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let user: Option<User> = match users::table.filter(users::email.eq(payload.email.to_lowercase())).first::<User>(&mut conn) {
@@ -254,13 +253,20 @@ async fn request_password_reset(
 	let user = user.unwrap();
 
 	let reset_row: Option<PasswordReset> = match password_reset::table.filter(password_reset::user_id.eq(user.id.clone())).first::<PasswordReset>(&mut conn) {
-		Ok(user) => Some(user),
+		Ok(row) => Some(row),
 		Err(_) => None,
 	};
 
-	// if reset_row.is_some() {
-	// 	if reset_row.
-	// }
+	
+	if reset_row.is_some() {
+		let reset_row = reset_row.unwrap();
+
+		if !has_duration_passed(reset_row.created_at, state.app_config.password_reset_request_time.unwrap()) {
+			return generic_error(StatusCode::BAD_REQUEST, "Please try again later.")
+		} else {
+			let _ = diesel::delete(password_reset::table).filter(password_reset::id.eq(reset_row.id)).execute(&mut conn);
+		}
+	}
 
 	let request = PasswordReset::new(user.id);
 

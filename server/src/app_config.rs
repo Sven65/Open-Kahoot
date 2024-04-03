@@ -7,7 +7,8 @@ pub struct AppConfig {
 	pub smtp_enabled: bool,
 	pub enable_email_verification: bool,
 	pub frontend_url: String,
-	pub password_reset_time: Option<Duration>,
+	pub password_reset_request_time: Option<Duration>,
+	pub password_reset_valid_time: Option<Duration>,
 }
 
 fn check_env_var(name: &str, error_msg: &str) -> Result<(), String> {
@@ -85,10 +86,17 @@ impl AppConfig {
 			check_bool_env_var("SMTP_ENABLED", "SMTP_ENABLED must be set to true if ENABLE_EMAIL_VERIFICATION is set to true", true)?;
 		}
 
-		if let Some(password_reset_time) = self.password_reset_time {
+		if let Some(password_reset_time) = self.password_reset_request_time {
 			let enable_email_verification = self.enable_email_verification;
 			if !password_reset_time.is_zero() && !enable_email_verification {
 				return Err("PASSWORD_RESET_TIME is set to true but ENABLE_EMAIL_VERIFICATION is not set to true".to_string());
+			}
+		}
+
+		if let Some(password_reset_valid_time) = self.password_reset_valid_time {
+			let enable_email_verification = self.enable_email_verification;
+			if !password_reset_valid_time.is_zero() && !enable_email_verification {
+				return Err("PASSWORD_RESET_VALID_TIME is set to true but ENABLE_EMAIL_VERIFICATION is not set to true".to_string());
 			}
 		}
 		
@@ -106,10 +114,22 @@ impl AppConfig {
 
 		let frontend_url = env::var("FRONTEND_URL").unwrap_or_else(|_| String::new());
 
-		let password_reset_time = match env::var("PASSWORD_RESET_TIME") {
+		let password_reset_request_time = match env::var("PASSWORD_RESET_REQUEST_TIME") {
 			Ok(val) => {
-				match val.parse::<i64>() {
-					Ok(seconds) => Some(Duration::try_seconds(seconds).unwrap()), // Assuming no error for simplicity
+				match parse_duration::parse(val.as_str()) {
+					Ok(duration) => Some(Duration::from_std(duration).unwrap()), // Assuming no error for simplicity
+					Err(_) => None,
+				}
+			}
+			Err(_) => None,
+		};
+	
+		println!("password_reset_request_time {:#?}", password_reset_request_time);
+
+		let password_reset_valid_time = match env::var("PASSWORD_RESET_VALID_TIME") {
+			Ok(val) => {
+				match parse_duration::parse(val.as_str()) {
+					Ok(duration) => Some(Duration::from_std(duration).unwrap()), // Assuming no error for simplicity
 					Err(_) => None,
 				}
 			}
@@ -120,7 +140,8 @@ impl AppConfig {
 			smtp_enabled,
 			enable_email_verification,
 			frontend_url,
-			password_reset_time,
+			password_reset_request_time,
+			password_reset_valid_time,
 		};
 
 		config.validate().unwrap();
