@@ -1,5 +1,4 @@
 use async_trait::async_trait;
-use chrono::{Utc, Duration};
 use rusoto_core::credential::AwsCredentials;
 use rusoto_core::Region;
 use rusoto_s3::{GetObjectRequest, PutObjectRequest, S3Client, S3};

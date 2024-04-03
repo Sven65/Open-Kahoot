@@ -258,3 +258,26 @@ impl EmailVerification {
         }
     }
 }
+
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, AsChangeset)]
+#[diesel(table_name = crate::db::schema::password_reset)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct PasswordReset {
+    pub id: String,
+    pub user_id: String,
+    pub reset_token: String,
+    pub created_at: chrono::NaiveDateTime,
+    pub updated_at: chrono::NaiveDateTime,
+}
+
+impl PasswordReset {
+    pub fn new(user_id: String) -> Self {
+        Self {
+            id: generate_short_uuid(),
+            user_id,
+            reset_token: generate_short_uuid(),
+            created_at: Local::now().naive_local(),
+            updated_at: Local::now().naive_local()
+        }
+    }
+}

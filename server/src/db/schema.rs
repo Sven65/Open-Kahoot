@@ -52,6 +52,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    password_reset (id) {
+        id -> Varchar,
+        user_id -> Varchar,
+        reset_token -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     questions (id) {
         id -> Varchar,
         quiz_id -> Varchar,
@@ -99,6 +109,7 @@ diesel::joinable!(answers -> questions (question_id));
 diesel::joinable!(email_verification -> users (user_id));
 diesel::joinable!(files -> questions (question_id));
 diesel::joinable!(files -> users (owner_id));
+diesel::joinable!(password_reset -> users (user_id));
 diesel::joinable!(questions -> quiz (quiz_id));
 diesel::joinable!(quiz -> users (owner_id));
 
@@ -106,6 +117,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     answers,
     email_verification,
     files,
+    password_reset,
     questions,
     quiz,
     session,

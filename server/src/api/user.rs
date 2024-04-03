@@ -14,9 +14,9 @@ use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, Quiz, Session, User}, schema::{quiz, session, users}}, email::Email, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::generate_short_uuid};
 
-use super::util::{generic_error, json_response};
+use super::util::{generic_error, generic_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -41,6 +41,11 @@ struct LoginUser {
 struct CreatedUser {
     id: String,
     username: String,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+struct SingleEmail {
+	email: String,
 }
 
 fn hash_password(password: &[u8]) -> Option<(String, String)> {
@@ -200,8 +205,6 @@ async fn get_me(
 	let current_session = current_session.session.unwrap();
 	
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool.");
-	
-	info!("session ext {:#?}", current_session);
 
 	match users::table.find(current_session.user_id).first::<User>(&mut conn) {
 		Ok(user) => {json_response(StatusCode::OK, ReturnedUser {
@@ -232,6 +235,40 @@ async fn get_my_quizzes(
 	}
 }
 
+async fn request_password_reset(	
+	State(state): State<Arc<AppState>>,
+	Json(payload): Json<SingleEmail>
+) -> Response<axum::body::Body> {
+
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
+
+	let user: Option<User> = match users::table.filter(users::email.eq(payload.email.to_lowercase())).first::<User>(&mut conn) {
+		Ok(user) => Some(user),
+		Err(_) => None,
+	};
+
+	if user.is_none() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Password reset request failed");
+	}
+
+	let user = user.unwrap();
+
+	let reset_row: Option<PasswordReset> = match password_reset::table.filter(password_reset::user_id.eq(user.id.clone())).first::<PasswordReset>(&mut conn) {
+		Ok(user) => Some(user),
+		Err(_) => None,
+	};
+
+	// if reset_row.is_some() {
+	// 	if reset_row.
+	// }
+
+	let request = PasswordReset::new(user.id);
+
+	let _ = request.insert_into(crate::db::schema::password_reset::table).execute(&mut conn);
+
+	generic_response(StatusCode::OK, "Request made")
+}
+
 pub fn user_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", get(root))
@@ -239,5 +276,6 @@ pub fn user_router(state: Arc<AppState>) -> Router {
 		.route("/login", post(login))
 		.route("/@me", get(get_me))
 		.route("/@me/quizzes", get(get_my_quizzes))
+		.route("/password/reset", post(request_password_reset))
 		.with_state(state)
 }

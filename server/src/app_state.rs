@@ -3,16 +3,16 @@ use std::{env, sync::Arc};
 use diesel::{r2d2::{ConnectionManager, Pool, PooledConnection}, PgConnection};
 use dotenvy::dotenv;
 
-use crate::api::files::{disk_storage::DiskStorage, file_storage_engine::FileStorageEngine, s3_storage::S3Storage};
+use crate::{api::files::{disk_storage::DiskStorage, file_storage_engine::FileStorageEngine, s3_storage::S3Storage}, app_config::AppConfig};
 
 pub type PgPooledConn = PooledConnection<ConnectionManager<PgConnection>>;
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
-
 
 #[derive(Clone)]
 pub struct AppState {
 	pub db_pool: PgPool,
 	pub filestorage: Arc<dyn FileStorageEngine + Sync + Send>,
+	pub app_config: AppConfig,
 }
 
 impl AppState {
@@ -34,6 +34,7 @@ impl AppState {
 		Self {
 			db_pool: pool,
 			filestorage: AppState::get_file_engine().await,
+			app_config: AppConfig::load_from_env(),
 		}
 	}
 }

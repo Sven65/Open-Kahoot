@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::{extract::{Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Json, Router};
-use diesel::{associations::HasTable, prelude::*, QueryDsl};
+use diesel::{prelude::*, QueryDsl};
 use serde::Deserialize;
 use tracing::info;
 

@@ -7,6 +7,7 @@ mod api;
 mod app_state;
 mod socket;
 mod email;
+mod app_config;
 
 use std::sync::Arc;
 
