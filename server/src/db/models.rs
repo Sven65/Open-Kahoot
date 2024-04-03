@@ -4,7 +4,7 @@ use chrono::Local;
 use diesel::{deserialize::{self, FromSql, FromSqlRow}, expression::AsExpression, pg::{Pg, PgValue}, prelude::*, serialize::{self, IsNull, Output, ToSql}, sql_types::SqlType};
 use serde::{Deserialize, Serialize};
 
-use crate::api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz};
+use crate::{api::quiz_types::{ReturnedAnswer, ReturnedQuestion, ReturnedQuiz}, util::generate_short_uuid};
 
 use super::schema::{files, sql_types::AnswerColor};
 use super::schema::sql_types::Filehostprovider;
@@ -82,6 +82,7 @@ pub struct User {
     pub email: String,
     pub salt: String,
     pub password: String,
+    pub verified_email: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations, AsChangeset)]
@@ -232,5 +233,28 @@ impl Files {
     pub async fn get_by_id(id: String, conn: &mut PgConnection) -> Result<Files, diesel::result::Error> {
         let file = files::table.find(id).first::<Files>(conn)?;
         Ok(file)
+    }
+}
+
+#[derive(Debug, Serialize, Clone, Identifiable, Queryable, Selectable, Insertable, AsChangeset)]
+#[diesel(table_name = crate::db::schema::email_verification)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct EmailVerification {
+    pub id: String,
+    pub user_id: String,
+    pub verification_token: String,
+    pub created_at: chrono::NaiveDateTime,
+    pub updated_at: chrono::NaiveDateTime,
+}
+
+impl EmailVerification {
+    pub fn new(user_id: String) -> Self {
+        Self {
+            id: generate_short_uuid(),
+            user_id,
+            verification_token: generate_short_uuid(),
+            created_at: Local::now().naive_local(),
+            updated_at: Local::now().naive_local()
+        }
     }
 }

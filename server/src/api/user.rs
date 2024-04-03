@@ -1,5 +1,5 @@
 
-use std::sync::Arc;
+use std::{env, sync::Arc};
 
 use argon2::{
     password_hash::{
@@ -14,7 +14,7 @@ use email_address::EmailAddress;
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{Quiz, Session, User}, schema::{quiz, session, users}}, middleware::CurrentSession, util::generate_short_uuid};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, Quiz, Session, User}, schema::{quiz, session, users}}, email::Email, middleware::CurrentSession, util::generate_short_uuid};
 
 use super::util::{generic_error, json_response};
 
@@ -72,6 +72,12 @@ fn validate_password (password: String, salt: String, hash: String) -> bool {
     }
 }
 
+fn get_default_verification_status() -> bool {
+	let res = env::var("ENABLE_EMAIL_VERIFICATION").expect("Expected ENABLE_EMAIL_VERIFICATION to be set.");
+
+	res != "true"
+}
+
 async fn create_user(
 	State(state): State<Arc<AppState>>,
 	Json(payload): Json<CreateUser>,
@@ -92,11 +98,12 @@ async fn create_user(
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let new_user = User {
-		id: user_id,
+		id: user_id.clone(),
 		salt,
 		email: payload.email.clone(),
 		password,
 		username: payload.username.clone(),
+		verified_email: Some(get_default_verification_status()),
 	};
 
 	let result = diesel::insert_into(users::table)
@@ -124,6 +131,29 @@ async fn create_user(
 		id: result.id,
 		username: result.username
 	};
+
+	if env::var("ENABLE_EMAIL_VERIFICATION").unwrap() == "true" {
+		let verification = EmailVerification::new(user_id);
+
+		let res = verification.clone().insert_into(crate::db::schema::email_verification::table).execute(&mut conn);
+
+		if res.is_err() {
+			info!("res is {:#?}", res.err());
+			return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to create verification token");
+		}
+
+		let email = Email::new().unwrap();
+
+		let _ = email.send(
+			"Please verify your email.",
+			payload.email.clone().as_str(),
+			format!(
+				"Plase use the following link to verify ypur email: {}/v/{}",
+				env::var("FRONTEND_URL").expect("Expected FRONTEND_URL to be set."),
+				verification.verification_token,
+			).as_str()
+		).await;
+	}
 
 	json_response(StatusCode::CREATED, user)
 

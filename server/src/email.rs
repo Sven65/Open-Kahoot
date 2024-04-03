@@ -17,8 +17,8 @@ impl Email {
 		let smtp_host = env::var("SMTP_HOST").expect("Expected SMTP_HOST to be set.");
 
 		let mailer = AsyncSmtpTransport::<Tokio1Executor>::relay(smtp_host.as_str())?
-        .credentials(smtp_credentials)
-        .build();
+		.credentials(smtp_credentials)
+		.build();
 		
 		Ok(Self {
 			mailer,
@@ -28,10 +28,10 @@ impl Email {
 
 	pub async fn send(&self, subject: &str, to: &str, body: &str) -> Result<(), Box<dyn std::error::Error>> {
 		let email = Message::builder()
-        .from(self.from.parse()?)
-        .to(to.parse()?)
-        .subject(subject)
-        .body(body.to_string())?;
+		.from(self.from.parse()?)
+		.to(to.parse()?)
+		.subject(subject)
+		.body(body.to_string())?;
 
 		self.mailer.send(email).await?;
 		

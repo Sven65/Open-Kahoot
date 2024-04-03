@@ -26,6 +26,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    email_verification (id) {
+        id -> Varchar,
+        user_id -> Varchar,
+        verification_token -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::Filehostprovider;
 
@@ -78,13 +88,15 @@ diesel::table! {
     users (id) {
         id -> Varchar,
         username -> Varchar,
-        email -> Varchar,
         salt -> Varchar,
         password -> Varchar,
+        email -> Varchar,
+        verified_email -> Nullable<Bool>,
     }
 }
 
 diesel::joinable!(answers -> questions (question_id));
+diesel::joinable!(email_verification -> users (user_id));
 diesel::joinable!(files -> questions (question_id));
 diesel::joinable!(files -> users (owner_id));
 diesel::joinable!(questions -> quiz (quiz_id));
@@ -92,6 +104,7 @@ diesel::joinable!(quiz -> users (owner_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     answers,
+    email_verification,
     files,
     questions,
     quiz,
