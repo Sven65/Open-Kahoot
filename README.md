@@ -119,13 +119,13 @@ Installation instructions can be found in the client and server directories, res
 
 - [ ] Server
   - [ ] Put login sessions and game rooms in redis
-  - [ ] Email support
-    - [ ] Confirmation emails
+  - [x] Email support
+    - [x] Confirmation emails
     - [ ] Password change request
   - [ ] Refactoring
     - [x] Refactor out socket events to own files in server
 - [ ] Client
-  - [ ] UI Redesign
+  - [x] UI Redesign
     - [x] Player view
     - [x] Host view
     - [x] Quiz editor
