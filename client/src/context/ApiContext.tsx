@@ -4,7 +4,6 @@ import { useState } from 'preact/hooks'
 import { toast } from 'react-toastify'
 import { useLocation } from 'preact-iso'
 import { deleteByKey } from '../util/modify'
-import { typedFetch } from '../util/typedFetch'
 
 export type CreateUser = {
 	username: string,
@@ -39,8 +38,6 @@ export type IApiContext = {
 	uploadFile: (id: string, file: any) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	getImageUrl: (id: string) => Promise<string>,
-	// eslint-disable-next-line no-unused-vars
-	verifyEmail: (token: string) => Promise<string>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -92,6 +89,35 @@ export const verifyEmail = async (token: string) => {
 		headers: {
 			'Content-Type': 'application/json',
 		},
+	})
+
+	return await res.json()
+}
+
+export const requestResetPassword = async (email: string) => {
+	const res = await fetch('/api/user/password/reset/request', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			email,
+		}),
+	})
+
+	return await res.json()
+}
+
+export const resetPassword = async (token: string, new_password: string) => {
+	const res = await fetch('/api/user/password/reset', {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			new_password,
+			token,
+		}),
 	})
 
 	return await res.json()

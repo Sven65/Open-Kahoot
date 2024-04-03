@@ -121,7 +121,7 @@ Installation instructions can be found in the client and server directories, res
   - [ ] Put login sessions and game rooms in redis
   - [x] Email support
     - [x] Confirmation emails
-    - [ ] Password change request
+    - [x] Password change request
   - [ ] Refactoring
     - [x] Refactor out socket events to own files in server
 - [ ] Client

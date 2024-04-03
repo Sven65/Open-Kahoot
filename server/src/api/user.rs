@@ -17,7 +17,7 @@ use tracing::info;
 
 use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
 
-use super::util::{generic_error, generic_response, json_response};
+use super::util::{generic_error, generic_json_response, generic_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -51,7 +51,6 @@ struct SingleEmail {
 
 #[derive(Deserialize, Clone, Debug)]
 struct PasswordResetRequest {
-	email: String,
 	new_password: String,
 	token: String,
 }
@@ -305,7 +304,7 @@ async fn request_password_reset(
 		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to send email.")
 	}
 
-	generic_response(StatusCode::OK, "Request made")
+	generic_json_response(StatusCode::OK, "Request made")
 }
 
 async fn reset_password(
@@ -336,12 +335,6 @@ async fn reset_password(
 
 	let user = user.unwrap();
 
-	println!("user {:#?}", user);
-
-	if payload.email != user.email {
-		return generic_error(StatusCode::NOT_FOUND, "Invalid token or email provided.");
-	}
-	
 	if has_duration_passed(reset_row.created_at, state.app_config.password_reset_valid_time.unwrap()) {
 		let _ = diesel::delete(password_reset::table)
 			.filter(password_reset::id.eq(reset_row.id))
@@ -371,7 +364,7 @@ async fn reset_password(
 		.filter(password_reset::id.eq(reset_row.id))
 		.execute(&mut conn);
 
-	generic_response(StatusCode::OK, "Password updated.")
+	generic_json_response(StatusCode::OK, "Password updated.")
 }
 
 pub fn user_router(state: Arc<AppState>) -> Router {
