@@ -79,9 +79,9 @@ impl FromSql<Filehostprovider, Pg> for FileHostProvider {
 pub struct User {
     pub id: String,
     pub username: String,
-    pub email: String,
     pub salt: String,
     pub password: String,
+    pub email: String,
     pub verified_email: Option<bool>,
 }
 

@@ -49,6 +49,13 @@ struct SingleEmail {
 	email: String,
 }
 
+#[derive(Deserialize, Clone, Debug)]
+struct PasswordResetRequest {
+	email: String,
+	new_password: String,
+	token: String,
+}
+
 fn hash_password(password: &[u8]) -> Option<(String, String)> {
 	let salt = SaltString::generate(&mut OsRng);
 
@@ -301,6 +308,72 @@ async fn request_password_reset(
 	generic_response(StatusCode::OK, "Request made")
 }
 
+async fn reset_password(
+	State(state): State<Arc<AppState>>,
+	Json(payload): Json<PasswordResetRequest>
+) ->  Response<axum::body::Body> {
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
+
+	let reset_row: Option<PasswordReset> = match password_reset::table.filter(password_reset::reset_token.eq(payload.token)).first::<PasswordReset>(&mut conn) {
+		Ok(row) => Some(row),
+		Err(_) => None,
+	};
+
+	if reset_row.is_none() {
+		return generic_error(StatusCode::NOT_FOUND, "Invalid token or email provided.");
+	}
+
+	let reset_row = reset_row.unwrap();
+
+	let user: Option<User> = match users::table.filter(users::id.eq(reset_row.user_id)).first::<User>(&mut conn) {
+		Ok(user) => Some(user),
+		Err(_) => None,
+	};
+
+	if user.is_none() {
+		return generic_error(StatusCode::NOT_FOUND, "Invalid token or email provided.");
+	}
+
+	let user = user.unwrap();
+
+	println!("user {:#?}", user);
+
+	if payload.email != user.email {
+		return generic_error(StatusCode::NOT_FOUND, "Invalid token or email provided.");
+	}
+	
+	if has_duration_passed(reset_row.created_at, state.app_config.password_reset_valid_time.unwrap()) {
+		let _ = diesel::delete(password_reset::table)
+			.filter(password_reset::id.eq(reset_row.id))
+			.execute(&mut conn);
+
+		return generic_error(StatusCode::BAD_REQUEST, "Password reset has timed out.");
+	}
+
+	let hash_tuple = hash_password(payload.new_password.as_bytes());
+
+	if hash_tuple.is_none() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Invalid hashing data");
+	}
+
+	let (salt, password) = hash_tuple.unwrap();	
+
+	let res = diesel::update(users::table)
+		.filter(users::id.eq(user.id))
+		.set((users::password.eq(password), users::salt.eq(salt)))
+		.execute(&mut conn);
+
+	if res.is_err() {
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to save user.");
+	}
+
+	let _ = diesel::delete(password_reset::table)
+		.filter(password_reset::id.eq(reset_row.id))
+		.execute(&mut conn);
+
+	generic_response(StatusCode::OK, "Password updated.")
+}
+
 pub fn user_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", get(root))
@@ -308,6 +381,7 @@ pub fn user_router(state: Arc<AppState>) -> Router {
 		.route("/login", post(login))
 		.route("/@me", get(get_me))
 		.route("/@me/quizzes", get(get_my_quizzes))
-		.route("/password/reset", post(request_password_reset))
+		.route("/password/reset", post(reset_password))
+		.route("/password/reset/request", post(request_password_reset))
 		.with_state(state)
 }
