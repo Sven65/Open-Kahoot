@@ -4,6 +4,7 @@ import { useState } from 'preact/hooks'
 import { toast } from 'react-toastify'
 import { useLocation } from 'preact-iso'
 import { deleteByKey } from '../util/modify'
+import { typedFetch } from '../util/typedFetch'
 
 export type CreateUser = {
 	username: string,
@@ -38,6 +39,8 @@ export type IApiContext = {
 	uploadFile: (id: string, file: any) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	getImageUrl: (id: string) => Promise<string>,
+	// eslint-disable-next-line no-unused-vars
+	verifyEmail: (token: string) => Promise<string>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -81,6 +84,17 @@ export const getImageUrl = async (id: string): Promise<string> => {
 	}
 
 	return data.message
+}
+
+export const verifyEmail = async (token: string) => {
+	const res = await fetch(`/api/email/${token}`, {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+	})
+
+	return await res.json()
 }
 
 export const ApiContextProvider = ({
@@ -175,9 +189,11 @@ export const ApiContextProvider = ({
 
 				const data = await request.json()
 
+				toast.info('Creating, please wait...')
+
 				switch (request.status) {
 					case 201:
-						toast.success('User created!')
+						toast.success('User created, please check your emails!')
 						location.route('/@me')
 						break
 					case 409:

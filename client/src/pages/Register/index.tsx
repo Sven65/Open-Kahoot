@@ -11,6 +11,7 @@ export const Register = () => {
 	const [ password, setPassword ] = useState(null)
 	const [ email, setEmail ] = useState(null)
 	const [ confirmPassword, setConfirmPassword ] = useState(null)
+	const [ isSubmitted, setIsSubmitted ] = useState<boolean>(false)
 	const formRef = useRef()
 
 	const [ invalidFields, setInvalidFields ] = useState<string[]>([])
@@ -19,6 +20,8 @@ export const Register = () => {
 
 
 	const submitForm = () => {
+		if (isSubmitted) return
+		
 		setInvalidFields([])
 		if(!formRef.current.checkValidity()) return toast.error('Form is invalid. Please check your inputs.')
 
@@ -35,6 +38,8 @@ export const Register = () => {
 			password,
 			username,
 		})
+
+		setIsSubmitted(true)
 	}
 
 	return (
