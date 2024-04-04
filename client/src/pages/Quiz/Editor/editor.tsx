@@ -27,7 +27,7 @@ export const QuizEditor = () => {
 
 	const fileUploadRef = useRef()
 
-	const [ shownPanel, setShownPanel ] = useState<string>('')
+	const [ shownPanel, setShownPanel ] = useState<string>('questions')
 
 
 
@@ -147,6 +147,8 @@ export const QuizEditor = () => {
 			...editedQuiz,
 			questions: newQuestions,
 		})
+
+		setShownPanel('questions')
 	}
 
 	const onChangeFile = async (e) => {
@@ -217,6 +219,7 @@ export const QuizEditor = () => {
 									}}
 									onClickQuestion={(id) => {
 										setSelectedQuestion(editedQuiz.questions.find(question => question.id === id))
+										setShownPanel('editor')
 									}}
 									onAddQuestion={createNewQuestion}
 								/>
