@@ -60,7 +60,7 @@ const InternalMe = () => {
 									<p className="mt-1 truncate text-xs leading-5 text-gray-500">Placeholder text</p>
 								</div>
 							</div>
-							<div className="hidden shrink-0 sm:flex sm:flex-col sm:items-end">
+							<div className="shrink-0 sm:flex sm:flex-col sm:items-end">
 								<Button onClick={() => location.route(`/quiz/${quiz.id}/edit`)} bgColor="green-500" className="w-full">Edit</Button>
 								<Button onClick={() => { gameContext.createRoom(quiz.id) }} bgColor="green-500" className="w-full">Host</Button>
 							</div>

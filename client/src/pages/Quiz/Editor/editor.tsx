@@ -10,6 +10,7 @@ import { deleteByKey, replaceObjectById } from '../../../util/modify'
 import { Card } from '../../../components/Card/Card'
 import { AnswerInput } from '../../../components/Form/AnswerInput'
 import { DangerModal } from '../../../components/Modal/DangerModal'
+import { MobileEditorSidebar } from './MobileEditorSidebar'
 
 export const QuizEditor = () => {
 	const apiContext = useContext(ApiContext)
@@ -25,6 +26,8 @@ export const QuizEditor = () => {
 	const [ imagePreview, setImagePreview ] = useState('')
 
 	const fileUploadRef = useRef()
+
+	const [ shownPanel, setShownPanel ] = useState<string>('')
 
 
 
@@ -167,7 +170,10 @@ export const QuizEditor = () => {
 	}
 
 	return (
-		<DashboardLayout>
+		<DashboardLayout
+			navbarClass="hidden sm:block"
+			navbar={(<MobileEditorSidebar onClick={setShownPanel} />)}
+		>
 			<DangerModal
 				show={showModal}
 				onClose={() => setShowModal(false)}
@@ -197,10 +203,10 @@ export const QuizEditor = () => {
 						</div>
 					</nav>
 				</div>
-				<div class="max-h-full flex flex-col mt-0 mt-[-10px]">
+				<div class={'max-h-full flex flex-col mt-0 mt-[-10px]'}>
 					<div class="w-full px-6 py-6 mx-auto drop-zone">
 						<div class="flex flex-wrap -mx-3 mb-5 max-h-screen h-full">
-							<div class="w-full max-w-full px-3 mb-6 lg:w-2/12 sm:flex-none xl:mb-0 max-h-screen h-[90vh] grow-0">
+							<div class={`w-full max-w-full px-3 mb-6 lg:w-2/12 sm:flex-none xl:mb-0 max-h-screen h-[90vh] grow-0 ${shownPanel === 'questions' ? '' : 'hidden'} sm:block`}>
 								<QuestionsList
 									ref={listRef}
 									questions={editedQuiz.questions}
@@ -217,13 +223,13 @@ export const QuizEditor = () => {
 							</div>
 							{!selectedQuestion ? (
 								<>
-									<div class="w-full max-w-full px-3 mb-6 lg:w-10/12 sm:flex-none xl:mb-0 flex flex-row min-h-screen justify-center items-center">
+									<div class={`w-full max-w-full px-3 mb-6 lg:w-10/12 xl:mb-0 flex flex-row min-h-screen justify-center items-center ${shownPanel === 'editor' ? '' : 'hidden'} sm:flex`}>
 										Please select a question
 									</div>
 								</>
 							) : (
 								<>
-									<div class="w-full max-w-full px-3 mb-6 lg:w-8/12 sm:flex-none xl:mb-0">
+									<div class={`w-full max-w-full px-3 mb-6 lg:w-8/12 sm:flex-none xl:mb-0 ${shownPanel === 'editor' ? '' : 'hidden'} sm:block`}>
 										<Card title="Editor">
 											<div>
 												<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">Question</label>
@@ -285,7 +291,7 @@ export const QuizEditor = () => {
 											</div>
 										</Card>
 									</div>
-									<div class="w-full max-w-full px-3 mb-6 lg:w-2/12 sm:flex-none xl:mb-0">
+									<div class={`w-full max-w-full px-3 mb-6 lg:w-2/12 sm:flex-none xl:mb-0 ${shownPanel === 'meta' ? '' : 'hidden'} sm:block`}>
 										<Card title="Question data">
 											<div>
 												<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">Max Points</label>
