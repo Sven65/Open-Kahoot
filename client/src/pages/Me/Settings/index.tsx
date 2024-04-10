@@ -17,11 +17,16 @@ const Settings = () => {
 	return (
 		<DashboardLayout>
 			<div class="flex flex-col flex-1 h-full">
-				<Card title="Avatar" className='flex-1'>1</Card>
-				<Card title="Email" className="flex-1">
+				<Card title="User Settings" className='flex-1'>
+					<div>
 					Your email address is <span class="font-bold">email@example.com</span>
-					<br />
-					<a href="#" class="text-blue-500 underline">Change</a>
+						<br />
+						<a href="#" class="text-blue-500 underline">Change</a>
+					</div>
+					<hr />
+					<div>
+						Avatar
+					</div>
 				</Card>
 				<Card title="Password" className='flex-1'>
 					<div>
