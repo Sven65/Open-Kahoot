@@ -9,6 +9,7 @@ pub struct AppConfig {
 	pub frontend_url: String,
 	pub password_reset_request_time: Option<Duration>,
 	pub password_reset_valid_time: Option<Duration>,
+	pub session_valid_time: Option<Duration>,
 }
 
 fn check_env_var(name: &str, error_msg: &str) -> Result<(), String> {
@@ -60,6 +61,8 @@ impl AppConfig {
 
 	fn validate(&self) -> Result<(), String> {
 		check_env_var("DATABASE_URL", "DATABASE_URL is not set")?;
+		check_env_var("SESSION_TIME", "SESSION_TIME is not set")?;
+
 
 		let file_storage_engine = env::var("FILE_STORAGE_ENGINE")
 			.map_err(|_| "FILE_STORAGE_ENGINE is not set".to_string())?;
@@ -134,12 +137,23 @@ impl AppConfig {
 			Err(_) => None,
 		};
 
+		let session_valid_time = match env::var("SESSION_TIME") {
+			Ok(val) => {
+				match parse_duration::parse(val.as_str()) {
+					Ok(duration) => Some(Duration::from_std(duration).unwrap()), // Assuming no error for simplicity
+					Err(_) => None,
+				}
+			}
+			Err(_) => None,
+		};
+
 		let config = Self {
 			smtp_enabled,
 			enable_email_verification,
 			frontend_url,
 			password_reset_request_time,
 			password_reset_valid_time,
+			session_valid_time,
 		};
 
 		config.validate().unwrap();
