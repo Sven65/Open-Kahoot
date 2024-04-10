@@ -268,7 +268,15 @@ export const ApiContextProvider = ({
 
 					// location.route('/@me')
 				} else {
-					toast.error(`Login failed: ${data.error}`)
+					switch (data.error) {
+						case 'SessionExpired':
+						case 'SessionNotFound':
+							location.route('/login')
+							break
+						default:
+							toast.error(`Login failed: ${data.error}`)
+							break
+					}
 				}
 			},
 			fetchUserQuizzes: () => simpleDataFetch('/api/user/@me/quizzes', setUserQuizzes),

@@ -17,7 +17,7 @@ use tracing::info;
 
 use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
 
-use super::util::{generic_error, generic_json_response, generic_response, json_response};
+use super::util::{generic_error, generic_json_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -207,7 +207,9 @@ async fn get_me(
 	Extension(current_session): Extension<CurrentSession>,
 	State(state): State<Arc<AppState>>,
 ) -> Response<axum::body::Body> {
+	if current_session.error.is_some() { return generic_error(StatusCode::BAD_REQUEST, current_session.error.unwrap()); }
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
 
 	let current_session = current_session.session.unwrap();
 	

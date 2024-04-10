@@ -6,8 +6,7 @@ use axum::{
 
 use axum_extra::extract::CookieJar;
 use diesel::{prelude::*, QueryDsl};
-use crate::{app_state::AppState, db::{models::Session, schema::session}};
-
+use crate::{app_state::AppState, db::{models::Session, schema::session}, util::has_duration_passed};
 
 #[derive(Clone, Debug)]
 pub struct SessionInternal {
@@ -17,7 +16,8 @@ pub struct SessionInternal {
 
 #[derive(Clone, Debug)]
 pub struct CurrentSession {
-	pub session: Option<SessionInternal>
+	pub session: Option<SessionInternal>,
+	pub error: Option<&'static str>,
 }
 
 impl CurrentSession {
@@ -43,19 +43,28 @@ pub async fn auth_session<B>(
 			let mut conn = state.db_pool.get().expect("Failed to get database pool.");
 			match session::table.find(session_id.clone().value()).first::<Session>(&mut conn) {
 				Ok(session) => {
+					if has_duration_passed(session.created_at, state.app_config.session_valid_time.unwrap()) {
+						req.extensions_mut().insert(CurrentSession { session: None, error: Some("SessionExpired") });
+
+						//let _ = diesel::delete(session::table).filter(session::id.eq(session.id)).execute(&mut conn);
+
+						return Ok(next.run(req).await);
+					}
+
 					req.extensions_mut().insert(CurrentSession {
 						session: Some(SessionInternal {
 							session_id: session_id.value().to_string(),
 							user_id: session.user_id,
-						})
+						}),
+						error: None
 					});
 				},
 				Err(_) => {
-					req.extensions_mut().insert(CurrentSession { session: None });
+					req.extensions_mut().insert(CurrentSession { session: None, error: Some("SessionNotFound") });
 				},
 			}
 		},
-		None => { req.extensions_mut().insert(CurrentSession { session: None }); }
+		None => { req.extensions_mut().insert(CurrentSession { session: None, error: Some("SessionNotFound") }); }
 	}
 
 
