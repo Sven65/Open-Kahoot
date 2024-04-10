@@ -39,6 +39,8 @@ export type IApiContext = {
 	// eslint-disable-next-line no-unused-vars
 	getImageUrl: (id: string) => Promise<string>,
 	getAvatarUrl: () => string,
+	// eslint-disable-next-line no-unused-vars
+	setUserAvatar: (id: string) => Promise<string>
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -340,7 +342,38 @@ export const ApiContextProvider = ({
 			},
 			getImageUrl,
 			getAvatarUrl: () => {
-				return `https://api.dicebear.com/8.x/initials/svg?seed=${user.username}`
+				if (!user.avatar) return `https://api.dicebear.com/8.x/initials/svg?seed=${user.username}`
+
+				return `/api/user/avatar/${user.id}`
+			},
+			setUserAvatar: async (id: string) => {
+				const request = await fetch('/api/user/@me/avatar', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						id,
+					}),
+				})
+
+				let data = await request.json()
+
+				if (request.status !== 200) {
+					toast.error('Failed to set user avatar')
+					return
+				}
+
+				toast.success('Avatar set.')
+
+
+				setUser({
+					...user,
+					avatar: data.message,
+				})
+
+
+				return 'OK'
 			},
 		}}>
 			{children}

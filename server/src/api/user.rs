@@ -8,17 +8,16 @@ use argon2::{
     Argon2, PasswordHash, PasswordVerifier
 };
 
-use axum::{extract::State, http::StatusCode, response::Response, routing::{get, post}, Extension, Json, Router};
+use axum::{extract::{Path, State}, http::StatusCode, response::{IntoResponse, Redirect, Response}, routing::{get, post, put}, Extension, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
-use initials::{AvatarBuilder, AvatarResult};
 use pretty_duration::{pretty_duration, PrettyDurationOptions, PrettyDurationOutputFormat};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, Files, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
 
-use super::util::{generic_error, generic_json_response, json_response};
+use super::util::{generic_error, generic_json_response, generic_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -48,6 +47,11 @@ struct CreatedUser {
 #[derive(Deserialize, Clone, Debug)]
 struct SingleEmail {
 	email: String,
+}
+
+#[derive(Deserialize, Clone, Debug)]
+struct SetAvatarIdInput {
+	pub id: Option<String>,
 }
 
 #[derive(Deserialize, Clone, Debug)]
@@ -117,6 +121,7 @@ async fn create_user(
 		password,
 		username: payload.username.clone(),
 		verified_email: Some(get_default_verification_status()),
+		avatar: None,
 	};
 
 	let result = diesel::insert_into(users::table)
@@ -220,6 +225,7 @@ async fn get_me(
 		Ok(user) => {json_response(StatusCode::OK, ReturnedUser {
 			id: user.id,
 			username: user.username,
+			avatar: user.avatar,
 		})},
 		Err(_) => generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to login session.")
 	}
@@ -235,8 +241,6 @@ async fn get_my_quizzes(
 	
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 	
-	info!("session ext {:#?}", current_session);
-
 	let quizzes = quiz::table.filter(quiz::owner_id.eq(current_session.user_id)).select(quiz::all_columns).load::<Quiz>(&mut conn);
 	
 	match quizzes {
@@ -370,6 +374,73 @@ async fn reset_password(
 	generic_json_response(StatusCode::OK, "Password updated.")
 }
 
+async fn set_avatar(
+	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
+	Json(payload): Json<SetAvatarIdInput>
+) -> Response<axum::body::Body> {
+	if current_session.error.is_some() { return generic_error(StatusCode::BAD_REQUEST, current_session.error.unwrap()); }
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+
+	let current_session = current_session.session.unwrap();
+	
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool.");
+
+	let _ = diesel::update(users::table)
+		.filter(users::id.eq(current_session.user_id.clone()))
+		.set(users::avatar.eq(payload.id.clone()))
+		.execute(&mut conn);
+
+	if payload.id.is_none() { return generic_json_response(StatusCode::GONE, "Avatar removed"); }
+
+	let cloned = payload.id.unwrap().clone();
+
+	let id = cloned.as_str();
+
+	generic_json_response(StatusCode::OK, id)
+}
+
+async fn get_avatar(
+	Path(id): Path<String>,
+	State(state): State<Arc<AppState>>,
+) -> Response {
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
+
+	let user: Option<User> = match users::table.filter(users::id.eq(id.clone())).first::<User>(&mut conn) {
+		Ok(user) => Some(user),
+		Err(_) => None,
+	};
+
+	if user.is_none() {
+		return StatusCode::NOT_FOUND.into_response()
+		//return generic_error(StatusCode::NOT_FOUND, "User avatar not found.");
+	}
+
+	let user = user.unwrap();
+
+	if user.avatar.is_none() {
+		// return generic_error(StatusCode::NOT_FOUND, "User avatar not found.");
+		return StatusCode::NOT_FOUND.into_response()
+	}
+
+	let file = Files::get_by_id(user.avatar.unwrap(), &mut conn).await;
+
+	if file.is_err() { return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+
+	let file = file.unwrap();
+
+	let file_url = state.filestorage.serve_file(file.file_location.unwrap()).await;
+
+	if file_url.is_err() { return StatusCode::INTERNAL_SERVER_ERROR.into_response(); }
+	
+	let redir_url = format!("/api/{}", file_url.unwrap().as_str());
+
+	Redirect::to(redir_url.as_str()).into_response()
+
+	//generic_json_response(StatusCode::OK, file_url.unwrap().as_str())
+}
+
 pub fn user_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", get(root))
@@ -377,6 +448,8 @@ pub fn user_router(state: Arc<AppState>) -> Router {
 		.route("/login", post(login))
 		.route("/@me", get(get_me))
 		.route("/@me/quizzes", get(get_my_quizzes))
+		.route("/@me/avatar", put(set_avatar))
+		.route("/avatar/:id", get(get_avatar))
 		.route("/password/reset", post(reset_password))
 		.route("/password/reset/request", post(request_password_reset))
 		.with_state(state)

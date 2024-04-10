@@ -5,7 +5,7 @@ pub mod s3_storage;
 
 use std::{env, sync::Arc};
 
-use axum::{extract::{Multipart, Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Router};
+use axum::{extract::{Multipart, Path, State}, http::{Response, StatusCode}, routing::{get, post}, Extension, Json, Router};
 use diesel::{ExpressionMethods, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 use tokio::{fs::File, io::AsyncReadExt};
@@ -34,7 +34,6 @@ async fn get_temp_path_id(
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let id = generate_short_uuid();
-
 	
 	let _ = diesel::insert_into(crate::api::files::files::dsl::files)
 		.values(Files::new(

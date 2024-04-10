@@ -21,8 +21,8 @@ pub async fn get_quiz_by_id (quiz_id: String, conn: &mut PgPooledConn) -> Result
 	let answers = Answer::belonging_to(&questions).load::<Answer>(conn)?;
 	let owner = users::table
 		.filter(users::id.eq(quiz.clone().owner_id))
-		.select((users::id, users::username))
-		.get_result::<(String, String)>(conn)?;
+		.select((users::id, users::username, users::avatar))
+		.get_result::<(String, String, Option<String>)>(conn)?;
 
 	let files = questions.clone().iter().filter_map(|question| {
 		let file: Result<Files, diesel::result::Error> = files::table.filter(files::question_id.eq(&question.id)).select(files::table::all_columns()).first::<Files>(conn);

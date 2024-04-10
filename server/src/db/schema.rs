@@ -102,6 +102,7 @@ diesel::table! {
         password -> Varchar,
         email -> Varchar,
         verified_email -> Nullable<Bool>,
+        avatar -> Nullable<Varchar>,
     }
 }
 
