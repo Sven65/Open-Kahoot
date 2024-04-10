@@ -11,6 +11,7 @@ use argon2::{
 use axum::{extract::State, http::StatusCode, response::Response, routing::{get, post}, Extension, Json, Router};
 use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
+use initials::{AvatarBuilder, AvatarResult};
 use pretty_duration::{pretty_duration, PrettyDurationOptions, PrettyDurationOutputFormat};
 use serde::{Deserialize, Serialize};
 use tracing::info;

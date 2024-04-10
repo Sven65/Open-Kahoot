@@ -85,7 +85,7 @@ async fn upload_file(
 
 		let name = format!("{}.webp", file_id);
 
-		let webp_image = convert_to_webp(data);
+		let webp_image = convert_to_webp(data.to_vec());
 
 		let result = state.filestorage.upload_file(webp_image.as_slice(), name).await;
 

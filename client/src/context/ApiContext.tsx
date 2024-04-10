@@ -38,6 +38,7 @@ export type IApiContext = {
 	uploadFile: (id: string, file: any) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	getImageUrl: (id: string) => Promise<string>,
+	getAvatarUrl: () => string,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -338,6 +339,9 @@ export const ApiContextProvider = ({
 				toast.success('File uploaded')
 			},
 			getImageUrl,
+			getAvatarUrl: () => {
+				return `https://api.dicebear.com/8.x/initials/svg?seed=${user.username}`
+			},
 		}}>
 			{children}
 		</ApiContext.Provider>

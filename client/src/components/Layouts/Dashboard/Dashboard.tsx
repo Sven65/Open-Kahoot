@@ -1,7 +1,6 @@
-import classNames from 'classnames'
-import { useLocation } from 'preact-iso'
-import { PropsWithChildren, ReactElement } from 'preact/compat'
+import { PropsWithChildren, ReactElement, useContext } from 'preact/compat'
 import { Layout } from '../Layout'
+import { ApiContext } from '../../../context/ApiContext'
 
 type Props = PropsWithChildren & {
 	navbar?: ReactElement,
@@ -13,7 +12,7 @@ export const DashboardLayout = ({
 	navbar,
 	navbarClass,
 }: Props) => {
-	const location = useLocation()
+	const apiContext = useContext(ApiContext)
 
 	return (
 		<Layout>
@@ -42,7 +41,7 @@ export const DashboardLayout = ({
 				{/* User avatar: */}
 				<div class='flex flex-col items-center gap-y-4 py-10'>
 					<a class={'mt-2 rounded-full bg-gray-100'} href={'/@me/settings'}>
-						<img class="h-10 w-10 rounded-full" src="" alt="" />
+						<img class="h-10 w-10 rounded-full" src={apiContext.getAvatarUrl()} alt={apiContext.user.username} />
 					</a>
 				</div>
 			</aside>
