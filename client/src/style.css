@@ -12,12 +12,20 @@
 
 @font-face {
 	font-family: 'Futura';
-	src: url("/assets/fonts/Futura.woff");	
+	src: url("/assets/fonts/Futura.woff");
+	font-weight: normal;
+}
+
+@font-face {
+	font-family: 'Futura';
+	src: url("/assets/fonts/Futura-Bold.woff");
+	font-weight: bold;
 }
 
 
 :root {
 	font-family: Futura, system-ui, Avenir, Helvetica, Arial, sans-serif;
+	/* font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; */
 	line-height: 1.5;
 	font-weight: 400;
 

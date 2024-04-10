@@ -41,7 +41,7 @@ export const DashboardLayout = ({
 
 				{/* User avatar: */}
 				<div class='flex flex-col items-center gap-y-4 py-10'>
-					<a class={'mt-2 rounded-full bg-gray-100'} href={'/@me'}>
+					<a class={'mt-2 rounded-full bg-gray-100'} href={'/@me/settings'}>
 						<img class="h-10 w-10 rounded-full" src="" alt="" />
 					</a>
 				</div>

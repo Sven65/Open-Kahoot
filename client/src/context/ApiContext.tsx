@@ -262,8 +262,6 @@ export const ApiContextProvider = ({
 				const data = await request.json()
 
 				if (request.status === 200) {
-					toast.success('Logged in.')
-
 					setUser(data)
 
 					// location.route('/@me')
