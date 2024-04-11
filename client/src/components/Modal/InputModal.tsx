@@ -1,5 +1,4 @@
-import { h } from 'preact'
-import { ComponentChildren } from 'preact'
+import { h, ComponentChildren } from 'preact'
 
 import './Modal.scss'
 import { Input } from '../Form/Input'
@@ -15,6 +14,7 @@ type Props =  {
 	actionText?: string
 	placeholder?: string,
 	icon?: h.JSX.Element,
+	type?: string,
 }
 
 export const InputModal = ({
@@ -26,6 +26,7 @@ export const InputModal = ({
 	icon,
 	onAction,
 	onClose,
+	type,
 }: Props) => {
 	const [ value, setValue ] = useState('')
 	if (!show) return null
@@ -52,6 +53,7 @@ export const InputModal = ({
 											value={value}
 											onChange={e => setValue(e.target.value)}
 											onKeyDown={e => {e.key === 'Enter' ? onAction(value) : null}}
+											type={type}
 										/>
 									</div>
 								</div>

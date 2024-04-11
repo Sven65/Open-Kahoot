@@ -6,11 +6,15 @@ import { DashboardLayout } from '../../../components/Layouts/Dashboard/Dashboard
 import { Card } from '../../../components/Card/Card'
 import { Input } from '../../../components/Form/Input'
 import { FileModal } from '../../../components/Modal/FileModal'
+import { InputModal } from '../../../components/Modal/InputModal'
+import { Modal } from '../../../components/Modal/Modal'
   
 const Settings = () => {
 	const apiContext = useContext(ApiContext)
 	const [ showModal, setShowModal ] = useState(false)
 	const [ imageUrl, setImageUrl ] = useState('')
+	const [ showEmailModal, setShowEmailModal ] = useState(false)
+	const [ showDeleteModal, setShowDeleteModal ] = useState(false)
 	const imgRef = useRef()
 
 	useEffect(() => {
@@ -44,12 +48,28 @@ const Settings = () => {
 			<FileModal show={showModal} onClose={() => setShowModal(false)} onChangeFile={onChangeFile}>
 				Change avatar
 			</FileModal>
+			<InputModal
+				show={showEmailModal}
+				title="Change Email"
+				icon={(
+					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+						<path strokeLinecap="round" strokeLinejoin="round" d="M16.5 12a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm0 0c0 1.657 1.007 3 2.25 3S21 13.657 21 12a9 9 0 1 0-2.636 6.364M16.5 12V8.25" />
+					</svg>
+				)}
+				actionText='Change'
+				onClose={() => setShowEmailModal(false)}
+				
+			/>
+			<Modal
+				show={showDeleteModal}
+				onClose={() => setShowDeleteModal(false)}
+			/>
 			<div class="flex flex-col flex-1 h-full">
 				<Card title="User Settings" className='flex-1'>
 					<div>
 						Your email address is <span class="font-bold">email@example.com</span>
 						<br />
-						<a href="#" class="text-blue-500 underline">Change</a>
+						<a href="#" class="text-blue-500 underline" onClick={() => setShowEmailModal(true)}>Change</a>
 					</div>
 					<hr />
 					<div>
@@ -69,25 +89,30 @@ const Settings = () => {
 					<div>
 						<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">Current password</label>
 						<div class="mt-2">
-							<Input />
+							<Input
+								type="password"
+							/>
 						</div>
 					</div>
 					<div>
 						<label for="maxPoints" class="block text-sm font-medium leading-6 text-gray-900">New password</label>
 						<div class="mt-2">
-							<Input />
+							<Input
+								type="password"
+								error
+							/>
 						</div>
 					</div>
 					<Button className="mt-2" full>Change</Button>
 				</Card>
 				<Card title="Delete account" className='flex-1'>
-					<span class="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-md m-2 font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Proceed with caution!</span>
+					<span class="inline-flex items-center rounded-md bg-red-200 px-2 py-1 text-md m-2 font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Proceed with caution!</span>
 					<br />
 
 					Make sure you have taken backup of your account in case you ever need to get access to your data. We will completely wipe your data. There is no way to access your account after this action.
 					<br />
 
-					<a href="#" class="text-red-600 underline">Continue with deletion</a>
+					<a href="#" class="text-red-600 underline" onClick={() => setShowDeleteModal(true)}>Continue with deletion</a>
 				</Card>
 			
 			</div>
