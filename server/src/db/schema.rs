@@ -113,6 +113,7 @@ diesel::joinable!(files -> users (owner_id));
 diesel::joinable!(password_reset -> users (user_id));
 diesel::joinable!(questions -> quiz (quiz_id));
 diesel::joinable!(quiz -> users (owner_id));
+diesel::joinable!(session -> users (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     answers,

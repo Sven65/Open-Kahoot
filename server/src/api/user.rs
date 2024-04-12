@@ -572,12 +572,38 @@ async fn change_password(
 	}	
 }
 
+async fn delete_me(
+	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
+) -> Response<axum::body::Body> {
+	if current_session.error.is_some() { return generic_error(StatusCode::BAD_REQUEST, current_session.error.unwrap()); }
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
+
+	let res = diesel::delete(users::table)
+		.filter(users::id.eq(current_session.session.unwrap().user_id))
+		.execute(&mut conn);
+
+	if res.is_err() {
+		println!("delete err {:#?}", res.err());
+		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete user.");
+	}
+
+
+
+	generic_json_response(StatusCode::GONE, "Deleted user.")
+}
+
 pub fn user_router(state: Arc<AppState>) -> Router {
 	Router::new()
 		.route("/", get(root))
 		.route("/", post(create_user))
 		.route("/login", post(login))
-		.route("/@me", get(get_me))
+		.route("/@me", 
+			get(get_me)
+			.delete(delete_me)
+		)
 		.route("/@me/quizzes", get(get_my_quizzes))
 		.route("/@me/avatar", put(set_avatar))
 		.route("/@me/email", put(change_email))

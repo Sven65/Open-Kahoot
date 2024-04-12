@@ -10,6 +10,7 @@ import { InputModal } from '../../../components/Modal/InputModal'
 import { Modal } from '../../../components/Modal/Modal'
 import { validateEmail } from '../../../util/validator'
 import { PasswordCheckResult } from '../../../types'
+import { LoadModal } from '../../../components/Modal/LoadModal'
   
 const Settings = () => {
 	const apiContext = useContext(ApiContext)
@@ -90,12 +91,16 @@ const Settings = () => {
 		setPasswordFeedback(data)
 	}
 
+	const onDelete = async () => {
+		await apiContext.deleteMe()
+	}
+
 	return (
 		<DashboardLayout>
 			<FileModal show={showModal} onClose={() => setShowModal(false)} onChangeFile={onChangeFile}>
 				Change avatar
 			</FileModal>
-			<InputModal
+			{isSettingEmail ? (<LoadModal show />) : (<InputModal
 				show={showEmailModal}
 				title="Change Email"
 				icon={(
@@ -108,10 +113,11 @@ const Settings = () => {
 				onAction={onSetNewEmail}
 				error={emailError}
 				isLoading={isSettingEmail}
-			/>
+			/>)}
 			<Modal
 				show={showDeleteModal}
 				onClose={() => setShowDeleteModal(false)}
+				onAction={onDelete}
 			/>
 			<div class="flex flex-col flex-1 h-full">
 				<Card title="User Settings" className='flex-1'>

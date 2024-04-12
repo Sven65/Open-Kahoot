@@ -4,6 +4,7 @@ import { useState } from 'preact/hooks'
 import { toast } from 'react-toastify'
 import { useLocation } from 'preact-iso'
 import { deleteByKey } from '../util/modify'
+import { deleteCookie } from '../util/cookies'
 
 export type CreateUser = {
 	username: string,
@@ -44,7 +45,8 @@ export type IApiContext = {
 	// eslint-disable-next-line no-unused-vars
 	changeEmail: (email: string) => Promise<string>
 	// eslint-disable-next-line no-unused-vars
-	changePassword: (oldPassword: string, newPassword: string) => Promise<PasswordCheckResult | string>
+	changePassword: (oldPassword: string, newPassword: string) => Promise<PasswordCheckResult | string>,
+	deleteMe: () => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -228,7 +230,7 @@ export const ApiContextProvider = ({
 					case 201:
 						toast.success('User created, please check your emails!')
 						location.route('/@me')
-						break
+						return 'ok'
 					case 409:
 						toast.error(data.error)
 						break
@@ -431,6 +433,24 @@ export const ApiContextProvider = ({
 				toast.success('Password changed.')
 
 				return 'OK'
+			},
+			deleteMe: async () => {
+				const request = await fetch('/api/user/@me', {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				})
+
+				if (request.status !== 410) {
+					toast.error('Failed to delete user')
+					return
+				}
+
+				toast.success('User deleted.')
+
+				location.route('/@me')
+				deleteCookie('login_session')
 			},
 		}}>
 			{children}
