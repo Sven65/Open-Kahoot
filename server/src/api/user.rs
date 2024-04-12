@@ -586,7 +586,6 @@ async fn delete_me(
 		.execute(&mut conn);
 
 	if res.is_err() {
-		println!("delete err {:#?}", res.err());
 		return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to delete user.");
 	}
 
