@@ -41,6 +41,10 @@ export type IApiContext = {
 	getAvatarUrl: () => string,
 	// eslint-disable-next-line no-unused-vars
 	setUserAvatar: (id: string) => Promise<string>
+	// eslint-disable-next-line no-unused-vars
+	changeEmail: (email: string) => Promise<string>
+	// eslint-disable-next-line no-unused-vars
+	changePassword: (oldPassword: string, newPassword: string) => Promise<string>
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -372,6 +376,58 @@ export const ApiContextProvider = ({
 					avatar: data.message,
 				})
 
+
+				return 'OK'
+			},
+			changeEmail: async (email: string) => {
+				const request = await fetch('/api/user/@me/email', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						email,
+					}),
+				})
+
+				let data = await request.json()
+
+				if (request.status !== 200) {
+					toast.error('Failed to set user email')
+					return data.error
+				}
+
+				toast.success('Email changed.')
+
+
+				setUser({
+					...user,
+					email,
+					verified_email: false,
+				})
+
+				return 'OK'
+			},
+			changePassword: async (oldPassword: string, newPassword: string) => {
+				const request = await fetch('/api/user/@me/password', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						old_password: oldPassword,
+						new_password: newPassword,
+					}),
+				})
+
+				let data = await request.json()
+
+				if (request.status !== 200) {
+					toast.error('Failed to set user password')
+					return data.error
+				}
+
+				toast.success('Password changed.')
 
 				return 'OK'
 			},

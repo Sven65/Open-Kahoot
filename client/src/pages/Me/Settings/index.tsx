@@ -21,6 +21,7 @@ const Settings = () => {
 	const [ confirmPassword, setConfirmPassword ] = useState('')
 	const [ emailError, setEmailError ] = useState('')
 	const [ passwordError, setPasswordError ] = useState('')
+	const [ isSettingEmail, setIsSettingEmail ] = useState(false)
 
 	useEffect(() => {
 		if (!apiContext.user) return
@@ -46,13 +47,39 @@ const Settings = () => {
 	}
 
 
-	const onSetNewEmail = (email: string) => {
+	const onSetNewEmail = async (email: string) => {
 		setEmailError(null)
 		if (!validateEmail(email)) {
 			setEmailError('Please enter a valid email.')
 			return
 		}
-		console.log('new email', email)
+
+		setIsSettingEmail(true)
+
+		const res = await apiContext.changeEmail(email)
+
+		setIsSettingEmail(false)
+
+
+		if (res === 'OK') {
+			setShowEmailModal(false)
+		} else {
+			setEmailError(res)
+		}
+	}
+
+	const onChangePassword = async () => {
+		setPasswordError('')
+		if (newPassword === '' || confirmPassword === '') {
+			setPasswordError('Please type a password')
+			return
+		}
+		if (newPassword !== confirmPassword) {
+			setPasswordError("Passwords don't match")
+			return
+		}
+
+		apiContext.changePassword(oldPassword, newPassword)
 	}
 
 	return (
@@ -72,6 +99,7 @@ const Settings = () => {
 				onClose={() => setShowEmailModal(false)}
 				onAction={onSetNewEmail}
 				error={emailError}
+				isLoading={isSettingEmail}
 			/>
 			<Modal
 				show={showDeleteModal}
@@ -109,6 +137,7 @@ const Settings = () => {
 						<div class="mt-2">
 							<Input
 								type="password"
+								onChange={e => setOldPassword(e.currentTarget.value)}
 							/>
 						</div>
 					</div>
@@ -118,6 +147,7 @@ const Settings = () => {
 							<Input
 								type="password"
 								error
+								onChange={e => setNewPassword(e.currentTarget.value)}
 							/>
 						</div>
 						{passwordError && (<p class="text-red-500 text-xs italic">{passwordError}</p>)}
@@ -129,6 +159,7 @@ const Settings = () => {
 							<Input
 								type="password"
 								error
+								onChange={(e) => setConfirmPassword(e.currentTarget.value)}
 							/>
 						</div>
 						{passwordError && (<p class="text-red-500 text-xs italic">{passwordError}</p>)}
@@ -138,14 +169,14 @@ const Settings = () => {
 						Password requirements:
 						Ensure that these requirements are met:
 
-							At least 10 characters (and up to 100 characters)
-							At least one lowercase character
+							At least 8 characters (and up to 100 characters)
+							At least one uppercase character
 							Inclusion of at least one special character, e.g., ! @ # ?
 							Some text here zoltan
 
 
 					</div>
-					<Button className="mt-2" full>Change</Button>
+					<Button className="mt-2" full onClick={onChangePassword}>Change</Button>
 				</Card>
 				<Card title="Delete account" className='flex-1'>
 					<span class="inline-flex items-center rounded-md bg-red-200 px-2 py-1 text-md m-2 font-medium text-red-700 ring-1 ring-inset ring-red-600/10">Proceed with caution!</span>

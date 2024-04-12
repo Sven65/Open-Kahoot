@@ -1,5 +1,5 @@
 
-use std::{env, sync::Arc};
+use std::{env, sync::Arc, time::Duration};
 
 use argon2::{
     password_hash::{
@@ -13,11 +13,11 @@ use diesel::{RunQueryDsl, SelectableHelper, prelude::*, QueryDsl};
 use email_address::EmailAddress;
 use pretty_duration::{pretty_duration, PrettyDurationOptions, PrettyDurationOutputFormat};
 use serde::{Deserialize, Serialize};
-use tracing::info;
+use tokio::time::sleep;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, Files, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, Files, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{check_password_requirements, generate_short_uuid, has_duration_passed}};
 
-use super::util::{generic_error, generic_json_response, generic_response, json_response};
+use super::util::{generic_error, generic_json_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -38,7 +38,7 @@ struct LoginUser {
 }
 
 // the output to our `create_user` handler
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 struct CreatedUser {
     id: String,
     username: String,
@@ -58,6 +58,13 @@ struct SetAvatarIdInput {
 struct PasswordResetRequest {
 	new_password: String,
 	token: String,
+}
+
+
+#[derive(Deserialize, Clone, Debug)]
+struct PasswordChangeInput {
+	new_password: String,
+	old_password: String,
 }
 
 fn hash_password(password: &[u8]) -> Option<(String, String)> {
@@ -95,12 +102,46 @@ fn get_default_verification_status() -> bool {
 	res != "true"
 }
 
+async fn send_verification_email(
+	user_id: String,
+	email_addr: String,
+	conn: &mut PgConnection
+) -> Result<(), Response<axum::body::Body>> {
+	if env::var("ENABLE_EMAIL_VERIFICATION").unwrap() == "true" {
+		let verification = EmailVerification::new(user_id);
+
+		let res = verification.clone().insert_into(crate::db::schema::email_verification::table).execute(conn);
+
+		if res.is_err() {
+			return Err(generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to create verification token"));
+		}
+
+		let email = Email::new().unwrap();
+
+		let _ = email.send(
+			"Please verify your email.",
+			email_addr.as_str(),
+			format!(
+				"Plase use the following link to verify ypur email: {}/v/{}",
+				env::var("FRONTEND_URL").expect("Expected FRONTEND_URL to be set."),
+				verification.verification_token,
+			).as_str()
+		).await;
+	}
+
+	Ok(())
+}
+
 async fn create_user(
 	State(state): State<Arc<AppState>>,
 	Json(payload): Json<CreateUser>,
 ) -> Response<axum::body::Body> {
 	if !EmailAddress::is_valid(&payload.email.clone()) {
 		return generic_error(StatusCode::BAD_REQUEST, "Email is invalid.")
+	}
+
+	if !check_password_requirements(&payload.password) {
+		return generic_error(StatusCode::BAD_REQUEST, "Password does not meet requirements.")
 	}
 
 	let hash_tuple = hash_password(payload.password.as_bytes());
@@ -117,7 +158,7 @@ async fn create_user(
 	let new_user = User {
 		id: user_id.clone(),
 		salt,
-		email: payload.email.clone(),
+		email: payload.email.clone().to_lowercase(),
 		password,
 		username: payload.username.clone(),
 		verified_email: Some(get_default_verification_status()),
@@ -150,27 +191,10 @@ async fn create_user(
 		username: result.username
 	};
 
-	if env::var("ENABLE_EMAIL_VERIFICATION").unwrap() == "true" {
-		let verification = EmailVerification::new(user_id);
+	let res = send_verification_email(user.clone().id, payload.email.clone(), &mut conn).await;
 
-		let res = verification.clone().insert_into(crate::db::schema::email_verification::table).execute(&mut conn);
-
-		if res.is_err() {
-			info!("res is {:#?}", res.err());
-			return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to create verification token");
-		}
-
-		let email = Email::new().unwrap();
-
-		let _ = email.send(
-			"Please verify your email.",
-			payload.email.clone().as_str(),
-			format!(
-				"Plase use the following link to verify ypur email: {}/v/{}",
-				env::var("FRONTEND_URL").expect("Expected FRONTEND_URL to be set."),
-				verification.verification_token,
-			).as_str()
-		).await;
+	if res.is_err() {
+		return res.err().unwrap();
 	}
 
 	json_response(StatusCode::CREATED, user)
@@ -352,6 +376,10 @@ async fn reset_password(
 		return generic_error(StatusCode::BAD_REQUEST, "Password reset has timed out.");
 	}
 
+	if !check_password_requirements(&payload.new_password) {
+		return generic_error(StatusCode::BAD_REQUEST, "Password does not meet requirements.")
+	}
+
 	let hash_tuple = hash_password(payload.new_password.as_bytes());
 
 	if hash_tuple.is_none() {
@@ -416,13 +444,11 @@ async fn get_avatar(
 
 	if user.is_none() {
 		return StatusCode::NOT_FOUND.into_response()
-		//return generic_error(StatusCode::NOT_FOUND, "User avatar not found.");
 	}
 
 	let user = user.unwrap();
 
 	if user.avatar.is_none() {
-		// return generic_error(StatusCode::NOT_FOUND, "User avatar not found.");
 		return StatusCode::NOT_FOUND.into_response()
 	}
 
@@ -439,8 +465,97 @@ async fn get_avatar(
 	let redir_url = format!("/api/{}", file_url.unwrap().as_str());
 
 	Redirect::to(redir_url.as_str()).into_response()
+}
 
-	//generic_json_response(StatusCode::OK, file_url.unwrap().as_str())
+async fn change_email(
+	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
+	Json(payload): Json<SingleEmail>
+) -> Response<axum::body::Body> {
+	if current_session.error.is_some() { return generic_error(StatusCode::BAD_REQUEST, current_session.error.unwrap()); }
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+	if !EmailAddress::is_valid(&payload.email.clone()) {
+		return generic_error(StatusCode::BAD_REQUEST, "Email is invalid.");
+	}
+
+	let current_session = current_session.session.unwrap();
+	
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool.");
+
+	let existing_email: Option<User> = match users::table.filter(users::email.eq(payload.email.to_lowercase())).first::<User>(&mut conn) {
+		Ok(user) => Some(user),
+		Err(_) => None,
+	};
+
+	if existing_email.is_some() {
+		return generic_error(StatusCode::BAD_REQUEST, "Email exists.");
+	}
+
+	let _ = diesel::update(users::table)
+		.filter(users::id.eq(current_session.user_id.clone()))
+		.set((users::email.eq(payload.email.clone()), users::verified_email.eq(false)))
+		.execute(&mut conn);
+
+	let res = send_verification_email(current_session.user_id.clone(), payload.email.clone(), &mut conn).await;
+
+	if res.is_err() {
+		return res.err().unwrap();
+	}
+
+	let _ = sleep(Duration::from_secs(3));
+
+	generic_json_response(StatusCode::OK, "Email changed")
+}
+
+async fn change_password(
+	Extension(current_session): Extension<CurrentSession>,
+	State(state): State<Arc<AppState>>,
+	Json(payload): Json<PasswordChangeInput>
+) -> Response<axum::body::Body> {
+	if current_session.error.is_some() { return generic_error(StatusCode::BAD_REQUEST, current_session.error.unwrap()); }
+	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
+
+	if !check_password_requirements(&payload.new_password) {
+		return generic_error(StatusCode::BAD_REQUEST, "Password does not meet requirements.")
+	}
+
+	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
+
+	let user_result = users::table
+		.filter(users::id.eq(current_session.session.unwrap().user_id))
+		.select((users::id, users::password, users::salt))
+		.get_result::<(String, String, String)>(&mut conn);
+
+	if user_result.is_err() {
+		return generic_error(StatusCode::UNAUTHORIZED, "Password incorrect.");
+	}
+
+	let (user_id, password_hash, salt) = user_result.unwrap();
+
+	match validate_password(payload.clone().old_password, salt, password_hash) {
+		true => {
+			let hash_tuple = hash_password(payload.new_password.as_bytes());
+
+			if hash_tuple.is_none() {
+				return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Invalid hashing data");
+			}
+
+			let (salt, password) = hash_tuple.unwrap();	
+
+			let res = diesel::update(users::table)
+				.filter(users::id.eq(user_id))
+				.set((users::password.eq(password), users::salt.eq(salt)))
+				.execute(&mut conn);
+
+			if res.is_err() {
+				return generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to save user.");
+			}
+
+			generic_json_response(StatusCode::OK, "Password changed")
+		},
+		false => generic_error(StatusCode::UNAUTHORIZED, "Password incorrect.")
+	}	
 }
 
 pub fn user_router(state: Arc<AppState>) -> Router {
@@ -451,6 +566,8 @@ pub fn user_router(state: Arc<AppState>) -> Router {
 		.route("/@me", get(get_me))
 		.route("/@me/quizzes", get(get_my_quizzes))
 		.route("/@me/avatar", put(set_avatar))
+		.route("/@me/email", put(change_email))
+		.route("/@me/password", put(change_password))
 		.route("/avatar/:id", get(get_avatar))
 		.route("/password/reset", post(reset_password))
 		.route("/password/reset/request", post(request_password_reset))
