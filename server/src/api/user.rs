@@ -385,7 +385,7 @@ async fn reset_password(
 		user.username,
 		user.email,
 	].into());
-
+	
 	if pass_check_result.is_err() {
 		return pass_check_result.err().unwrap()
 	}
@@ -546,8 +546,6 @@ async fn change_password(
 	if pass_check_result.is_err() {
 		return pass_check_result.err().unwrap()
 	}
-
-	// let (user_id, password_hash, salt) = user_result.unwrap();
 
 	match validate_password(payload.clone().old_password, user_result.salt, user_result.password) {
 		true => {

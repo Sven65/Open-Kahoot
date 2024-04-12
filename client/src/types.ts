@@ -104,3 +104,11 @@ export type Quiz = {
 	updated_at: Date,
 	questions: Question[],
 }
+
+
+export type PasswordCheckResult = {
+	feedback: {
+		warning?: string,
+		suggestions: string[]
+	}
+}

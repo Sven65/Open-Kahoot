@@ -1,5 +1,5 @@
 import { createContext } from 'preact'
-import { Quiz, User } from '../types'
+import { PasswordCheckResult, Quiz, User } from '../types'
 import { useState } from 'preact/hooks'
 import { toast } from 'react-toastify'
 import { useLocation } from 'preact-iso'
@@ -25,7 +25,7 @@ export type IApiContext = {
 	// eslint-disable-next-line no-unused-vars
 	deleteQuestion: (id: String) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
-	createUser: (user: CreateUser) => Promise<void>,
+	createUser: (user: CreateUser) => Promise<PasswordCheckResult | undefined>,
 	// eslint-disable-next-line no-unused-vars
 	login: (username: string, password: string) => Promise<void>,
 	fetchMe: () => Promise<void>,
@@ -44,7 +44,7 @@ export type IApiContext = {
 	// eslint-disable-next-line no-unused-vars
 	changeEmail: (email: string) => Promise<string>
 	// eslint-disable-next-line no-unused-vars
-	changePassword: (oldPassword: string, newPassword: string) => Promise<string>
+	changePassword: (oldPassword: string, newPassword: string) => Promise<PasswordCheckResult | string>
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -234,6 +234,7 @@ export const ApiContextProvider = ({
 						break
 					default:
 						toast.error('User creation failed.')
+						return data
 				}
 			},
 			login: async (username: string, password: string) => {
@@ -424,7 +425,7 @@ export const ApiContextProvider = ({
 
 				if (request.status !== 200) {
 					toast.error('Failed to set user password')
-					return data.error
+					return data
 				}
 
 				toast.success('Password changed.')

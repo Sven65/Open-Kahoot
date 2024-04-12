@@ -5,6 +5,7 @@ import { Input } from '../../components/Form/Input'
 import { ApiContext } from '../../context/ApiContext'
 import { toast } from 'react-toastify'
 import { validateEmail } from '../../util/validator'
+import { PasswordCheckResult } from '../../types'
 
 export const Register = () => {
 	const [ username, setUsername ] = useState(null)
@@ -12,6 +13,8 @@ export const Register = () => {
 	const [ email, setEmail ] = useState(null)
 	const [ confirmPassword, setConfirmPassword ] = useState(null)
 	const [ isSubmitted, setIsSubmitted ] = useState<boolean>(false)
+	const [ passwordFeedback, setPasswordFeedback ] = useState<PasswordCheckResult>({ feedback: { suggestions: [] } })
+
 	const formRef = useRef()
 
 	const [ invalidFields, setInvalidFields ] = useState<string[]>([])
@@ -19,8 +22,9 @@ export const Register = () => {
 	const apiContext = useContext(ApiContext)
 
 
-	const submitForm = () => {
+	const submitForm = async () => {
 		if (isSubmitted) return
+		setPasswordFeedback({ feedback: { suggestions: [] } })
 		
 		setInvalidFields([])
 		if(!formRef.current.checkValidity()) return toast.error('Form is invalid. Please check your inputs.')
@@ -32,14 +36,19 @@ export const Register = () => {
 		}
 
 		if (!validateEmail(email)) return toast.error('Email is invalid.')
+		setIsSubmitted(true)
 
-		apiContext.createUser({
+		toast.info('Creating user...')
+
+		let res = await apiContext.createUser({
 			email,
 			password,
 			username,
 		})
 
-		setIsSubmitted(true)
+		setIsSubmitted(false)
+
+		setPasswordFeedback(res)
 	}
 
 	return (
@@ -112,6 +121,22 @@ export const Register = () => {
 							</div>
 						</div>
 	
+						<div class="flex flex-col mt-3">
+							<span class="flex text-xl text-red-600">
+								{Object.keys(passwordFeedback.feedback.suggestions).length > 0 && (
+									<h1>Password issues:</h1>
+								)}
+							</span>
+							<ul>
+								<li class="mt-1 text-gray-900">
+									{passwordFeedback.feedback.warning && <span>{passwordFeedback.feedback.warning}</span>}
+								</li>
+								{passwordFeedback.feedback.suggestions.map((suggestion, i) => (
+									<li class="mt-1 text-gray-900" key={i}>{suggestion}</li>
+								))}
+							</ul>
+						</div>
+
 						<div>
 							<Button full onClick={submitForm}>Register</Button>
 						</div>

@@ -84,7 +84,7 @@ pub fn api_check_pass(
 			None => None
 		};
 	
-		return Err(json_response(StatusCode::OK, CheckPassOutput {
+		return Err(json_response(StatusCode::BAD_REQUEST, CheckPassOutput {
 			feedback
 		}));
 	}

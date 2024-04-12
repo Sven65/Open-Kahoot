@@ -9,6 +9,7 @@ import { FileModal } from '../../../components/Modal/FileModal'
 import { InputModal } from '../../../components/Modal/InputModal'
 import { Modal } from '../../../components/Modal/Modal'
 import { validateEmail } from '../../../util/validator'
+import { PasswordCheckResult } from '../../../types'
   
 const Settings = () => {
 	const apiContext = useContext(ApiContext)
@@ -22,6 +23,7 @@ const Settings = () => {
 	const [ emailError, setEmailError ] = useState('')
 	const [ passwordError, setPasswordError ] = useState('')
 	const [ isSettingEmail, setIsSettingEmail ] = useState(false)
+	const [ passwordFeedback, setPasswordFeedback ] = useState<PasswordCheckResult>({ feedback: { suggestions: [] } })
 
 	useEffect(() => {
 		if (!apiContext.user) return
@@ -70,6 +72,8 @@ const Settings = () => {
 
 	const onChangePassword = async () => {
 		setPasswordError('')
+		setPasswordFeedback({ feedback: { suggestions: [] } })
+
 		if (newPassword === '' || confirmPassword === '') {
 			setPasswordError('Please type a password')
 			return
@@ -79,7 +83,11 @@ const Settings = () => {
 			return
 		}
 
-		apiContext.changePassword(oldPassword, newPassword)
+		let data = await apiContext.changePassword(oldPassword, newPassword)
+
+		if (typeof data === 'string') return
+
+		setPasswordFeedback(data)
 	}
 
 	return (
@@ -164,17 +172,20 @@ const Settings = () => {
 						</div>
 						{passwordError && (<p class="text-red-500 text-xs italic">{passwordError}</p>)}
 					</div>
-					<div>
-
-						Password requirements:
-						Ensure that these requirements are met:
-
-							At least 8 characters (and up to 100 characters)
-							At least one uppercase character
-							Inclusion of at least one special character, e.g., ! @ # ?
-							Some text here zoltan
-
-
+					<div class="flex flex-col mt-3">
+						<span class="flex text-xl text-red-600">
+							{Object.keys(passwordFeedback.feedback.suggestions).length > 0 && (
+								<h1>Password issues:</h1>
+							)}
+						</span>
+						<ul>
+							<li class="mt-1">
+								{passwordFeedback.feedback.warning && <span>{passwordFeedback.feedback.warning}</span>}
+							</li>
+							{passwordFeedback.feedback.suggestions.map((suggestion, i) => (
+								<li class="mt-1" key={i}>{suggestion}</li>
+							))}
+						</ul>
 					</div>
 					<Button className="mt-2" full onClick={onChangePassword}>Change</Button>
 				</Card>

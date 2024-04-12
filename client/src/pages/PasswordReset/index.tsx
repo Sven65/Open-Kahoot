@@ -1,16 +1,19 @@
-import { useContext, useRef, useState } from 'preact/hooks'
+import { useRef, useState } from 'preact/hooks'
 import { Button } from '../../components/Form/Button'
 import { Input } from '../../components/Form/Input'
 
-import { ApiContext, resetPassword } from '../../context/ApiContext'
+import { resetPassword } from '../../context/ApiContext'
 import { toast } from 'react-toastify'
 
 import { useLocation, useRoute } from 'preact-iso'
+import { PasswordCheckResult } from '../../types'
 
 export const ResetPassword = () => {
 	const [ password, setPassword ] = useState(null)
 	const [ confirmPassword, setConfirmPassword ] = useState(null)
 	const [ invalidFields, setInvalidFields ] = useState<string[]>([])
+	const [ passwordFeedback, setPasswordFeedback ] = useState<PasswordCheckResult>({ feedback: { suggestions: [] } })
+
 
 
 	const formRef = useRef()
@@ -20,6 +23,7 @@ export const ResetPassword = () => {
 
 	const submitForm = async () => {
 		setInvalidFields([])
+		setPasswordFeedback({ feedback: { suggestions: [] } })
 
 		if(!formRef.current.checkValidity()) return toast.error('Form is invalid. Please check your inputs.')
 
@@ -32,9 +36,13 @@ export const ResetPassword = () => {
 
 		let res = await resetPassword(route.params.id, password)
 
-
 		if (res.error) {
 			toast.error(res.error)
+			return
+		}
+
+		if (res.message !== 'Password updated.') {
+			setPasswordFeedback(res)
 			return
 		}
 		
@@ -80,7 +88,21 @@ export const ResetPassword = () => {
 							{invalidFields.includes('confirmPassword') && (<p class="text-red-500 text-xs italic">Passwords don't match.</p>)}
 						</div>
 					</div>
-	
+					<div class="flex flex-col mt-3">
+						<span class="flex text-xl text-red-600">
+							{Object.keys(passwordFeedback.feedback.suggestions).length > 0 && (
+								<h1>Password issues:</h1>
+							)}
+						</span>
+						<ul>
+							<li class="mt-1 text-gray-900">
+								{passwordFeedback.feedback.warning && <span>{passwordFeedback.feedback.warning}</span>}
+							</li>
+							{passwordFeedback.feedback.suggestions.map((suggestion, i) => (
+								<li class="mt-1 text-gray-900" key={i}>{suggestion}</li>
+							))}
+						</ul>
+					</div>
 					<div>
 						<Button full onClick={submitForm}>Change</Button>
 					</div>
