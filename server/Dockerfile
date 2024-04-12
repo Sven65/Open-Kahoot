@@ -14,18 +14,13 @@ WORKDIR /open-kahoot
 COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
 
-# 3. Build deps for cache
-
-RUN --mount=type=cache,target=/usr/local/cargo/registry \
-    --mount=type=cache,target=/home/root/app/target \
-    cargo build --release
-RUN rm src/*.rs
-
 COPY ./src ./src
 
 # Build for release
 
-RUN cargo install --path .
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/home/root/app/target \
+    cargo install --path .
 
 RUN ls /open-kahoot/target/release
 

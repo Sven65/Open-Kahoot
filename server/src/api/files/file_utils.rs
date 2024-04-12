@@ -8,7 +8,7 @@ pub fn convert_to_webp(img: Vec<u8>) -> Vec<u8> {
     let (w, h) = img.dimensions();
     // Optionally, resize the existing photo and convert back into DynamicImage
     let size_factor = 1.0;
-    let img: DynamicImage = image::DynamicImage::ImageRgba8(imageops::resize(
+    let img = DynamicImage::ImageRgba8(imageops::resize(
         &img,
         (w as f64 * size_factor) as u32,
         (h as f64 * size_factor) as u32,
