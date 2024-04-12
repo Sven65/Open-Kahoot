@@ -15,9 +15,9 @@ use pretty_duration::{pretty_duration, PrettyDurationOptions, PrettyDurationOutp
 use serde::{Deserialize, Serialize};
 use tokio::time::sleep;
 
-use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, Files, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{check_password_requirements, generate_short_uuid, has_duration_passed}};
+use crate::{api::{quiz_types::ReturnedUser, util::json_response_with_cookie}, app_state::AppState, db::{models::{EmailVerification, Files, PasswordReset, Quiz, Session, User}, schema::{password_reset, quiz, session, users}}, email::Email, middleware::CurrentSession, util::{generate_short_uuid, has_duration_passed}};
 
-use super::util::{generic_error, generic_json_response, json_response};
+use super::util::{api_check_pass, generic_error, generic_json_response, json_response};
 
 async fn root() -> &'static str {
 	"Hello world"
@@ -140,8 +140,13 @@ async fn create_user(
 		return generic_error(StatusCode::BAD_REQUEST, "Email is invalid.")
 	}
 
-	if !check_password_requirements(&payload.password) {
-		return generic_error(StatusCode::BAD_REQUEST, "Password does not meet requirements.")
+	let pass_check_result = api_check_pass(&payload.password, vec![
+		payload.email.clone(),
+		payload.username.clone(),
+	].into());
+
+	if pass_check_result.is_err() {
+		return pass_check_result.err().unwrap()
 	}
 
 	let hash_tuple = hash_password(payload.password.as_bytes());
@@ -376,8 +381,13 @@ async fn reset_password(
 		return generic_error(StatusCode::BAD_REQUEST, "Password reset has timed out.");
 	}
 
-	if !check_password_requirements(&payload.new_password) {
-		return generic_error(StatusCode::BAD_REQUEST, "Password does not meet requirements.")
+	let pass_check_result = api_check_pass(&payload.new_password, vec![
+		user.username,
+		user.email,
+	].into());
+
+	if pass_check_result.is_err() {
+		return pass_check_result.err().unwrap()
 	}
 
 	let hash_tuple = hash_password(payload.new_password.as_bytes());
@@ -516,24 +526,30 @@ async fn change_password(
 	if current_session.error.is_some() { return generic_error(StatusCode::BAD_REQUEST, current_session.error.unwrap()); }
 	if current_session.session.is_none() { return generic_error(StatusCode::UNAUTHORIZED, "Unauthorized."); }
 
-	if !check_password_requirements(&payload.new_password) {
-		return generic_error(StatusCode::BAD_REQUEST, "Password does not meet requirements.")
-	}
-
 	let mut conn = state.db_pool.get().expect("Failed to get DB connection from pool");
 
 	let user_result = users::table
 		.filter(users::id.eq(current_session.session.unwrap().user_id))
-		.select((users::id, users::password, users::salt))
-		.get_result::<(String, String, String)>(&mut conn);
+		.get_result::<User>(&mut conn);
 
 	if user_result.is_err() {
 		return generic_error(StatusCode::UNAUTHORIZED, "Password incorrect.");
 	}
 
-	let (user_id, password_hash, salt) = user_result.unwrap();
+	let user_result = user_result.unwrap();
 
-	match validate_password(payload.clone().old_password, salt, password_hash) {
+	let pass_check_result = api_check_pass(&payload.new_password, vec![
+		user_result.email.clone(),
+		user_result.username.clone(),
+	].into());
+
+	if pass_check_result.is_err() {
+		return pass_check_result.err().unwrap()
+	}
+
+	// let (user_id, password_hash, salt) = user_result.unwrap();
+
+	match validate_password(payload.clone().old_password, user_result.salt, user_result.password) {
 		true => {
 			let hash_tuple = hash_password(payload.new_password.as_bytes());
 
@@ -544,7 +560,7 @@ async fn change_password(
 			let (salt, password) = hash_tuple.unwrap();	
 
 			let res = diesel::update(users::table)
-				.filter(users::id.eq(user_id))
+				.filter(users::id.eq(user_result.id))
 				.set((users::password.eq(password), users::salt.eq(salt)))
 				.execute(&mut conn);
 

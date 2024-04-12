@@ -1,4 +1,4 @@
-use chrono::{Duration, Local, NaiveDateTime, Utc};
+use chrono::{Duration, Local, NaiveDateTime};
 use rand::Rng;
 use uuid_b64::UuidB64;
 use zxcvbn::zxcvbn;
@@ -25,7 +25,8 @@ pub fn has_duration_passed(created_at: NaiveDateTime, duration: Duration) -> boo
 }
 
 pub fn check_password_strength(password: &str, inputs: Option<Vec<String>>) -> Result<zxcvbn::Entropy, zxcvbn::ZxcvbnError>  {
-    let input_slice: &[&str] = &inputs.unwrap_or(vec![]).iter().map(|s| s.as_str()).collect::<Vec<&str>>();
+    let input_vec = inputs.clone().unwrap_or(vec![]);
+    let input_slice: &[&str] = &input_vec.iter().map(|s| s.as_str()).collect::<Vec<&str>>();
     let estimate: Result<zxcvbn::Entropy, zxcvbn::ZxcvbnError> = zxcvbn(&password, input_slice);
 
     return estimate

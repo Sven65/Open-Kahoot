@@ -10,8 +10,6 @@ pub mod check_password;
 use std::sync::Arc;
 
 use axum::{routing::{get, post}, Router};
-use serde::Deserialize;
-
 use crate::AppState;
 
 use self::{email::email_router, files::files_router, question::question_router, quiz::quiz_router, user::user_router};
