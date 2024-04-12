@@ -53,6 +53,8 @@ pub struct ReturnedUser {
 	pub id: String,
 	pub username: String,
 	pub avatar: Option<String>,
+	pub verified_email: Option<bool>,
+	pub email: Option<String>,
 }
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReturnedQuiz {
@@ -115,6 +117,8 @@ impl ReturnedQuiz {
 				id: owner.0,
 				username: owner.1,
 				avatar: owner.2,
+				verified_email: None,
+				email: None,
 			},
 			name: quiz.name,
 			public: quiz.public,

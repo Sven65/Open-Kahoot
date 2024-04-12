@@ -226,6 +226,8 @@ async fn get_me(
 			id: user.id,
 			username: user.username,
 			avatar: user.avatar,
+			verified_email: user.verified_email,
+			email: Some(user.email),
 		})},
 		Err(_) => generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to login session.")
 	}

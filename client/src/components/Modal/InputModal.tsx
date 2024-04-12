@@ -15,6 +15,7 @@ type Props =  {
 	placeholder?: string,
 	icon?: h.JSX.Element,
 	type?: string,
+	error?: string,
 }
 
 export const InputModal = ({
@@ -27,6 +28,7 @@ export const InputModal = ({
 	onAction,
 	onClose,
 	type,
+	error,
 }: Props) => {
 	const [ value, setValue ] = useState('')
 	if (!show) return null
@@ -55,6 +57,7 @@ export const InputModal = ({
 											onKeyDown={e => {e.key === 'Enter' ? onAction(value) : null}}
 											type={type}
 										/>
+										{error && (<p class="text-red-500 text-xs italic">{error}</p>)}
 									</div>
 								</div>
 							</div>

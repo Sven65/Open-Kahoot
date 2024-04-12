@@ -91,6 +91,8 @@ export type User = {
 	id: string,
 	username: string,
 	avatar?: string,
+	verified_email?: boolean,
+	email?: string,
 }
 
 export type Quiz = {
