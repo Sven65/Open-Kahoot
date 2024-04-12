@@ -1,6 +1,10 @@
 use axum::http::{header::SET_COOKIE, Response, StatusCode};
 use serde::Serialize;
 
+use crate::util::check_password_strength;
+
+use super::check_password::{CheckPassOutput, SerializableFeedback};
+
 #[derive(Serialize)]
 struct GenericError {
 	pub error: String
@@ -57,4 +61,33 @@ pub fn generic_json_response(status: StatusCode, message: &str) -> Response<axum
 	};
 
 	json_response(status, g_message)
+}
+
+pub fn api_check_pass(
+	password: &str,
+	inputs: Option<Vec<String>>,
+) -> Result<(), Response<axum::body::Body>> {
+	let password_check = check_password_strength(
+		&password, 
+		inputs,
+	);
+
+	if password_check.is_err() {
+		return Err(generic_error(StatusCode::INTERNAL_SERVER_ERROR, "Failed to check password requirements."))
+	}
+
+	let password_check = password_check.unwrap();
+
+	if password_check.score() < 3 {
+		let feedback = match password_check.feedback() {
+			Some(feedback) => Some(SerializableFeedback::from(feedback)),
+			None => None
+		};
+	
+		return Err(json_response(StatusCode::BAD_REQUEST, CheckPassOutput {
+			feedback
+		}));
+	}
+
+	Ok(())
 }

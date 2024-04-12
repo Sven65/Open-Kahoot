@@ -1,9 +1,10 @@
 import { createContext } from 'preact'
-import { Quiz, User } from '../types'
+import { PasswordCheckResult, Quiz, User } from '../types'
 import { useState } from 'preact/hooks'
 import { toast } from 'react-toastify'
 import { useLocation } from 'preact-iso'
 import { deleteByKey } from '../util/modify'
+import { deleteCookie } from '../util/cookies'
 
 export type CreateUser = {
 	username: string,
@@ -25,7 +26,7 @@ export type IApiContext = {
 	// eslint-disable-next-line no-unused-vars
 	deleteQuestion: (id: String) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
-	createUser: (user: CreateUser) => Promise<void>,
+	createUser: (user: CreateUser) => Promise<PasswordCheckResult | undefined>,
 	// eslint-disable-next-line no-unused-vars
 	login: (username: string, password: string) => Promise<void>,
 	fetchMe: () => Promise<void>,
@@ -38,6 +39,14 @@ export type IApiContext = {
 	uploadFile: (id: string, file: any) => Promise<void>,
 	// eslint-disable-next-line no-unused-vars
 	getImageUrl: (id: string) => Promise<string>,
+	getAvatarUrl: () => string,
+	// eslint-disable-next-line no-unused-vars
+	setUserAvatar: (id: string) => Promise<string>
+	// eslint-disable-next-line no-unused-vars
+	changeEmail: (email: string) => Promise<string>
+	// eslint-disable-next-line no-unused-vars
+	changePassword: (oldPassword: string, newPassword: string) => Promise<PasswordCheckResult | string>,
+	deleteMe: () => Promise<void>,
 }
 
 export const ApiContext = createContext<IApiContext>(null)
@@ -221,12 +230,13 @@ export const ApiContextProvider = ({
 					case 201:
 						toast.success('User created, please check your emails!')
 						location.route('/@me')
-						break
+						return 'ok'
 					case 409:
 						toast.error(data.error)
 						break
 					default:
 						toast.error('User creation failed.')
+						return data
 				}
 			},
 			login: async (username: string, password: string) => {
@@ -262,8 +272,6 @@ export const ApiContextProvider = ({
 				const data = await request.json()
 
 				if (request.status === 200) {
-					toast.success('Logged in.')
-
 					setUser(data)
 
 					// location.route('/@me')
@@ -340,6 +348,110 @@ export const ApiContextProvider = ({
 				toast.success('File uploaded')
 			},
 			getImageUrl,
+			getAvatarUrl: () => {
+				if (!user.avatar) return `https://api.dicebear.com/8.x/initials/svg?seed=${user.username}`
+
+				return `/api/user/avatar/${user.id}`
+			},
+			setUserAvatar: async (id: string) => {
+				const request = await fetch('/api/user/@me/avatar', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						id,
+					}),
+				})
+
+				let data = await request.json()
+
+				if (request.status !== 200) {
+					toast.error('Failed to set user avatar')
+					return
+				}
+
+				toast.success('Avatar set.')
+
+
+				setUser({
+					...user,
+					avatar: data.message,
+				})
+
+
+				return 'OK'
+			},
+			changeEmail: async (email: string) => {
+				const request = await fetch('/api/user/@me/email', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						email,
+					}),
+				})
+
+				let data = await request.json()
+
+				if (request.status !== 200) {
+					toast.error('Failed to set user email')
+					return data.error
+				}
+
+				toast.success('Email changed.')
+
+
+				setUser({
+					...user,
+					email,
+					verified_email: false,
+				})
+
+				return 'OK'
+			},
+			changePassword: async (oldPassword: string, newPassword: string) => {
+				const request = await fetch('/api/user/@me/password', {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						old_password: oldPassword,
+						new_password: newPassword,
+					}),
+				})
+
+				let data = await request.json()
+
+				if (request.status !== 200) {
+					toast.error('Failed to set user password')
+					return data
+				}
+
+				toast.success('Password changed.')
+
+				return 'OK'
+			},
+			deleteMe: async () => {
+				const request = await fetch('/api/user/@me', {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+				})
+
+				if (request.status !== 410) {
+					toast.error('Failed to delete user')
+					return
+				}
+
+				toast.success('User deleted.')
+
+				location.route('/@me')
+				deleteCookie('login_session')
+			},
 		}}>
 			{children}
 		</ApiContext.Provider>

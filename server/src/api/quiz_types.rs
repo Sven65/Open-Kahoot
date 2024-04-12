@@ -52,6 +52,9 @@ pub struct ReturnedQuestion {
 pub struct ReturnedUser {
 	pub id: String,
 	pub username: String,
+	pub avatar: Option<String>,
+	pub verified_email: Option<bool>,
+	pub email: Option<String>,
 }
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ReturnedQuiz {
@@ -65,7 +68,7 @@ pub struct ReturnedQuiz {
 }
 
 impl ReturnedQuiz {
-	pub fn new_from(quiz: Quiz, questions: Vec<Question>, answers: Vec<Answer>, owner: (String, String), files: Vec<Files>) -> Self {
+	pub fn new_from(quiz: Quiz, questions: Vec<Question>, answers: Vec<Answer>, owner: (String, String, Option<String>), files: Vec<Files>) -> Self {
 		let mut collected_questions = questions
 			.into_iter().map(|map_question| {
 				let answers_for_question = answers.clone().into_iter().filter_map(|answer| {
@@ -113,6 +116,9 @@ impl ReturnedQuiz {
 			owner: ReturnedUser {
 				id: owner.0,
 				username: owner.1,
+				avatar: owner.2,
+				verified_email: None,
+				email: None,
 			},
 			name: quiz.name,
 			public: quiz.public,

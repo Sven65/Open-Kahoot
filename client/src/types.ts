@@ -90,6 +90,9 @@ export type Question = {
 export type User = {
 	id: string,
 	username: string,
+	avatar?: string,
+	verified_email?: boolean,
+	email?: string,
 }
 
 export type Quiz = {
@@ -100,4 +103,12 @@ export type Quiz = {
 	created_at: Date,
 	updated_at: Date,
 	questions: Question[],
+}
+
+
+export type PasswordCheckResult = {
+	feedback: {
+		warning?: string,
+		suggestions: string[]
+	}
 }

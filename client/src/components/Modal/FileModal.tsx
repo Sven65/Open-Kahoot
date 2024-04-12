@@ -1,36 +1,27 @@
 import { h, ComponentChildren } from 'preact'
 
 import './Modal.scss'
-import { Input } from '../Form/Input'
-import { useState } from 'preact/hooks'
 
 type Props =  {
 	show: boolean,
 	title?: string,
 	onClose?: () => void,
-	onAction?: (value: string) => void,
 	children?: ComponentChildren,
 	text?: string
-	actionText?: string
 	placeholder?: string,
 	icon?: h.JSX.Element,
-	type?: string,
-	error?: string,
+	// eslint-disable-next-line no-unused-vars
+	onChangeFile: (e: any) => void,
 }
 
-export const InputModal = ({
+export const FileModal = ({
 	show = false,
 	title,
 	text,
-	actionText,
-	placeholder,
 	icon,
-	onAction,
 	onClose,
-	type,
-	error,
+	onChangeFile,
 }: Props) => {
-	const [ value, setValue ] = useState('')
 	if (!show) return null
 
 	return (
@@ -50,20 +41,23 @@ export const InputModal = ({
 									<h3 class="text-base font-semibold leading-6 text-gray-900" id="modal-title">{title}</h3>
 									<div class="mt-2">
 										<p class="text-sm text-gray-500">{text}</p>
-										<Input
-											placeholder={placeholder}
-											value={value}
-											onChange={e => setValue(e.target.value)}
-											onKeyDown={e => {e.key === 'Enter' ? onAction(value) : null}}
-											type={type}
-										/>
-										{error && (<p class="text-red-500 text-xs italic">{error}</p>)}
+										<div class="mt-4">
+											<div class="border border-dashed border-gray-500 relative">
+												<input type="file" class="cursor-pointer relative block opacity-0 w-full h-full p-20 z-50" onChange={onChangeFile} />
+												<div class="text-center p-10 absolute top-0 right-0 left-0 m-auto">
+													<h4>
+															Drop files anywhere to upload
+														<br />or
+														<p class="">Select Files</p>
+													</h4>
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>
 						</div>
 						<div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-							<button type="button" class="inline-flex w-full justify-center rounded-md bg-green-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-500 sm:ml-3 sm:w-auto" onClick={() => onAction(value)}>{actionText}</button>
 							<button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto" onClick={onClose}>Cancel</button>
 						</div>
 					</div>

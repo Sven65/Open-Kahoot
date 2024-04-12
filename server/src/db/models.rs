@@ -83,6 +83,7 @@ pub struct User {
     pub password: String,
     pub email: String,
     pub verified_email: Option<bool>,
+    pub avatar: Option<String>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, Identifiable, Queryable, Selectable, Insertable, Associations, AsChangeset)]

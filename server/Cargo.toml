@@ -37,3 +37,4 @@ rusoto_s3 = "0.48.0"
 rusoto_core = "0.48.0"
 parse_duration = "2.1.1"
 pretty-duration = "0.1.1"
+zxcvbn = { version = "2.2.2", features = ["ser"] }

@@ -10,6 +10,7 @@ pub struct AppConfig {
 	pub password_reset_request_time: Option<Duration>,
 	pub password_reset_valid_time: Option<Duration>,
 	pub session_valid_time: Option<Duration>,
+	pub generate_default_avatar: bool,
 }
 
 fn check_env_var(name: &str, error_msg: &str) -> Result<(), String> {
@@ -147,6 +148,18 @@ impl AppConfig {
 			Err(_) => None,
 		};
 
+		let generate_default_avatar = match env::var("GENERATE_DEFAULT_AVATAR") {
+			Ok(val) => {
+				match val.as_str() {
+					"true" => true,
+					"false" => false,
+					&_ => false,
+				}
+			}
+			Err(_) => false,
+		};
+
+
 		let config = Self {
 			smtp_enabled,
 			enable_email_verification,
@@ -154,6 +167,7 @@ impl AppConfig {
 			password_reset_request_time,
 			password_reset_valid_time,
 			session_valid_time,
+			generate_default_avatar,
 		};
 
 		config.validate().unwrap();

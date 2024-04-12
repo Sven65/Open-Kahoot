@@ -1,7 +1,6 @@
-import classNames from 'classnames'
-import { useLocation } from 'preact-iso'
-import { PropsWithChildren, ReactElement } from 'preact/compat'
+import { PropsWithChildren, ReactElement, useContext } from 'preact/compat'
 import { Layout } from '../Layout'
+import { ApiContext } from '../../../context/ApiContext'
 
 type Props = PropsWithChildren & {
 	navbar?: ReactElement,
@@ -13,7 +12,7 @@ export const DashboardLayout = ({
 	navbar,
 	navbarClass,
 }: Props) => {
-	const location = useLocation()
+	const apiContext = useContext(ApiContext)
 
 	return (
 		<Layout>
@@ -40,13 +39,24 @@ export const DashboardLayout = ({
 				{navbar}
 
 				{/* User avatar: */}
-				<div class='flex flex-col items-center gap-y-4 py-10'>
-					<a class={'mt-2 rounded-full bg-gray-100'} href={'/@me'}>
-						<img class="h-10 w-10 rounded-full" src="" alt="" />
-					</a>
+				<div class='flex flex-row items-center gap-y-4 py-10'>
+					<div class="flex flex-row">
+						<a href="/@me/settings" class="group relative rounded-xl p-2 text-blue-600 hover:bg-gray-50 flex-row">
+							<img class="h-10 w-10 rounded-full" src={apiContext.getAvatarUrl()} alt={apiContext.user.username} />
+					
+							<div class="absolute inset-y-0 left-12 hidden items-center group-hover:flex">
+								<div class="relative whitespace-nowrap rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 drop-shadow-lg">
+									<div class="absolute inset-0 -left-1 flex items-center">
+										<div class="h-2 w-2 rotate-45 bg-white" />
+									</div>
+									Settings
+								</div>
+							</div>
+						</a>
+					</div>
 				</div>
 			</aside>
-			<aside class="w-full max-h-full">
+			<aside class="w-full max-h-full overflow-scroll">
 				{children}
 			</aside>
 		</Layout>
